@@ -25,13 +25,22 @@ L'application permet de suivre les coûts de propriété d'un véhicule en tenan
 - Autres
 
 Note sur la valeur de revente :
-**Cette valeur peut fluctuer dans le temps. L'utilisateur doit la mettre à jour périodiquement.**
+**Cette valeur peut fluctuer dans le temps. L'utilisateur doit pour lui donner des valeurs datées.**
+
+**Point important :** On doit pouvoir saisir des périodes de prêt (ou location, ou encore vol). Pendant ces périodes, des appoints de carburant peuvent être faits par des tiers sans être saisis dans l'application. Ces périodes doivent être prises en compte dans le calcul de la consommation.
+Deux possibilités (à trancher) :
+- soit on considère que pendant ces périodes, la consommation est égale à la consommation des deux périodes entourant la période de prêt
+- soit on marque ces périodes comme "consommation inconnue". Ce qui semble plus logique.
+
+On a exactement le même problème pour des appoints de carburant sans volume (on peut imaginer une déclaration d'un appoint de 50€ sans savoir le volume, ça peut typiquement être le cas pour un historique).
 
 ### Calcul de la consommation
 
 L'application calcule la consommation de carburant ou d'électricité en fonction des données saisies par l'utilisateur.
 
-Les calculs ne peuvent se faire qu'entre des **pleins** de carburant (les apports ponctuels sont pris en compte dans le volume total entre deux pleins,mais sans plein, on ne peut pas calculer la consommation au kilomètre fiable).
+La prise en compte des véhicules électriques et hybrides rechargeables impose de faire un calcul plus complexe qu'un simple "Entre deux pleins" car il est rare de faire le plein sur un véhicule électrique.
+
+**Obsolète :** Les calculs ne peuvent se faire qu'entre des **pleins** de carburant (les apports ponctuels sont pris en compte dans le volume total entre deux pleins, mais, sans plein, on ne peut pas calculer la consommation au kilomètre fiable).
 En effet, on peut parfaitement avoir un véhicule, dont on n'a pas noté les appoints de carburant, depuis son achat. Certaines applications ignorent ce cas de figure ce qui leur fait donner des consommations fantaisistes. Dans cette application, on fera attention à bien faire des calculs "entre pleins".
 
 Il y a plusieurs cas de figure suivant le type d'appoint de carburant :
@@ -74,4 +83,22 @@ L'application permet de prendre en compte l'inflation dans tous les calculs de c
 
 ## Sauvegarde des données
 
-//TODO
+Les données seront sauvegardées grâce à l'API de https://github.com/fathzer/ts-cloud-storage-manager.
+Un fichier unique "car-cost-meter.json" sera créé dans le dossier de l'utilisateur.
+La réconciliation des données se fera au niveau de chaque véhicule (des conflits sur des modifications simultanées de deux véhicules seront résolus automatiquement).
+
+Les settings, eux, seront sauvegardés dans le localStorage.
+
+## UI
+
+L'application sera développée en pur TypeScript. Si possible sans framework externe, à l'exception de la librairie de gestion des stockages cloud.
+
+Ce sera une application web responsive (mobile-first) installable comme une application progressive web app (PWA).
+
+Elle aura deux thèmes : clair et sombre (sélectionnés par défaut par le système de l'utilisateur et modifiables manuellement dans les settings).
+
+**TOUS** les textes et libellés seront traduits en français et en anglais dans une structure apte à l'extension future à d'autres langues (permettant, par exemple, l'import export dans Crowdin).
+
+Le design devra être modulaire et éviter au maximum les redondances de code. Il devra maximiser le découpage en composants réutilisables.
+
+## L'hébergement sera effectué sur GitHub Pages
