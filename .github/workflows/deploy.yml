@@ -1,0 +1,96 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      # The storage library lives in a sibling repo consumed via a file:
+      # dependency (web/package.json) — check it out and build it so the
+      # postinstall vendor step finds its dist/.
+      - name: Checkout ts-cloud-storage-manager
+        uses: actions/checkout@v4
+        with:
+          repository: fathzer/ts-cloud-storage-manager
+          ref: first
+          path: ts-cloud-storage-manager
+
+      - name: Build ts-cloud-storage-manager
+        working-directory: ts-cloud-storage-manager
+        run: |
+          bun install
+          bun run build
+
+      - name: Install dependencies, test and compile TypeScript
+        working-directory: web
+        run: |
+          bun install
+          bun test
+          bun run build
+
+      - name: Prepare site
+        run: |
+          mkdir -p _site
+
+          # Copy compiled JavaScript and source maps
+          cp -r web/dist/* _site/
+
+          # Copy the vendored storage library (import-mapped in the HTML pages)
+          cp -r web/vendor _site/vendor
+
+          # Copy static assets
+          cp web/favicon.svg _site/favicon.svg
+          cp -r web/css _site/css
+          cp web/demo.json _site/demo.json
+
+          # Copy legal pages (rewrite the compiled entry point like the index pages)
+          sed 's|dist/legal.js|legal.js|g' web/privacy.html > _site/privacy.html
+          sed 's|dist/legal.js|legal.js|g' web/terms.html > _site/terms.html
+
+          # Generate landing and app pages with compiled entry point
+          sed 's|dist/main.js|main.js|g' web/index.html > _site/index.html
+          mkdir -p _site/app
+          sed 's|dist/main.js|main.js|g' web/app/index.html > _site/app/index.html
+
+          # Copy manifest.json
+          cp web/manifest.json _site/manifest.json
+
+          # Generate service worker with build hash
+          sed "s/BUILD_HASH/${{ github.sha }}/g" web/sw.template.js > _site/sw.js
+
+          touch _site/.nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

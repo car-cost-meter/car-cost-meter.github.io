@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0f17">
+    <meta name="description" content="Car Cost Meter — Application gratuite et open source de calcul des coûts réels de propriété d'un véhicule : achat, entretien, assurance, carburant, consommation. Vos données restent dans votre espace de stockage cloud personnel.">
+    <title>Car Cost Meter — Le coût réel de vos véhicules</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+    <!-- Static landing page, fully readable without JS. The application
+         itself lives under /app/. -->
+    <div id="landing-root">
+        <main class="main-content">
+            <div class="landing-shell">
+                <header class="landing-hero">
+                    <h1><img src="favicon.svg" class="landing-logo" alt=""><span data-i18n="app.title">Car Cost Meter</span></h1>
+                    <p class="landing-tagline" data-i18n="app.tagline">Application gratuite et open source pour calculer le coût réel de vos véhicules — achat, entretien, assurance, carburant — et suivre leur consommation.</p>
+                </header>
+
+                <div class="auth-card">
+                    <div class="welcome-cards">
+                        <div class="welcome-card">
+                            <div class="welcome-card-header">
+                                <div class="welcome-card-icon">🚗</div>
+                                <h3 class="welcome-card-title" data-i18n="landing.card1Title">Centralisez tous les coûts de vos véhicules</h3>
+                            </div>
+                            <p class="welcome-card-text" data-i18n="landing.card1Text">Achat, entretien, contrôles techniques, assurance, carburant ou électricité : chaque dépense est enregistrée, par véhicule, avec son historique complet.</p>
+                        </div>
+                        <div class="welcome-card">
+                            <div class="welcome-card-header">
+                                <div class="welcome-card-icon">⛽</div>
+                                <h3 class="welcome-card-title" data-i18n="landing.card2Title">Une consommation fiable</h3>
+                            </div>
+                            <p class="welcome-card-text" data-i18n="landing.card2Text">La consommation n'est calculée que sur des périodes où toutes les données sont connues — jamais de chiffres fantaisistes quand des appoints de carburant manquent (prêt, location, saisie incomplète).</p>
+                        </div>
+                        <div class="welcome-card">
+                            <div class="welcome-card-header">
+                                <div class="welcome-card-icon">📈</div>
+                                <h3 class="welcome-card-title" data-i18n="landing.card3Title">Coût au kilomètre et coût total</h3>
+                            </div>
+                            <p class="welcome-card-text" data-i18n="landing.card3Text">Coût kilométrique et coût total de possession annuel par véhicule, valeur de revente déduite, affichables en euros constants grâce aux indices INSEE.</p>
+                        </div>
+                    </div>
+
+                    <div class="auth-actions">
+                        <a class="btn-primary" href="app/"><span data-i18n="landing.connect">Connexion</span></a>
+                        <a class="auth-demo-link" href="app/?demo"><span data-i18n="landing.tryDemo">ou tester Car Cost Meter en mode démo</span></a>
+                    </div>
+                </div>
+
+                <footer class="landing-footer">
+                    <a href="privacy.html" data-i18n="landing.footerPrivacy">Confidentialité</a>
+                    <a href="terms.html" data-i18n="landing.footerTerms">Conditions</a>
+                    <a href="https://github.com/fathzer/car-cost-meter.github.io" target="_blank" rel="noopener">GitHub</a>
+                    <a href="#" data-lang-switch="fr">FR</a>
+                    <a href="#" data-lang-switch="en">EN</a>
+                </footer>
+            </div>
+        </main>
+    </div>
+    <script type="importmap">
+      {"imports": {"ts-cloud-storage-manager": "./vendor/ts-cloud-storage-manager/index.js"}}
+    </script>
+    <script type="module" src="dist/main.js"></script>
+</body>
+</html>

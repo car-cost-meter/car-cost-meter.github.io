@@ -1,0 +1,170 @@
+/* Global layout structure: body, top bar, content areas, banners. */
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-base);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-size: 14px;
+  line-height: var(--line-height-base);
+}
+
+#app-root,
+#landing-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The app is viewport-bounded: everything fits the viewport so each view
+   manages its own internal scrolling (the landing page keeps document
+   scrolling). `flex: none` is required — the shared `flex: 1 1 0%` above
+   sets a flex-basis that would otherwise override `height`. */
+#app-root {
+  flex: none;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* These containers set display:flex, which beats the hidden attribute. */
+#app-root[hidden],
+#landing-root[hidden] {
+  display: none;
+}
+
+.main-content {
+  flex: 1 1 0%;
+  overflow-y: auto;
+  padding: var(--space-xl);
+}
+
+/* Demo-mode warning strip on top of the screen. */
+.demo-banner {
+  flex-shrink: 0;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-warning);
+  color: #fff;
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+}
+
+/* Strip flagging that figures are displayed in constant (inflation-adjusted)
+   euros — reuses the demo-banner amber tone. */
+.inflation-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-accent-soft);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  text-align: center;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-xl);
+  border-bottom: 1px solid var(--card-border);
+  background: var(--card-bg);
+  flex-shrink: 0;
+}
+
+.top-bar h1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.top-bar-logo {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* On narrow screens the action buttons scroll horizontally instead of
+   overflowing out of reach. `min-width: 0` lets the flex item shrink below
+   its content size so scrolling actually kicks in. */
+.top-bar-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  overflow-x: auto;
+  min-width: 0;
+  scrollbar-width: thin;
+  margin-left: auto;
+}
+
+.top-bar-actions > button {
+  white-space: nowrap;
+}
+
+/* Hamburger menu — hidden on desktop, replaces the icon row on mobile. */
+.top-bar-menu {
+  display: none;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 12rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  padding: var(--space-xs);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: var(--font-size-md);
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: var(--hover-bg);
+}
+
+.menu-item svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .top-bar-actions { display: none; }
+  .top-bar-menu { display: block; }
+}
+
+@media (max-width: 640px) {
+  .main-content {
+    padding: var(--space-md);
+  }
+  .top-bar {
+    padding: var(--space-sm) var(--space-md);
+  }
+}

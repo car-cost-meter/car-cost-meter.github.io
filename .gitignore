@@ -1,0 +1,5 @@
+/.project
+/web/node_modules
+/web/dist
+# Local dev link to the sibling storage library (file:../ts-cloud-storage-manager)
+/ts-cloud-storage-manager

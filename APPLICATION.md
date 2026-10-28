@@ -10,7 +10,7 @@ L'application permet de suivre les informations d'autant de véhicules que l'uti
 Chaque véhicule peut être configuré avec ses propres paramètres (type de carburant, etc.).
 On peut considérer que les véhicules sont des "objets" fonctionnels distincts.
 
-Lors de la création d'un véhicule, l'utilisateur doit renseigner le nom du véhicule, le type de carburant utilisé (essence/diesel/GPL, électrique, ou hybride rechargeable), le kilométrage initial, la date d'acquisition, et le montant versé.
+Lors de la création d'un véhicule, l'utilisateur doit renseigner le nom du véhicule, le type de véhicule (voiture, utilitaire, moto — pour l'icône de la carte), le type d'énergie utilisé (carburant, électrique, ou hybride rechargeable — la seule distinction utile est le(s) flux d'énergie : litres, kWh, ou les deux), le kilométrage initial, la date d'acquisition, et le montant versé.
 
 Les mensualités de crédit, ou loyer sont saisis dans la catégorie "Acquisition" (voir chapitre suivant).
 
@@ -18,19 +18,20 @@ Les mensualités de crédit, ou loyer sont saisis dans la catégorie "Acquisitio
 
 L'application permet de suivre les coûts de propriété d'un véhicule en tenant compte des différents coûts associés à la propriété d'un véhicule. Ces coûts sont classés en plusieurs catégories :
 - Acquisition (achat, financement, etc. et, **important** estimation de la valeur de revente)
-- Entretien (entretien, réparations, etc.)
+- Entretien (entretien courant : vidange, pneus, révision, etc.)
+- Réparation (pannes, casse, carrosserie, etc.)
 - Contrôles (essentiellement les contrôles techniques)
 - Assurance
 - Carburant (y compris l'électricité pour les véhicules électriques)
 - Autres
 
+Note de saisie : **tous les champs montants** (coûts, montants de pleins/charges, prix d'achat, estimations de revente, hypothèses du simulateur) acceptent des expressions arithmétiques avec `+ - * /`, les parenthèses, le `%` et la virgule ou le point décimal — ex. `1000*(1+5%)` ou `23,50+4`.
+
 Note sur la valeur de revente :
 **Cette valeur peut fluctuer dans le temps. L'utilisateur doit pour lui donner des valeurs datées.**
 
 **Point important :** On doit pouvoir saisir des périodes de prêt (ou location, ou encore vol). Pendant ces périodes, des appoints de carburant peuvent être faits par des tiers sans être saisis dans l'application. Ces périodes doivent être prises en compte dans le calcul de la consommation.
-Deux possibilités (à trancher) :
-- soit on considère que pendant ces périodes, la consommation est égale à la consommation des deux périodes entourant la période de prêt
-- soit on marque ces périodes comme "consommation inconnue". Ce qui semble plus logique.
+~~Deux possibilités (à trancher) :~~ **Tranché** : on marque ces périodes comme **"consommation inconnue"** (pas d'extrapolation à partir des périodes encadrantes).
 
 On a exactement le même problème pour des appoints de carburant sans volume (on peut imaginer une déclaration d'un appoint de 50€ sans savoir le volume, ça peut typiquement être le cas pour un historique).
 
@@ -58,7 +59,7 @@ En particulier, elle calcule :
 La valeur de revente vient en déduction du coût total de possession.
 
 Ces calculs sont réalisés pour chaque véhicule individuellement, pour chaque année.
-On peut exclure certains coûts de ces calculs via un filtrage par catégorie (Acquisition, Entretien, Contrôles, Assurance, Carburant, Autres).
+On peut exclure certains coûts de ces calculs via un filtrage par catégorie (Acquisition, Entretien, Réparation, Contrôles, Assurance, Carburant, Autres).
 
 On peut afficher des graphiques d'évolution par an pour visualiser les coûts et la consommation.
 On peut détailler les coûts par catégorie, pour une période librement définie.
@@ -86,8 +87,14 @@ L'application permet de prendre en compte l'inflation dans tous les calculs de c
 Les données seront sauvegardées grâce à l'API de https://github.com/fathzer/ts-cloud-storage-manager.
 Un fichier unique "car-cost-meter.json" sera créé dans le dossier de l'utilisateur.
 La réconciliation des données se fera au niveau de chaque véhicule (des conflits sur des modifications simultanées de deux véhicules seront résolus automatiquement).
+Les providers proposés sont **Dropbox** et **Microsoft OneDrive**, plus un mode **démo en lecture seule** alimenté par un fichier d'exemple publié sur un Gist.
 
-Les settings, eux, seront sauvegardés dans le localStorage.
+Les settings, eux, seront sauvegardés dans le localStorage. Ils incluent la langue, le thème, les unités (localisées par défaut : km + L/100km en français, mi + mpg en anglais — modifiables manuellement) et le symbole de devise (pas de conversion de change). La prise en compte de l'inflation s'appuie sur les indices INSEE : c'est une fonctionnalité **spécifique à la France**, affichée comme telle.
+
+### Import/export
+Données au format JSON tel que celui sauvegardé dans le cloud.
+- Import : chargement d'un fichier JSON dans l'application.
+- Export : sauvegarde d'un fichier JSON depuis l'application.
 
 ## UI
 

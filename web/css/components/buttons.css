@@ -1,0 +1,53 @@
+/* Primary, secondary and danger buttons. */
+
+.btn-primary,
+.btn-secondary,
+.btn-warning,
+.btn-danger {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.6rem 1.2rem;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  box-sizing: border-box;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-secondary:disabled,
+.btn-secondary[disabled],
+.btn-warning:disabled,
+.btn-warning[disabled],
+.btn-danger:disabled,
+.btn-danger[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(80%);
+}
+
+.btn-warning {
+  background: var(--color-warning);
+  color: #fff;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--card-border);
+  color: var(--text-main);
+}

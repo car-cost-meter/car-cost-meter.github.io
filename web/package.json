@@ -1,0 +1,21 @@
+{
+  "name": "car-cost-meter",
+  "version": "1.0.0",
+  "devDependencies": {
+    "bun-types": "^1.4.2",
+    "typescript": "^7.0.2"
+  },
+  "description": "Web application to track the real cost of owning a vehicle (acquisition, maintenance, insurance, fuel/electricity) and its consumption.",
+  "scripts": {
+    "dev": "tsc --watch & python3 -m http.server 5500",
+    "build": "tsc",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
+    "vendor": "bash scripts/vendor-csm.sh",
+    "postinstall": "bun run vendor"
+  },
+  "type": "module",
+  "dependencies": {
+    "ts-cloud-storage-manager": "file:../ts-cloud-storage-manager"
+  }
+}

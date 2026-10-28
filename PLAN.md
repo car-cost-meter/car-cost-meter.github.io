@@ -82,13 +82,13 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 
 ## Étapes
 
-### Étape 0 — Socle du repo
+### Étape 0 ✅ — Socle du repo
 
 - `package.json` (bun, typescript, `file:` dep vers `../ts-cloud-storage-manager`, scripts `dev/build/test/typecheck/vendor` + `postinstall`), `tsconfig*.json` copiés, `.gitignore`, `scripts/vendor-csm.sh`.
 - `APPLICATION.md` complété avec les décisions tranchées ; `README.md` amorcé.
 - Vérif : `bun install` + `bun run build` compilent un `main.ts` trivial.
 
-### Étape 1 — Landing, shell applicatif, i18n, thème, settings, unités
+### Étape 1 ✅ — Landing, shell applicatif, i18n, thème, settings, unités
 
 - `index.html` landing statique (cartes de présentation, boutons « Se connecter » / « Tester la démo », footer aide/CGU/confidentialité) — contenu lisible sans JS.
 - `app/index.html` : `<base href="../">`, importmap `ts-cloud-storage-manager` → `./vendor/...`, `<div id="app-root">`, `dist/main.js`.
@@ -98,7 +98,7 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 - `core/units.ts` : distance km/mi, volume L/gal, consommation L/100km ↔ mpg, kWh/100km ↔ kWh/mi ; formatage `I18n`-aware ; conversions au **formatage uniquement** (stockage toujours métrique).
 - Vérif : tests `bun test` (i18n fallback, conversions mpg↔L/100km), rendu landing en FR et EN.
 
-### Étape 2 — Modèle de domaine + AppStore
+### Étape 2 ✅ — Modèle de domaine + AppStore
 
 - `domain/events.ts` : types des collections datées + helpers (`sortByDate`, `recordById`, tombstones éventuels), `compareDates`, `todayString` (généraliser `DatedHistory` de mon-patrimoine).
 - `domain/Vehicle.ts` : classe par véhicule (ajout/édition/suppression d'événements, dernier CT = dernière entrée de coût catégorie `inspection`, prochain CT = +`inspectionPeriodMonths`).
@@ -106,39 +106,39 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 - `core/AppStore.ts` + `EventBus` : état `vehicles[]`, `state:changed`, `save:error`, save → `storageManager.save(exportPayload)` ; `loginDemo()` via `ReadOnlyProvider`.
 - Vérif : tests unitaires modèle (sérialisation round-trip, tri, édition rétroactive).
 
-### Étape 3 — Données de démo (avancée — dès le modèle fixé)
+### Étape 3 ✅ — Données de démo (avancée — dès le modèle fixé)
 
 - `scripts/make_demo_data.ts` : génère `demo/demo.json` — dataset riche (ex. véhicule thermique avec période de prêt, un EV, un hybride, historiques et reventes datées) ; publication manuelle sur Gist → `DEMO_DATA_URL`.
 - Câblage `ReadOnlyProvider(DEMO_DATA_URL)` + bandeau « Mode démo — modifications non sauvegardées » piloté par `provider.isReadOnly()` ; entrée `app/?demo` depuis la landing.
 - **Intérêt** : toute l'UI suivante se développe et se vérifie sur données réelles.
 - Vérif : chargement du gist en mode démo, read-only effectif.
 
-### Étape 4 — Stockage cloud + sync + merge par véhicule
+### Étape 4 ✅ — Stockage cloud + sync + merge par véhicule
 
 - `main.ts` : `STORAGE_CONFIG = { fileName: 'car-cost-meter.json', dropbox: { appKey }, oneDrive: { clientId }, sync: { policy: mergePolicy, eagerPull: false } }` — déclarer les apps Dropbox/OneDrive (PKCE) et documenter les consoles dans README (copier les sections de mon-patrimoine ; URIs de redirect `<origine>/app/`).
 - `domain/mergePolicy.ts` : merge par véhicule décrit plus haut + tests (véhicules disjoints auto-merge, conflit scalaire → UNRECONCILABLE).
 - Picker provider (Dropbox/OneDrive/démo) — flow redirect+PKCE géré par la lib (`authenticate`/`resumeAuth`).
 - Vérif : tests mergePolicy ; `bun test` vert ; parcours auth Dropbox en local.
 
-### Étape 5 — UI véhicules (CRUD)
+### Étape 5 ✅ — UI véhicules (CRUD)
 
 - `ui/DashboardView.ts` : liste des véhicules (carte par véhicule : nom, type d'énergie, km total), bouton ajouter.
 - `ui/VehicleEditor.ts` : formulaire création/édition (nom, énergie, label carburant optionnel, date d'acquisition, km initial, prix d'achat, périodicité CT) — composant autonome, markup + CSS dans le fichier.
 - Suppression véhicule et de toute donnée via `ConfirmDialog` (spec : effacement après confirmation) ; `ui/icons.ts`.
 - Vérif : parcours manuel complet sur données démo + tests store.
 
-### Étape 6 — Rappel de contrôle technique (avancé — facile, besoin personnel)
+### Étape 6 ✅ — Rappel de contrôle technique (avancé — facile, besoin personnel)
 
 - Prochain CT = dernier coût catégorie `inspection` + `inspectionPeriodMonths` ; pastille d'échéance sur la carte véhicule (vert/orange/rouge selon proximité), date dans le détail.
 - Vérif : tests dates limites (aucun CT, CT récent, CT proche, CT dépassé) ; affichage mobile sur données démo.
 
-### Étape 7 — Saisie des événements
+### Étape 7 ✅ — Saisie des événements
 
 - `ui/VehicleDetailView.ts` : onglets/listes par type d'événement, triées par date, édition/suppression (confirm).
 - Éditeurs : `FuelUpEditor`/`ChargeEditor` (odo optionnel, volume/kWh optionnel, montant, flag « plein/charge complète »), `CostEditor` (catégorie, montant, date, commentaire, odo optionnel), `ResaleValueEditor` (estimations datées), `LoanPeriodEditor` (from/to/note).
 - Vérif : saisie multi-types, correction rétroactive, persistance + sync.
 
-### Étape 8 — Moteur de coûts + vues
+### Étape 8 ✅ — Moteur de coûts + vues
 
 `domain/costs.ts` :
 
@@ -148,13 +148,13 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 - Vues : `ui/CostsView.ts` — tableau annuel par véhicule, filtre par catégories (checkboxes), détail par catégorie sur période libre (deux dates), graphes SVG d'évolution annuelle (pattern `HistoryChartView` de mon-patrimoine).
 - Vérif : tests d'interpolation, TCO, €/km, filtres.
 
-### Étape 9 — Inflation (INSEE, France/€)
+### Étape 9 ✅ — Inflation (INSEE, France/€)
 
 - `core/inflation.ts` : fetch des séries du Gist INSEE (mêmes `insee-<idbank>.json` que mon-patrimoine), cache mémoire, conversion montant(date)→montant constant.
 - Toggle « euros constants » dans les vues de coûts ; libellé précisant que l'indice est français (INSEE) — badge « France ».
 - Vérif : tests de conversion, état sans réseau.
 
-### Étape 10 — Simulateur avant achat
+### Étape 10 ✅ — Simulateur avant achat
 
 - `ui/SimulatorView.ts` : formulaire d'hypothèses (prix d'achat, revente à date, km/an, loyer, crédit montant+durée+taux, conso estimée, prix énergie) → coût annuel projeté et coût/km ; indépendant des véhicules saisis, calcul via `domain/costs.ts`/`consumption.ts` réutilisés.
 - Vérif : tests du calcul de crédit (annuités) et du scénario complet.
@@ -166,7 +166,7 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 - UI : tuile consommation dans la fiche véhicule + graphe d'évolution par segments ; hybride : L/100km **et** kWh/100km.
 - Vérif : jeu de tests conséquent couvrant les cas limites retenus.
 
-### Étape 12 — Finitions PWA + polish + déploiement
+### Étape 12 (partiel) — Finitions PWA + polish + déploiement
 
 - `manifest.json` (icônes maskable), `sw.template.js` (network-first comme mon-patrimoine), vérif installabilité (Chrome/Android + iOS).
 - Responsive mobile-first, revue contrastes des deux thèmes, `robots noindex` sur `app/` ; landing complétée (textes FR/EN, liens `app/?connect` / `app/?demo`), `privacy.html`/`terms.html`.
