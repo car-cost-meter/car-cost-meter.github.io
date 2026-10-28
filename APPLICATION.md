@@ -10,9 +10,12 @@ L'application permet de suivre les informations d'autant de véhicules que l'uti
 Chaque véhicule peut être configuré avec ses propres paramètres (type de carburant, etc.).
 On peut considérer que les véhicules sont des "objets" fonctionnels distincts.
 
-Lors de la création d'un véhicule, l'utilisateur doit renseigner le nom du véhicule, le type de véhicule (voiture, utilitaire, moto — pour l'icône de la carte), le type d'énergie utilisé (carburant, électrique, ou hybride rechargeable — la seule distinction utile est le(s) flux d'énergie : litres, kWh, ou les deux), le kilométrage initial, la date d'acquisition, et le montant versé.
+Lors de la création d'un véhicule, l'utilisateur doit renseigner le nom du véhicule, le type de véhicule (voiture, utilitaire, moto — pour l'icône de la carte), le type d'énergie utilisé (carburant, électrique, ou hybride rechargeable — la seule distinction utile est le(s) flux d'énergie : litres, kWh, ou les deux), le kilométrage initial, la date d'acquisition, et les paramètres du contrôle technique.
 
-Les mensualités de crédit, ou loyer sont saisis dans la catégorie "Acquisition" (voir chapitre suivant).
+L'onglet "Coûts / Acquisition" regroupe tout ce qui concerne le financement du véhicule :
+- le **montant initial** versé à l'achat (ancre de la courbe de dépréciation) ;
+- une case à cocher **« Crédit / loyer »** qui déclare un échéancier : périodicité (mensuel — par défaut, trimestriel, annuel), montant des échéances, nombre d'échéances et date de la première échéance — les versements sont déduits automatiquement de cet échéancier, pas saisis un par un ;
+- la **liste des autres coûts d'acquisition** (carte grise, options, frais de dossier…), saisis comme des coûts datés ordinaires.
 
 ### Suivi des coûts
 
@@ -64,7 +67,7 @@ On peut exclure certains coûts de ces calculs via un filtrage par catégorie (A
 On peut afficher des graphiques d'évolution par an pour visualiser les coûts et la consommation.
 On peut détailler les coûts par catégorie, pour une période librement définie.
 
-Dans les calculs de coûts l'acquisition est constituée du prix d'achat du véhicule, moins sa valeur de revente. Quand une date ne tombe pas exactement sur une date pour laquelle on a une valeur de revente, on interpole linéairement la valeur de revente entre points connus (c'est une approximation, on marquera ça en TODO).
+Dans les calculs de coûts l'acquisition est constituée du montant initial versé à l'achat du véhicule, moins sa valeur de revente (dépréciation), plus les échéances de l'éventuel échéancier crédit/loyer et les autres coûts d'acquisition enregistrés. Quand une date ne tombe pas exactement sur une date pour laquelle on a une valeur de revente, on interpole linéairement la valeur de revente entre points connus (c'est une approximation, on marquera ça en TODO).
 
 ### Rappel des contrôles techniques
 

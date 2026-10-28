@@ -1,4 +1,5 @@
 import { UNRECONCILABLE } from 'ts-cloud-storage-manager';
+import { compareDates } from '../core/dates.js';
 import type { ExportPayload } from './payload.js';
 import type { VehicleData } from './Vehicle.js';
 
@@ -20,7 +21,7 @@ type CollectionName = typeof COLLECTIONS[number];
 
 const SCALARS = [
   'name', 'energyType', 'vehicleType', 'acquisitionDate',
-  'initialOdometerKm', 'purchasePrice', 'inspectionPeriodMonths',
+  'initialOdometerKm', 'acquisition', 'inspectionPeriodMonths',
   'firstInspectionDate', 'inspectionExempt'
 ] as const;
 
@@ -36,7 +37,7 @@ function deepEqual(a: unknown, b: unknown): boolean {
 }
 
 function deepClone<T>(v: T): T {
-  return JSON.parse(JSON.stringify(v)) as T;
+  return structuredClone(v);
 }
 
 type ScalarName = typeof SCALARS[number];
@@ -47,6 +48,26 @@ interface MergeEntry {
   date?: string;
   from?: string;
   [k: string]: unknown;
+}
+
+/** Winning entry for one collection key, or undefined when it merges to
+ *  a deletion. `prefer` = the side whose vehicle is fresher. */
+function mergeEntry(
+  b: MergeEntry | undefined, l: MergeEntry | undefined,
+  r: MergeEntry | undefined, prefer: 'local' | 'remote'
+): MergeEntry | undefined {
+  if (l === undefined) {
+    // Remote-only: deleted locally when it existed in base, else created remotely.
+    return b === undefined ? r : undefined;
+  }
+  if (r === undefined) {
+    // Local-only: deleted remotely when it existed in base, else created locally.
+    return b === undefined ? l : undefined;
+  }
+  if (deepEqual(l, r)) return l;
+  if (b !== undefined && deepEqual(l, b)) return r; // only the remote side changed it
+  if (b !== undefined && deepEqual(r, b)) return l; // only the local side changed it
+  return prefer === 'local' ? l : r;                // both changed → fresher vehicle wins
 }
 
 /** 3-way merge of one dated collection: union by id, honoring deletions. */
@@ -61,31 +82,11 @@ function mergeCollection(
 
   const merged = new Map<string, MergeEntry>();
   for (const k of new Set([...localMap.keys(), ...remoteMap.keys()])) {
-    const l = localMap.get(k);
-    const r = remoteMap.get(k);
-    const b = baseMap.get(k);
-    if (l === undefined) {
-      // Remote-only: deleted locally when it existed in base, else created remotely.
-      if (b === undefined) merged.set(k, r!);
-    } else if (r === undefined) {
-      // Local-only: deleted remotely when it existed in base, else created locally.
-      if (b === undefined) merged.set(k, l);
-    } else if (deepEqual(l, r)) {
-      merged.set(k, l);
-    } else if (b !== undefined && deepEqual(l, b)) {
-      merged.set(k, r); // only the remote side changed it
-    } else if (b !== undefined && deepEqual(r, b)) {
-      merged.set(k, l); // only the local side changed it
-    } else {
-      merged.set(k, prefer === 'local' ? l : r); // both changed → fresher vehicle wins
-    }
+    const winner = mergeEntry(baseMap.get(k), localMap.get(k), remoteMap.get(k), prefer);
+    if (winner !== undefined) merged.set(k, winner);
   }
   const values = [...merged.values()];
-  values.sort((a, b) => {
-    const da = a.date ?? a.from!;
-    const db = b.date ?? b.from!;
-    return da < db ? -1 : da > db ? 1 : 0;
-  });
+  values.sort((a, b) => compareDates(a.date ?? a.from!, b.date ?? b.from!));
   return values;
 }
 
@@ -128,6 +129,24 @@ function mergeVehicle(
   return merged;
 }
 
+/** Merge of one vehicle id: the merged vehicle, null when a deletion
+ *  wins, or UNRECONCILABLE on delete-vs-edit conflicts. */
+function mergeVehicleById(
+  b: VehicleData | undefined, l: VehicleData | undefined, r: VehicleData | undefined
+): VehicleData | null | typeof UNRECONCILABLE {
+  if (l === undefined) {
+    if (b === undefined) return r!;             // created remotely
+    // Deleted locally — wins when untouched remotely.
+    return deepEqual(r, b) ? null : UNRECONCILABLE;
+  }
+  if (r === undefined) {
+    if (b === undefined) return l;              // created locally
+    // Deleted remotely — wins when untouched locally.
+    return deepEqual(l, b) ? null : UNRECONCILABLE;
+  }
+  return mergeVehicle(b, l, r);
+}
+
 export function mergePolicy(ctx: { base: unknown; local: unknown; remote: unknown }): unknown {
   const base = asPayload(ctx.base);
   const local = asPayload(ctx.local);
@@ -142,30 +161,10 @@ export function mergePolicy(ctx: { base: unknown; local: unknown; remote: unknow
   const allIds = new Set([...localVehicles.keys(), ...remoteVehicles.keys()]);
 
   for (const id of allIds) {
-    const l = localVehicles.get(id);
-    const r = remoteVehicles.get(id);
-    const b = baseVehicles.get(id);
-    if (l === undefined) {
-      if (b === undefined) {
-        mergedVehicles.set(id, r!);                        // created remotely
-      } else if (deepEqual(r, b)) {
-        // Deleted locally, untouched remotely → deletion wins.
-      } else {
-        return UNRECONCILABLE; // deleted locally but edited remotely
-      }
-    } else if (r === undefined) {
-      if (b === undefined) {
-        mergedVehicles.set(id, l);                         // created locally
-      } else if (deepEqual(l, b)) {
-        // Deleted remotely, untouched locally → deletion wins.
-      } else {
-        return UNRECONCILABLE; // deleted remotely but edited locally
-      }
-    } else {
-      const merged = mergeVehicle(b, l, r);
-      if (merged === UNRECONCILABLE) return UNRECONCILABLE;
-      mergedVehicles.set(id, merged);
-    }
+    const merged = mergeVehicleById(
+      baseVehicles.get(id), localVehicles.get(id), remoteVehicles.get(id));
+    if (merged === UNRECONCILABLE) return UNRECONCILABLE;
+    if (merged !== null) mergedVehicles.set(id, merged);
   }
 
   // Keep the local ordering, then append vehicles that only exist remotely.

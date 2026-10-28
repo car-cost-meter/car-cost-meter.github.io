@@ -1,7 +1,7 @@
 import type { Vehicle } from './Vehicle.js';
 import type { CostCategory } from './events.js';
-import { COST_CATEGORIES } from './events.js';
-import { compareDates, utcDate, yearOf, yearStart, yearEnd, todayString } from '../core/dates.js';
+import { COST_CATEGORIES, LOAN_PERIOD_MONTHS } from './events.js';
+import { addMonths, compareDates, utcDate, yearOf, yearStart, yearEnd, todayString } from '../core/dates.js';
 
 /**
  * Cost engine — pure functions over a Vehicle's dated collections.
@@ -32,16 +32,32 @@ function interpolate<T extends { date: string }>(
 
 /**
  * Resale value at a date: linear interpolation between the dated
- * `resaleValues` estimates, anchored by (acquisitionDate, purchasePrice).
- * Before the first anchor → purchasePrice ; after the last → last estimate.
+ * `resaleValues` estimates, anchored by (acquisitionDate, initialAmount).
+ * Before the first anchor → initialAmount ; after the last → last estimate.
  * TODO: linear interpolation between known points is an approximation.
  */
 export function resaleValueAt(vehicle: Vehicle, date: string): number {
   const points = [
-    { date: vehicle.data.acquisitionDate, value: vehicle.data.purchasePrice },
+    { date: vehicle.data.acquisitionDate, value: vehicle.data.acquisition?.initialAmount ?? 0 },
     ...vehicle.data.resaleValues
   ].sort((a, b) => compareDates(a.date, b.date));
   return interpolate(points, date, p => p.value);
+}
+
+/**
+ * Loan/lease instalments expanded from the vehicle's acquisition schedule:
+ * `count` payments of `amount`, `firstPaymentDate` then +periodicity each.
+ * Returns [] when no loan is declared.
+ */
+export function loanPayments(vehicle: Vehicle): { date: string; amount: number }[] {
+  const loan = vehicle.data.acquisition?.loan;
+  if (!loan || loan.count <= 0 || loan.amount <= 0) return [];
+  const step = LOAN_PERIOD_MONTHS[loan.periodicity] ?? 1;
+  const out: { date: string; amount: number }[] = [];
+  for (let i = 0; i < loan.count; i++) {
+    out.push({ date: addMonths(loan.firstPaymentDate, i * step), amount: loan.amount });
+  }
+  return out;
 }
 
 /**
@@ -80,6 +96,28 @@ export type PriceFactor = (date: string) => number;
 
 const NOMINAL: PriceFactor = () => 1;
 
+/** Every cost-bearing entry of the vehicle as {category, date, amount}:
+ *  recorded costs, fill-up/charge amounts (bucket 'fuel'), and loan
+ *  instalments expanded from the acquisition schedule ('acquisition'). */
+function* costEntries(vehicle: Vehicle): Generator<{ category: CostCategory; date: string; amount: number }> {
+  for (const c of vehicle.data.costs) {
+    yield { category: c.category, date: c.date, amount: c.amount };
+  }
+  const regFee = vehicle.data.acquisition?.registrationFee;
+  if (regFee !== undefined && regFee > 0) {
+    yield { category: 'acquisition', date: vehicle.data.acquisitionDate, amount: regFee };
+  }
+  for (const f of vehicle.data.fuelUps) {
+    if (f.amount !== undefined) yield { category: 'fuel', date: f.date, amount: f.amount };
+  }
+  for (const c of vehicle.data.charges) {
+    if (c.amount !== undefined) yield { category: 'fuel', date: c.date, amount: c.amount };
+  }
+  for (const p of loanPayments(vehicle)) {
+    yield { category: 'acquisition', date: p.date, amount: p.amount };
+  }
+}
+
 /** Sum of cost entries inside [from, to], optionally filtered by category.
  *  Fill-ups and charges count as 'fuel' costs — their amounts are energy
  *  spend. Each amount is multiplied by `factor(date)` (constant-euros). */
@@ -88,15 +126,10 @@ export function costsInPeriod(
   categories?: ReadonlySet<CostCategory>, factor: PriceFactor = NOMINAL
 ): number {
   const filter = categories ?? new Set(COST_CATEGORIES);
-  let sum = vehicle.data.costs
-    .filter(c => c.date >= from && c.date <= to && filter.has(c.category))
-    .reduce((acc, c) => acc + c.amount * factor(c.date), 0);
-  if (filter.has('fuel')) {
-    for (const f of vehicle.data.fuelUps) {
-      if (f.amount !== undefined && f.date >= from && f.date <= to) sum += f.amount * factor(f.date);
-    }
-    for (const c of vehicle.data.charges) {
-      if (c.amount !== undefined && c.date >= from && c.date <= to) sum += c.amount * factor(c.date);
+  let sum = 0;
+  for (const e of costEntries(vehicle)) {
+    if (e.date >= from && e.date <= to && filter.has(e.category)) {
+      sum += e.amount * factor(e.date);
     }
   }
   return sum;
@@ -106,17 +139,10 @@ export function costsInPeriod(
  *  Fill-up and charge amounts are merged into 'fuel'. */
 export function costsByCategory(vehicle: Vehicle, from: string, to: string, factor: PriceFactor = NOMINAL): Map<CostCategory, number> {
   const out = new Map<CostCategory, number>();
-  const add = (cat: CostCategory, amount: number): void => {
-    out.set(cat, (out.get(cat) ?? 0) + amount);
-  };
-  for (const c of vehicle.data.costs) {
-    if (c.date >= from && c.date <= to) add(c.category, c.amount * factor(c.date));
-  }
-  for (const f of vehicle.data.fuelUps) {
-    if (f.amount !== undefined && f.date >= from && f.date <= to) add('fuel', f.amount * factor(f.date));
-  }
-  for (const c of vehicle.data.charges) {
-    if (c.amount !== undefined && c.date >= from && c.date <= to) add('fuel', c.amount * factor(c.date));
+  for (const e of costEntries(vehicle)) {
+    if (e.date >= from && e.date <= to) {
+      out.set(e.category, (out.get(e.category) ?? 0) + e.amount * factor(e.date));
+    }
   }
   return out;
 }

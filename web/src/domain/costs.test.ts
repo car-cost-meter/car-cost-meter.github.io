@@ -1,12 +1,13 @@
 import { describe, test, expect } from 'bun:test';
 import { createVehicle } from './payload.js';
-import { resaleValueAt, odometerAt, kmInPeriod, costsInPeriod, costsByCategory, depreciation, yearlyReport } from './costs.js';
+import { resaleValueAt, odometerAt, kmInPeriod, costsInPeriod, costsByCategory, depreciation, yearlyReport, loanPayments } from './costs.js';
 import { newId } from './events.js';
 
 function golf(): ReturnType<typeof createVehicle> {
   const v = createVehicle({
     name: 'Golf', energyType: 'fuel',
-    acquisitionDate: '2021-03-15', initialOdometerKm: 42000, purchasePrice: 18500
+    acquisitionDate: '2021-03-15', initialOdometerKm: 42000,
+    acquisition: { initialAmount: 18500 }
   });
   v.recordResaleValue({ date: '2022-03-15', value: 17200 });
   v.recordResaleValue({ date: '2024-03-15', value: 14500 });
@@ -72,5 +73,41 @@ describe('costs engine', () => {
     expect(y2022.costs).toBe(780); // 720 insurance + 60€ fuel-up
     // 2022: from 2022-01-01 (interp ~17453) to 2022-12-31 (interp ~16038)
     expect(y2022.depreciation).toBeGreaterThan(0);
+  });
+
+  test('loanPayments expands the schedule at each periodicity', () => {
+    const v = golf();
+    // Monthly: 3 × 285 from 2021-04-05 → 04-05, 05-05, 06-05.
+    v.data.acquisition = { loan: { periodicity: 'monthly', amount: 285, count: 3, firstPaymentDate: '2021-04-05' } };
+    expect(loanPayments(v)).toEqual([
+      { date: '2021-04-05', amount: 285 },
+      { date: '2021-05-05', amount: 285 },
+      { date: '2021-06-05', amount: 285 }
+    ]);
+    // Yearly: 2 payments 12 months apart.
+    v.data.acquisition = { loan: { periodicity: 'yearly', amount: 1200, count: 2, firstPaymentDate: '2021-04-05' } };
+    expect(loanPayments(v).map(p => p.date)).toEqual(['2021-04-05', '2022-04-05']);
+    // No loan → no payments.
+    v.data.acquisition = { initialAmount: 18500 };
+    expect(loanPayments(v)).toEqual([]);
+  });
+
+  test('loan instalments count as acquisition costs', () => {
+    const v = golf();
+    v.data.acquisition = {
+      initialAmount: 18500,
+      loan: { periodicity: 'monthly', amount: 285, count: 3, firstPaymentDate: '2021-04-05' }
+    };
+    // The 3 instalments (Apr/May/Jun 2021) fall in 2021, none in 2022.
+    expect(costsInPeriod(v, '2021-01-01', '2021-12-31', new Set(['acquisition']))).toBe(855);
+    expect(costsInPeriod(v, '2022-01-01', '2022-12-31', new Set(['acquisition']))).toBe(0);
+    expect(costsByCategory(v, '2021-01-01', '2021-12-31').get('acquisition')).toBe(855);
+  });
+
+  test('registration fee counts as an acquisition cost on the purchase date', () => {
+    const v = golf();
+    v.data.acquisition = { initialAmount: 18500, registrationFee: 380 };
+    expect(costsInPeriod(v, '2021-03-01', '2021-03-31', new Set(['acquisition']))).toBe(380);
+    expect(costsInPeriod(v, '2021-04-01', '2021-04-30', new Set(['acquisition']))).toBe(0);
   });
 });

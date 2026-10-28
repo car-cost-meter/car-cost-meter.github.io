@@ -8,7 +8,16 @@
       "energyType": "fuel",
       "acquisitionDate": "2021-03-15",
       "initialOdometerKm": 42000,
-      "purchasePrice": 18500,
+      "acquisition": {
+        "initialAmount": 18500,
+        "registrationFee": 380,
+        "loan": {
+          "periodicity": "monthly",
+          "amount": 285,
+          "count": 60,
+          "firstPaymentDate": "2021-04-05"
+        }
+      },
       "inspectionPeriodMonths": 24,
       "resaleValues": [
         {
@@ -799,48 +808,13 @@
         },
         {
           "id": "demo-2o",
-          "date": "2021-05-10",
+          "date": "2021-03-22",
           "category": "acquisition",
-          "amount": 285,
-          "comment": "Mensualité crédit"
+          "amount": 59,
+          "comment": "Frais de dossier"
         },
         {
           "id": "demo-2p",
-          "date": "2022-05-10",
-          "category": "acquisition",
-          "amount": 285,
-          "comment": "Mensualité crédit"
-        },
-        {
-          "id": "demo-2q",
-          "date": "2023-05-10",
-          "category": "acquisition",
-          "amount": 285,
-          "comment": "Mensualité crédit"
-        },
-        {
-          "id": "demo-2r",
-          "date": "2024-05-10",
-          "category": "acquisition",
-          "amount": 285,
-          "comment": "Mensualité crédit"
-        },
-        {
-          "id": "demo-2s",
-          "date": "2025-05-10",
-          "category": "acquisition",
-          "amount": 285,
-          "comment": "Mensualité crédit"
-        },
-        {
-          "id": "demo-2t",
-          "date": "2026-05-10",
-          "category": "acquisition",
-          "amount": 285,
-          "comment": "Mensualité crédit"
-        },
-        {
-          "id": "demo-2u",
           "date": "2021-10-12",
           "category": "maintenance",
           "amount": 149.9,
@@ -848,7 +822,7 @@
           "odometerKm": 55000
         },
         {
-          "id": "demo-2v",
+          "id": "demo-2q",
           "date": "2022-05-30",
           "category": "maintenance",
           "amount": 412,
@@ -856,7 +830,7 @@
           "odometerKm": 78000
         },
         {
-          "id": "demo-2w",
+          "id": "demo-2r",
           "date": "2022-09-20",
           "category": "inspection",
           "amount": 78.5,
@@ -864,7 +838,7 @@
           "odometerKm": 89000
         },
         {
-          "id": "demo-2x",
+          "id": "demo-2s",
           "date": "2023-02-14",
           "category": "maintenance",
           "amount": 233.4,
@@ -872,7 +846,7 @@
           "odometerKm": 105000
         },
         {
-          "id": "demo-2y",
+          "id": "demo-2t",
           "date": "2024-06-18",
           "category": "maintenance",
           "amount": 186.2,
@@ -880,7 +854,7 @@
           "odometerKm": 138000
         },
         {
-          "id": "demo-2z",
+          "id": "demo-2u",
           "date": "2024-09-22",
           "category": "inspection",
           "amount": 82,
@@ -888,7 +862,7 @@
           "odometerKm": 152000
         },
         {
-          "id": "demo-30",
+          "id": "demo-2v",
           "date": "2025-04-08",
           "category": "maintenance",
           "amount": 640,
@@ -896,7 +870,7 @@
           "odometerKm": 172000
         },
         {
-          "id": "demo-31",
+          "id": "demo-2w",
           "date": "2025-11-25",
           "category": "maintenance",
           "amount": 390,
@@ -904,7 +878,7 @@
           "odometerKm": 190000
         },
         {
-          "id": "demo-32",
+          "id": "demo-2x",
           "date": "2026-08-30",
           "category": "other",
           "amount": 96.5,
@@ -921,7 +895,9 @@
       "firstInspectionDate": "2027-06-01",
       "acquisitionDate": "2023-06-01",
       "initialOdometerKm": 5000,
-      "purchasePrice": 22000,
+      "acquisition": {
+        "initialAmount": 22000
+      },
       "inspectionPeriodMonths": 24,
       "resaleValues": [
         {
@@ -940,7 +916,7 @@
       "fuelUps": [],
       "charges": [
         {
-          "id": "demo-33",
+          "id": "demo-2y",
           "date": "2023-06-08",
           "odometerKm": 5251,
           "kwh": 38.7,
@@ -948,7 +924,7 @@
           "full": true
         },
         {
-          "id": "demo-34",
+          "id": "demo-2z",
           "date": "2023-06-14",
           "odometerKm": 5451,
           "kwh": 28.3,
@@ -956,7 +932,7 @@
           "full": false
         },
         {
-          "id": "demo-35",
+          "id": "demo-30",
           "date": "2023-06-20",
           "odometerKm": 5617,
           "kwh": 41.9,
@@ -964,7 +940,7 @@
           "full": false
         },
         {
-          "id": "demo-36",
+          "id": "demo-31",
           "date": "2023-06-26",
           "odometerKm": 5796,
           "kwh": 28.8,
@@ -972,7 +948,7 @@
           "full": false
         },
         {
-          "id": "demo-37",
+          "id": "demo-32",
           "date": "2023-07-02",
           "odometerKm": 6067,
           "kwh": 41.8,
@@ -980,7 +956,7 @@
           "full": true
         },
         {
-          "id": "demo-38",
+          "id": "demo-33",
           "date": "2023-07-08",
           "odometerKm": 6279,
           "kwh": 29.2,
@@ -988,7 +964,7 @@
           "full": false
         },
         {
-          "id": "demo-39",
+          "id": "demo-34",
           "date": "2023-07-14",
           "odometerKm": 6482,
           "kwh": 32.9,
@@ -996,7 +972,7 @@
           "full": false
         },
         {
-          "id": "demo-3a",
+          "id": "demo-35",
           "date": "2023-07-20",
           "odometerKm": 6677,
           "kwh": 37.3,
@@ -1004,7 +980,7 @@
           "full": false
         },
         {
-          "id": "demo-3b",
+          "id": "demo-36",
           "date": "2023-07-26",
           "odometerKm": 6902,
           "kwh": 36.9,
@@ -1012,7 +988,7 @@
           "full": true
         },
         {
-          "id": "demo-3c",
+          "id": "demo-37",
           "date": "2023-08-01",
           "odometerKm": 7073,
           "kwh": 41.9,
@@ -1020,7 +996,7 @@
           "full": false
         },
         {
-          "id": "demo-3d",
+          "id": "demo-38",
           "date": "2023-08-07",
           "odometerKm": 7341,
           "kwh": 42,
@@ -1028,7 +1004,7 @@
           "full": false
         },
         {
-          "id": "demo-3e",
+          "id": "demo-39",
           "date": "2023-08-13",
           "odometerKm": 7584,
           "kwh": 35.5,
@@ -1036,7 +1012,7 @@
           "full": false
         },
         {
-          "id": "demo-3f",
+          "id": "demo-3a",
           "date": "2023-08-19",
           "odometerKm": 7800,
           "kwh": 34,
@@ -1044,7 +1020,7 @@
           "full": true
         },
         {
-          "id": "demo-3g",
+          "id": "demo-3b",
           "date": "2023-08-25",
           "odometerKm": 7990,
           "kwh": 25.4,
@@ -1052,7 +1028,7 @@
           "full": false
         },
         {
-          "id": "demo-3h",
+          "id": "demo-3c",
           "date": "2023-08-31",
           "odometerKm": 8145,
           "kwh": 34,
@@ -1060,7 +1036,7 @@
           "full": false
         },
         {
-          "id": "demo-3i",
+          "id": "demo-3d",
           "date": "2023-09-06",
           "odometerKm": 8384,
           "kwh": 26.1,
@@ -1068,7 +1044,7 @@
           "full": false
         },
         {
-          "id": "demo-3j",
+          "id": "demo-3e",
           "date": "2023-09-12",
           "odometerKm": 8567,
           "kwh": 28.6,
@@ -1076,7 +1052,7 @@
           "full": true
         },
         {
-          "id": "demo-3k",
+          "id": "demo-3f",
           "date": "2023-09-18",
           "odometerKm": 8793,
           "kwh": 42.4,
@@ -1084,7 +1060,7 @@
           "full": false
         },
         {
-          "id": "demo-3l",
+          "id": "demo-3g",
           "date": "2023-09-24",
           "odometerKm": 9031,
           "kwh": 25.6,
@@ -1092,7 +1068,7 @@
           "full": false
         },
         {
-          "id": "demo-3m",
+          "id": "demo-3h",
           "date": "2023-09-30",
           "odometerKm": 9246,
           "kwh": 34.5,
@@ -1100,7 +1076,7 @@
           "full": false
         },
         {
-          "id": "demo-3n",
+          "id": "demo-3i",
           "date": "2023-10-06",
           "odometerKm": 9467,
           "kwh": 31.4,
@@ -1108,7 +1084,7 @@
           "full": true
         },
         {
-          "id": "demo-3o",
+          "id": "demo-3j",
           "date": "2023-10-12",
           "odometerKm": 9710,
           "kwh": 28.6,
@@ -1116,7 +1092,7 @@
           "full": false
         },
         {
-          "id": "demo-3p",
+          "id": "demo-3k",
           "date": "2023-10-18",
           "odometerKm": 9949,
           "kwh": 28,
@@ -1124,7 +1100,7 @@
           "full": false
         },
         {
-          "id": "demo-3q",
+          "id": "demo-3l",
           "date": "2023-10-24",
           "odometerKm": 10219,
           "kwh": 35.1,
@@ -1132,7 +1108,7 @@
           "full": false
         },
         {
-          "id": "demo-3r",
+          "id": "demo-3m",
           "date": "2023-10-30",
           "odometerKm": 10406,
           "kwh": 32.4,
@@ -1140,7 +1116,7 @@
           "full": true
         },
         {
-          "id": "demo-3s",
+          "id": "demo-3n",
           "date": "2023-11-05",
           "odometerKm": 10632,
           "kwh": 43.6,
@@ -1148,7 +1124,7 @@
           "full": false
         },
         {
-          "id": "demo-3t",
+          "id": "demo-3o",
           "date": "2023-11-11",
           "odometerKm": 10889,
           "kwh": 35.6,
@@ -1156,7 +1132,7 @@
           "full": false
         },
         {
-          "id": "demo-3u",
+          "id": "demo-3p",
           "date": "2023-11-17",
           "odometerKm": 11127,
           "kwh": 34.3,
@@ -1164,7 +1140,7 @@
           "full": false
         },
         {
-          "id": "demo-3v",
+          "id": "demo-3q",
           "date": "2023-11-23",
           "odometerKm": 11289,
           "kwh": 37.8,
@@ -1172,7 +1148,7 @@
           "full": true
         },
         {
-          "id": "demo-3w",
+          "id": "demo-3r",
           "date": "2023-11-29",
           "odometerKm": 11478,
           "kwh": 31.2,
@@ -1180,7 +1156,7 @@
           "full": false
         },
         {
-          "id": "demo-3x",
+          "id": "demo-3s",
           "date": "2023-12-05",
           "odometerKm": 11705,
           "kwh": 25.6,
@@ -1188,7 +1164,7 @@
           "full": false
         },
         {
-          "id": "demo-3y",
+          "id": "demo-3t",
           "date": "2023-12-11",
           "odometerKm": 11975,
           "kwh": 27.1,
@@ -1196,7 +1172,7 @@
           "full": false
         },
         {
-          "id": "demo-3z",
+          "id": "demo-3u",
           "date": "2023-12-17",
           "odometerKm": 12148,
           "kwh": 32.6,
@@ -1204,7 +1180,7 @@
           "full": true
         },
         {
-          "id": "demo-40",
+          "id": "demo-3v",
           "date": "2023-12-23",
           "odometerKm": 12378,
           "kwh": 40.4,
@@ -1212,7 +1188,7 @@
           "full": false
         },
         {
-          "id": "demo-41",
+          "id": "demo-3w",
           "date": "2023-12-29",
           "odometerKm": 12536,
           "kwh": 36.4,
@@ -1220,7 +1196,7 @@
           "full": false
         },
         {
-          "id": "demo-42",
+          "id": "demo-3x",
           "date": "2024-01-04",
           "odometerKm": 12712,
           "kwh": 26.8,
@@ -1228,7 +1204,7 @@
           "full": false
         },
         {
-          "id": "demo-43",
+          "id": "demo-3y",
           "date": "2024-01-10",
           "odometerKm": 12908,
           "kwh": 38.2,
@@ -1236,7 +1212,7 @@
           "full": true
         },
         {
-          "id": "demo-44",
+          "id": "demo-3z",
           "date": "2024-01-16",
           "odometerKm": 13068,
           "kwh": 41.6,
@@ -1244,7 +1220,7 @@
           "full": false
         },
         {
-          "id": "demo-45",
+          "id": "demo-40",
           "date": "2024-01-22",
           "odometerKm": 13236,
           "kwh": 36.5,
@@ -1252,7 +1228,7 @@
           "full": false
         },
         {
-          "id": "demo-46",
+          "id": "demo-41",
           "date": "2024-01-28",
           "odometerKm": 13430,
           "kwh": 43.3,
@@ -1260,7 +1236,7 @@
           "full": false
         },
         {
-          "id": "demo-47",
+          "id": "demo-42",
           "date": "2024-02-03",
           "odometerKm": 13631,
           "kwh": 31.7,
@@ -1268,7 +1244,7 @@
           "full": true
         },
         {
-          "id": "demo-48",
+          "id": "demo-43",
           "date": "2024-02-09",
           "odometerKm": 13829,
           "kwh": 29.6,
@@ -1276,7 +1252,7 @@
           "full": false
         },
         {
-          "id": "demo-49",
+          "id": "demo-44",
           "date": "2024-02-15",
           "odometerKm": 14102,
           "kwh": 42.2,
@@ -1284,7 +1260,7 @@
           "full": false
         },
         {
-          "id": "demo-4a",
+          "id": "demo-45",
           "date": "2024-02-21",
           "odometerKm": 14322,
           "kwh": 42.4,
@@ -1292,7 +1268,7 @@
           "full": false
         },
         {
-          "id": "demo-4b",
+          "id": "demo-46",
           "date": "2024-02-27",
           "odometerKm": 14553,
           "kwh": 28.7,
@@ -1300,7 +1276,7 @@
           "full": true
         },
         {
-          "id": "demo-4c",
+          "id": "demo-47",
           "date": "2024-03-04",
           "odometerKm": 14741,
           "kwh": 40.5,
@@ -1308,7 +1284,7 @@
           "full": false
         },
         {
-          "id": "demo-4d",
+          "id": "demo-48",
           "date": "2024-03-10",
           "odometerKm": 14956,
           "kwh": 38.6,
@@ -1316,7 +1292,7 @@
           "full": false
         },
         {
-          "id": "demo-4e",
+          "id": "demo-49",
           "date": "2024-03-16",
           "odometerKm": 15213,
           "kwh": 35.7,
@@ -1324,7 +1300,7 @@
           "full": false
         },
         {
-          "id": "demo-4f",
+          "id": "demo-4a",
           "date": "2024-03-22",
           "odometerKm": 15475,
           "kwh": 31.6,
@@ -1332,7 +1308,7 @@
           "full": true
         },
         {
-          "id": "demo-4g",
+          "id": "demo-4b",
           "date": "2024-03-28",
           "odometerKm": 15723,
           "kwh": 34.5,
@@ -1340,7 +1316,7 @@
           "full": false
         },
         {
-          "id": "demo-4h",
+          "id": "demo-4c",
           "date": "2024-04-03",
           "odometerKm": 15922,
           "kwh": 27.6,
@@ -1348,7 +1324,7 @@
           "full": false
         },
         {
-          "id": "demo-4i",
+          "id": "demo-4d",
           "date": "2024-04-09",
           "odometerKm": 16088,
           "kwh": 43.5,
@@ -1356,7 +1332,7 @@
           "full": false
         },
         {
-          "id": "demo-4j",
+          "id": "demo-4e",
           "date": "2024-04-15",
           "odometerKm": 16311,
           "kwh": 41.4,
@@ -1364,7 +1340,7 @@
           "full": true
         },
         {
-          "id": "demo-4k",
+          "id": "demo-4f",
           "date": "2024-04-21",
           "odometerKm": 16557,
           "kwh": 26.5,
@@ -1372,7 +1348,7 @@
           "full": false
         },
         {
-          "id": "demo-4l",
+          "id": "demo-4g",
           "date": "2024-04-27",
           "odometerKm": 16828,
           "kwh": 41.3,
@@ -1380,7 +1356,7 @@
           "full": false
         },
         {
-          "id": "demo-4m",
+          "id": "demo-4h",
           "date": "2024-05-03",
           "odometerKm": 17018,
           "kwh": 31.4,
@@ -1388,7 +1364,7 @@
           "full": false
         },
         {
-          "id": "demo-4n",
+          "id": "demo-4i",
           "date": "2024-05-09",
           "odometerKm": 17201,
           "kwh": 33.7,
@@ -1396,7 +1372,7 @@
           "full": true
         },
         {
-          "id": "demo-4o",
+          "id": "demo-4j",
           "date": "2024-05-15",
           "odometerKm": 17394,
           "kwh": 43.2,
@@ -1404,7 +1380,7 @@
           "full": false
         },
         {
-          "id": "demo-4p",
+          "id": "demo-4k",
           "date": "2024-05-21",
           "odometerKm": 17602,
           "kwh": 40.2,
@@ -1412,7 +1388,7 @@
           "full": false
         },
         {
-          "id": "demo-4q",
+          "id": "demo-4l",
           "date": "2024-05-27",
           "odometerKm": 17860,
           "kwh": 37.9,
@@ -1420,7 +1396,7 @@
           "full": false
         },
         {
-          "id": "demo-4r",
+          "id": "demo-4m",
           "date": "2024-06-02",
           "odometerKm": 18100,
           "kwh": 40.1,
@@ -1428,7 +1404,7 @@
           "full": true
         },
         {
-          "id": "demo-4s",
+          "id": "demo-4n",
           "date": "2024-06-08",
           "odometerKm": 18345,
           "kwh": 34.6,
@@ -1436,7 +1412,7 @@
           "full": false
         },
         {
-          "id": "demo-4t",
+          "id": "demo-4o",
           "date": "2024-06-14",
           "odometerKm": 18606,
           "kwh": 39.5,
@@ -1444,7 +1420,7 @@
           "full": false
         },
         {
-          "id": "demo-4u",
+          "id": "demo-4p",
           "date": "2024-06-20",
           "odometerKm": 18862,
           "kwh": 40,
@@ -1452,7 +1428,7 @@
           "full": false
         },
         {
-          "id": "demo-4v",
+          "id": "demo-4q",
           "date": "2024-06-26",
           "odometerKm": 19126,
           "kwh": 32.9,
@@ -1460,7 +1436,7 @@
           "full": true
         },
         {
-          "id": "demo-4w",
+          "id": "demo-4r",
           "date": "2024-07-02",
           "odometerKm": 19309,
           "kwh": 32.4,
@@ -1468,7 +1444,7 @@
           "full": false
         },
         {
-          "id": "demo-4x",
+          "id": "demo-4s",
           "date": "2024-07-08",
           "odometerKm": 19479,
           "kwh": 34.7,
@@ -1476,7 +1452,7 @@
           "full": false
         },
         {
-          "id": "demo-4y",
+          "id": "demo-4t",
           "date": "2024-07-14",
           "odometerKm": 19632,
           "kwh": 28.2,
@@ -1484,7 +1460,7 @@
           "full": false
         },
         {
-          "id": "demo-4z",
+          "id": "demo-4u",
           "date": "2024-07-20",
           "odometerKm": 19848,
           "kwh": 42.8,
@@ -1492,7 +1468,7 @@
           "full": true
         },
         {
-          "id": "demo-50",
+          "id": "demo-4v",
           "date": "2024-07-26",
           "odometerKm": 20092,
           "kwh": 26.9,
@@ -1500,7 +1476,7 @@
           "full": false
         },
         {
-          "id": "demo-51",
+          "id": "demo-4w",
           "date": "2024-08-01",
           "odometerKm": 20241,
           "kwh": 25.3,
@@ -1508,7 +1484,7 @@
           "full": false
         },
         {
-          "id": "demo-52",
+          "id": "demo-4x",
           "date": "2024-08-07",
           "odometerKm": 20433,
           "kwh": 33.1,
@@ -1516,7 +1492,7 @@
           "full": false
         },
         {
-          "id": "demo-53",
+          "id": "demo-4y",
           "date": "2024-08-13",
           "odometerKm": 20691,
           "kwh": 32.7,
@@ -1524,7 +1500,7 @@
           "full": true
         },
         {
-          "id": "demo-54",
+          "id": "demo-4z",
           "date": "2024-08-19",
           "odometerKm": 20850,
           "kwh": 42.2,
@@ -1532,7 +1508,7 @@
           "full": false
         },
         {
-          "id": "demo-55",
+          "id": "demo-50",
           "date": "2024-08-25",
           "odometerKm": 21046,
           "kwh": 24.4,
@@ -1540,7 +1516,7 @@
           "full": false
         },
         {
-          "id": "demo-56",
+          "id": "demo-51",
           "date": "2024-08-31",
           "odometerKm": 21235,
           "kwh": 23.8,
@@ -1548,7 +1524,7 @@
           "full": false
         },
         {
-          "id": "demo-57",
+          "id": "demo-52",
           "date": "2024-09-06",
           "odometerKm": 21490,
           "kwh": 43.4,
@@ -1556,7 +1532,7 @@
           "full": true
         },
         {
-          "id": "demo-58",
+          "id": "demo-53",
           "date": "2024-09-12",
           "odometerKm": 21679,
           "kwh": 26.7,
@@ -1564,7 +1540,7 @@
           "full": false
         },
         {
-          "id": "demo-59",
+          "id": "demo-54",
           "date": "2024-09-18",
           "odometerKm": 21922,
           "kwh": 40.5,
@@ -1572,7 +1548,7 @@
           "full": false
         },
         {
-          "id": "demo-5a",
+          "id": "demo-55",
           "date": "2024-09-24",
           "odometerKm": 22077,
           "kwh": 42.2,
@@ -1580,7 +1556,7 @@
           "full": false
         },
         {
-          "id": "demo-5b",
+          "id": "demo-56",
           "date": "2024-09-30",
           "odometerKm": 22327,
           "kwh": 42.9,
@@ -1588,7 +1564,7 @@
           "full": true
         },
         {
-          "id": "demo-5c",
+          "id": "demo-57",
           "date": "2024-10-06",
           "odometerKm": 22566,
           "kwh": 42.2,
@@ -1596,7 +1572,7 @@
           "full": false
         },
         {
-          "id": "demo-5d",
+          "id": "demo-58",
           "date": "2024-10-12",
           "odometerKm": 22763,
           "kwh": 34.1,
@@ -1604,7 +1580,7 @@
           "full": false
         },
         {
-          "id": "demo-5e",
+          "id": "demo-59",
           "date": "2024-10-18",
           "odometerKm": 22914,
           "kwh": 27.1,
@@ -1612,7 +1588,7 @@
           "full": false
         },
         {
-          "id": "demo-5f",
+          "id": "demo-5a",
           "date": "2024-10-24",
           "odometerKm": 23068,
           "kwh": 24,
@@ -1620,7 +1596,7 @@
           "full": true
         },
         {
-          "id": "demo-5g",
+          "id": "demo-5b",
           "date": "2024-10-30",
           "odometerKm": 23273,
           "kwh": 28.2,
@@ -1628,7 +1604,7 @@
           "full": false
         },
         {
-          "id": "demo-5h",
+          "id": "demo-5c",
           "date": "2024-11-05",
           "odometerKm": 23491,
           "kwh": 27.3,
@@ -1636,7 +1612,7 @@
           "full": false
         },
         {
-          "id": "demo-5i",
+          "id": "demo-5d",
           "date": "2024-11-11",
           "odometerKm": 23725,
           "kwh": 34.4,
@@ -1644,7 +1620,7 @@
           "full": false
         },
         {
-          "id": "demo-5j",
+          "id": "demo-5e",
           "date": "2024-11-17",
           "odometerKm": 23895,
           "kwh": 32.2,
@@ -1652,7 +1628,7 @@
           "full": true
         },
         {
-          "id": "demo-5k",
+          "id": "demo-5f",
           "date": "2024-11-23",
           "odometerKm": 24132,
           "kwh": 26.5,
@@ -1660,7 +1636,7 @@
           "full": false
         },
         {
-          "id": "demo-5l",
+          "id": "demo-5g",
           "date": "2024-11-29",
           "odometerKm": 24363,
           "kwh": 36.1,
@@ -1668,7 +1644,7 @@
           "full": false
         },
         {
-          "id": "demo-5m",
+          "id": "demo-5h",
           "date": "2024-12-05",
           "odometerKm": 24549,
           "kwh": 26.5,
@@ -1676,7 +1652,7 @@
           "full": false
         },
         {
-          "id": "demo-5n",
+          "id": "demo-5i",
           "date": "2024-12-11",
           "odometerKm": 24791,
           "kwh": 33.1,
@@ -1684,7 +1660,7 @@
           "full": true
         },
         {
-          "id": "demo-5o",
+          "id": "demo-5j",
           "date": "2024-12-17",
           "odometerKm": 24947,
           "kwh": 37.4,
@@ -1692,7 +1668,7 @@
           "full": false
         },
         {
-          "id": "demo-5p",
+          "id": "demo-5k",
           "date": "2024-12-23",
           "odometerKm": 25152,
           "kwh": 37.3,
@@ -1700,7 +1676,7 @@
           "full": false
         },
         {
-          "id": "demo-5q",
+          "id": "demo-5l",
           "date": "2024-12-29",
           "odometerKm": 25368,
           "kwh": 42.9,
@@ -1708,7 +1684,7 @@
           "full": false
         },
         {
-          "id": "demo-5r",
+          "id": "demo-5m",
           "date": "2025-01-04",
           "odometerKm": 25553,
           "kwh": 35.3,
@@ -1716,7 +1692,7 @@
           "full": true
         },
         {
-          "id": "demo-5s",
+          "id": "demo-5n",
           "date": "2025-01-10",
           "odometerKm": 25729,
           "kwh": 29.2,
@@ -1724,7 +1700,7 @@
           "full": false
         },
         {
-          "id": "demo-5t",
+          "id": "demo-5o",
           "date": "2025-01-16",
           "odometerKm": 25942,
           "kwh": 34.9,
@@ -1732,7 +1708,7 @@
           "full": false
         },
         {
-          "id": "demo-5u",
+          "id": "demo-5p",
           "date": "2025-01-22",
           "odometerKm": 26120,
           "kwh": 29.8,
@@ -1740,7 +1716,7 @@
           "full": false
         },
         {
-          "id": "demo-5v",
+          "id": "demo-5q",
           "date": "2025-01-28",
           "odometerKm": 26355,
           "kwh": 40.2,
@@ -1748,7 +1724,7 @@
           "full": true
         },
         {
-          "id": "demo-5w",
+          "id": "demo-5r",
           "date": "2025-02-03",
           "odometerKm": 26566,
           "kwh": 29.3,
@@ -1756,7 +1732,7 @@
           "full": false
         },
         {
-          "id": "demo-5x",
+          "id": "demo-5s",
           "date": "2025-02-09",
           "odometerKm": 26822,
           "kwh": 27.2,
@@ -1764,7 +1740,7 @@
           "full": false
         },
         {
-          "id": "demo-5y",
+          "id": "demo-5t",
           "date": "2025-02-15",
           "odometerKm": 27048,
           "kwh": 26.1,
@@ -1772,7 +1748,7 @@
           "full": false
         },
         {
-          "id": "demo-5z",
+          "id": "demo-5u",
           "date": "2025-02-21",
           "odometerKm": 27304,
           "kwh": 41.8,
@@ -1780,7 +1756,7 @@
           "full": true
         },
         {
-          "id": "demo-60",
+          "id": "demo-5v",
           "date": "2025-02-27",
           "odometerKm": 27452,
           "kwh": 25.1,
@@ -1788,7 +1764,7 @@
           "full": false
         },
         {
-          "id": "demo-61",
+          "id": "demo-5w",
           "date": "2025-03-05",
           "odometerKm": 27679,
           "kwh": 36.8,
@@ -1796,7 +1772,7 @@
           "full": false
         },
         {
-          "id": "demo-62",
+          "id": "demo-5x",
           "date": "2025-03-11",
           "odometerKm": 27931,
           "kwh": 34,
@@ -1804,7 +1780,7 @@
           "full": false
         },
         {
-          "id": "demo-63",
+          "id": "demo-5y",
           "date": "2025-03-17",
           "odometerKm": 28189,
           "kwh": 33.1,
@@ -1812,7 +1788,7 @@
           "full": true
         },
         {
-          "id": "demo-64",
+          "id": "demo-5z",
           "date": "2025-03-23",
           "odometerKm": 28368,
           "kwh": 40.6,
@@ -1820,7 +1796,7 @@
           "full": false
         },
         {
-          "id": "demo-65",
+          "id": "demo-60",
           "date": "2025-03-29",
           "odometerKm": 28635,
           "kwh": 41.4,
@@ -1828,7 +1804,7 @@
           "full": false
         },
         {
-          "id": "demo-66",
+          "id": "demo-61",
           "date": "2025-04-04",
           "odometerKm": 28815,
           "kwh": 36.1,
@@ -1836,7 +1812,7 @@
           "full": false
         },
         {
-          "id": "demo-67",
+          "id": "demo-62",
           "date": "2025-04-10",
           "odometerKm": 29010,
           "kwh": 42.1,
@@ -1844,7 +1820,7 @@
           "full": true
         },
         {
-          "id": "demo-68",
+          "id": "demo-63",
           "date": "2025-04-16",
           "odometerKm": 29256,
           "kwh": 24.8,
@@ -1852,7 +1828,7 @@
           "full": false
         },
         {
-          "id": "demo-69",
+          "id": "demo-64",
           "date": "2025-04-22",
           "odometerKm": 29405,
           "kwh": 26.6,
@@ -1860,7 +1836,7 @@
           "full": false
         },
         {
-          "id": "demo-6a",
+          "id": "demo-65",
           "date": "2025-04-28",
           "odometerKm": 29579,
           "kwh": 41.5,
@@ -1868,7 +1844,7 @@
           "full": false
         },
         {
-          "id": "demo-6b",
+          "id": "demo-66",
           "date": "2025-05-04",
           "odometerKm": 29749,
           "kwh": 35.5,
@@ -1876,7 +1852,7 @@
           "full": true
         },
         {
-          "id": "demo-6c",
+          "id": "demo-67",
           "date": "2025-05-10",
           "odometerKm": 29902,
           "kwh": 30.8,
@@ -1884,7 +1860,7 @@
           "full": false
         },
         {
-          "id": "demo-6d",
+          "id": "demo-68",
           "date": "2025-05-16",
           "odometerKm": 30132,
           "kwh": 40.5,
@@ -1892,7 +1868,7 @@
           "full": false
         },
         {
-          "id": "demo-6e",
+          "id": "demo-69",
           "date": "2025-05-22",
           "odometerKm": 30354,
           "kwh": 26.5,
@@ -1900,7 +1876,7 @@
           "full": false
         },
         {
-          "id": "demo-6f",
+          "id": "demo-6a",
           "date": "2025-05-28",
           "odometerKm": 30586,
           "kwh": 31.5,
@@ -1908,7 +1884,7 @@
           "full": true
         },
         {
-          "id": "demo-6g",
+          "id": "demo-6b",
           "date": "2025-06-03",
           "odometerKm": 30848,
           "kwh": 30.6,
@@ -1916,7 +1892,7 @@
           "full": false
         },
         {
-          "id": "demo-6h",
+          "id": "demo-6c",
           "date": "2025-06-09",
           "odometerKm": 31096,
           "kwh": 30.1,
@@ -1924,7 +1900,7 @@
           "full": false
         },
         {
-          "id": "demo-6i",
+          "id": "demo-6d",
           "date": "2025-06-15",
           "odometerKm": 31307,
           "kwh": 24.1,
@@ -1932,7 +1908,7 @@
           "full": false
         },
         {
-          "id": "demo-6j",
+          "id": "demo-6e",
           "date": "2025-06-21",
           "odometerKm": 31537,
           "kwh": 35.3,
@@ -1940,7 +1916,7 @@
           "full": true
         },
         {
-          "id": "demo-6k",
+          "id": "demo-6f",
           "date": "2025-06-27",
           "odometerKm": 31768,
           "kwh": 39.1,
@@ -1948,7 +1924,7 @@
           "full": false
         },
         {
-          "id": "demo-6l",
+          "id": "demo-6g",
           "date": "2025-07-03",
           "odometerKm": 31958,
           "kwh": 29.3,
@@ -1956,7 +1932,7 @@
           "full": false
         },
         {
-          "id": "demo-6m",
+          "id": "demo-6h",
           "date": "2025-07-09",
           "odometerKm": 32208,
           "kwh": 34.4,
@@ -1964,7 +1940,7 @@
           "full": false
         },
         {
-          "id": "demo-6n",
+          "id": "demo-6i",
           "date": "2025-07-15",
           "odometerKm": 32449,
           "kwh": 33.5,
@@ -1972,7 +1948,7 @@
           "full": true
         },
         {
-          "id": "demo-6o",
+          "id": "demo-6j",
           "date": "2025-07-21",
           "odometerKm": 32685,
           "kwh": 24.2,
@@ -1980,7 +1956,7 @@
           "full": false
         },
         {
-          "id": "demo-6p",
+          "id": "demo-6k",
           "date": "2025-07-27",
           "odometerKm": 32877,
           "kwh": 40.8,
@@ -1988,7 +1964,7 @@
           "full": false
         },
         {
-          "id": "demo-6q",
+          "id": "demo-6l",
           "date": "2025-08-02",
           "odometerKm": 33093,
           "kwh": 34.5,
@@ -1996,7 +1972,7 @@
           "full": false
         },
         {
-          "id": "demo-6r",
+          "id": "demo-6m",
           "date": "2025-08-08",
           "odometerKm": 33306,
           "kwh": 36,
@@ -2004,7 +1980,7 @@
           "full": true
         },
         {
-          "id": "demo-6s",
+          "id": "demo-6n",
           "date": "2025-08-14",
           "odometerKm": 33550,
           "kwh": 30.9,
@@ -2012,7 +1988,7 @@
           "full": false
         },
         {
-          "id": "demo-6t",
+          "id": "demo-6o",
           "date": "2025-08-20",
           "odometerKm": 33777,
           "kwh": 28.6,
@@ -2020,7 +1996,7 @@
           "full": false
         },
         {
-          "id": "demo-6u",
+          "id": "demo-6p",
           "date": "2025-08-26",
           "odometerKm": 33958,
           "kwh": 29.1,
@@ -2028,7 +2004,7 @@
           "full": false
         },
         {
-          "id": "demo-6v",
+          "id": "demo-6q",
           "date": "2025-09-01",
           "odometerKm": 34146,
           "kwh": 30,
@@ -2036,7 +2012,7 @@
           "full": true
         },
         {
-          "id": "demo-6w",
+          "id": "demo-6r",
           "date": "2025-09-07",
           "odometerKm": 34377,
           "kwh": 33.2,
@@ -2044,7 +2020,7 @@
           "full": false
         },
         {
-          "id": "demo-6x",
+          "id": "demo-6s",
           "date": "2025-09-13",
           "odometerKm": 34619,
           "kwh": 36.7,
@@ -2052,7 +2028,7 @@
           "full": false
         },
         {
-          "id": "demo-6y",
+          "id": "demo-6t",
           "date": "2025-09-19",
           "odometerKm": 34816,
           "kwh": 39.4,
@@ -2060,7 +2036,7 @@
           "full": false
         },
         {
-          "id": "demo-6z",
+          "id": "demo-6u",
           "date": "2025-09-25",
           "odometerKm": 34980,
           "kwh": 29.8,
@@ -2068,7 +2044,7 @@
           "full": true
         },
         {
-          "id": "demo-70",
+          "id": "demo-6v",
           "date": "2025-10-01",
           "odometerKm": 35217,
           "kwh": 37.9,
@@ -2076,7 +2052,7 @@
           "full": false
         },
         {
-          "id": "demo-71",
+          "id": "demo-6w",
           "date": "2025-10-07",
           "odometerKm": 35396,
           "kwh": 32.4,
@@ -2084,7 +2060,7 @@
           "full": false
         },
         {
-          "id": "demo-72",
+          "id": "demo-6x",
           "date": "2025-10-13",
           "odometerKm": 35586,
           "kwh": 32,
@@ -2092,7 +2068,7 @@
           "full": false
         },
         {
-          "id": "demo-73",
+          "id": "demo-6y",
           "date": "2025-10-19",
           "odometerKm": 35753,
           "kwh": 37,
@@ -2100,7 +2076,7 @@
           "full": true
         },
         {
-          "id": "demo-74",
+          "id": "demo-6z",
           "date": "2025-10-25",
           "odometerKm": 36012,
           "kwh": 37.5,
@@ -2108,7 +2084,7 @@
           "full": false
         },
         {
-          "id": "demo-75",
+          "id": "demo-70",
           "date": "2025-10-31",
           "odometerKm": 36228,
           "kwh": 24.2,
@@ -2116,7 +2092,7 @@
           "full": false
         },
         {
-          "id": "demo-76",
+          "id": "demo-71",
           "date": "2025-11-06",
           "odometerKm": 36395,
           "kwh": 29,
@@ -2124,7 +2100,7 @@
           "full": false
         },
         {
-          "id": "demo-77",
+          "id": "demo-72",
           "date": "2025-11-12",
           "odometerKm": 36581,
           "kwh": 23.7,
@@ -2132,7 +2108,7 @@
           "full": true
         },
         {
-          "id": "demo-78",
+          "id": "demo-73",
           "date": "2025-11-18",
           "odometerKm": 36744,
           "kwh": 34.2,
@@ -2140,7 +2116,7 @@
           "full": false
         },
         {
-          "id": "demo-79",
+          "id": "demo-74",
           "date": "2025-11-24",
           "odometerKm": 36925,
           "kwh": 40,
@@ -2148,7 +2124,7 @@
           "full": false
         },
         {
-          "id": "demo-7a",
+          "id": "demo-75",
           "date": "2025-11-30",
           "odometerKm": 37127,
           "kwh": 33.9,
@@ -2156,7 +2132,7 @@
           "full": false
         },
         {
-          "id": "demo-7b",
+          "id": "demo-76",
           "date": "2025-12-06",
           "odometerKm": 37360,
           "kwh": 29.2,
@@ -2164,7 +2140,7 @@
           "full": true
         },
         {
-          "id": "demo-7c",
+          "id": "demo-77",
           "date": "2025-12-12",
           "odometerKm": 37535,
           "kwh": 39.4,
@@ -2172,7 +2148,7 @@
           "full": false
         },
         {
-          "id": "demo-7d",
+          "id": "demo-78",
           "date": "2025-12-18",
           "odometerKm": 37706,
           "kwh": 40.4,
@@ -2180,7 +2156,7 @@
           "full": false
         },
         {
-          "id": "demo-7e",
+          "id": "demo-79",
           "date": "2025-12-24",
           "odometerKm": 37939,
           "kwh": 30.3,
@@ -2188,7 +2164,7 @@
           "full": false
         },
         {
-          "id": "demo-7f",
+          "id": "demo-7a",
           "date": "2025-12-30",
           "odometerKm": 38097,
           "kwh": 31.4,
@@ -2196,7 +2172,7 @@
           "full": true
         },
         {
-          "id": "demo-7g",
+          "id": "demo-7b",
           "date": "2026-01-05",
           "odometerKm": 38253,
           "kwh": 33.5,
@@ -2204,7 +2180,7 @@
           "full": false
         },
         {
-          "id": "demo-7h",
+          "id": "demo-7c",
           "date": "2026-01-11",
           "odometerKm": 38468,
           "kwh": 25.2,
@@ -2212,7 +2188,7 @@
           "full": false
         },
         {
-          "id": "demo-7i",
+          "id": "demo-7d",
           "date": "2026-01-17",
           "odometerKm": 38673,
           "kwh": 25.4,
@@ -2220,7 +2196,7 @@
           "full": false
         },
         {
-          "id": "demo-7j",
+          "id": "demo-7e",
           "date": "2026-01-23",
           "odometerKm": 38888,
           "kwh": 38.9,
@@ -2228,7 +2204,7 @@
           "full": true
         },
         {
-          "id": "demo-7k",
+          "id": "demo-7f",
           "date": "2026-01-29",
           "odometerKm": 39066,
           "kwh": 38.7,
@@ -2236,7 +2212,7 @@
           "full": false
         },
         {
-          "id": "demo-7l",
+          "id": "demo-7g",
           "date": "2026-02-04",
           "odometerKm": 39321,
           "kwh": 29.5,
@@ -2244,7 +2220,7 @@
           "full": false
         },
         {
-          "id": "demo-7m",
+          "id": "demo-7h",
           "date": "2026-02-10",
           "odometerKm": 39484,
           "kwh": 43.2,
@@ -2252,7 +2228,7 @@
           "full": false
         },
         {
-          "id": "demo-7n",
+          "id": "demo-7i",
           "date": "2026-02-16",
           "odometerKm": 39740,
           "kwh": 42,
@@ -2260,7 +2236,7 @@
           "full": true
         },
         {
-          "id": "demo-7o",
+          "id": "demo-7j",
           "date": "2026-02-22",
           "odometerKm": 39997,
           "kwh": 37.7,
@@ -2268,7 +2244,7 @@
           "full": false
         },
         {
-          "id": "demo-7p",
+          "id": "demo-7k",
           "date": "2026-02-28",
           "odometerKm": 40190,
           "kwh": 30.1,
@@ -2276,7 +2252,7 @@
           "full": false
         },
         {
-          "id": "demo-7q",
+          "id": "demo-7l",
           "date": "2026-03-06",
           "odometerKm": 40344,
           "kwh": 32.8,
@@ -2284,7 +2260,7 @@
           "full": false
         },
         {
-          "id": "demo-7r",
+          "id": "demo-7m",
           "date": "2026-03-12",
           "odometerKm": 40509,
           "kwh": 42.5,
@@ -2292,7 +2268,7 @@
           "full": true
         },
         {
-          "id": "demo-7s",
+          "id": "demo-7n",
           "date": "2026-03-18",
           "odometerKm": 40724,
           "kwh": 38.5,
@@ -2300,7 +2276,7 @@
           "full": false
         },
         {
-          "id": "demo-7t",
+          "id": "demo-7o",
           "date": "2026-03-24",
           "odometerKm": 40963,
           "kwh": 23.6,
@@ -2308,7 +2284,7 @@
           "full": false
         },
         {
-          "id": "demo-7u",
+          "id": "demo-7p",
           "date": "2026-03-30",
           "odometerKm": 41198,
           "kwh": 30.8,
@@ -2316,7 +2292,7 @@
           "full": false
         },
         {
-          "id": "demo-7v",
+          "id": "demo-7q",
           "date": "2026-04-05",
           "odometerKm": 41400,
           "kwh": 42.8,
@@ -2324,7 +2300,7 @@
           "full": true
         },
         {
-          "id": "demo-7w",
+          "id": "demo-7r",
           "date": "2026-04-11",
           "odometerKm": 41603,
           "kwh": 28.1,
@@ -2332,7 +2308,7 @@
           "full": false
         },
         {
-          "id": "demo-7x",
+          "id": "demo-7s",
           "date": "2026-04-17",
           "odometerKm": 41766,
           "kwh": 37.1,
@@ -2340,7 +2316,7 @@
           "full": false
         },
         {
-          "id": "demo-7y",
+          "id": "demo-7t",
           "date": "2026-04-23",
           "odometerKm": 42024,
           "kwh": 29.1,
@@ -2348,7 +2324,7 @@
           "full": false
         },
         {
-          "id": "demo-7z",
+          "id": "demo-7u",
           "date": "2026-04-29",
           "odometerKm": 42276,
           "kwh": 32.5,
@@ -2356,7 +2332,7 @@
           "full": true
         },
         {
-          "id": "demo-80",
+          "id": "demo-7v",
           "date": "2026-05-05",
           "odometerKm": 42519,
           "kwh": 23.9,
@@ -2364,7 +2340,7 @@
           "full": false
         },
         {
-          "id": "demo-81",
+          "id": "demo-7w",
           "date": "2026-05-11",
           "odometerKm": 42700,
           "kwh": 26.1,
@@ -2372,7 +2348,7 @@
           "full": false
         },
         {
-          "id": "demo-82",
+          "id": "demo-7x",
           "date": "2026-05-17",
           "odometerKm": 42919,
           "kwh": 41.4,
@@ -2380,7 +2356,7 @@
           "full": false
         },
         {
-          "id": "demo-83",
+          "id": "demo-7y",
           "date": "2026-05-23",
           "odometerKm": 43095,
           "kwh": 38.6,
@@ -2388,7 +2364,7 @@
           "full": true
         },
         {
-          "id": "demo-84",
+          "id": "demo-7z",
           "date": "2026-05-29",
           "odometerKm": 43254,
           "kwh": 33.6,
@@ -2396,7 +2372,7 @@
           "full": false
         },
         {
-          "id": "demo-85",
+          "id": "demo-80",
           "date": "2026-06-04",
           "odometerKm": 43499,
           "kwh": 42.6,
@@ -2404,7 +2380,7 @@
           "full": false
         },
         {
-          "id": "demo-86",
+          "id": "demo-81",
           "date": "2026-06-10",
           "odometerKm": 43649,
           "kwh": 32.8,
@@ -2412,7 +2388,7 @@
           "full": false
         },
         {
-          "id": "demo-87",
+          "id": "demo-82",
           "date": "2026-06-16",
           "odometerKm": 43886,
           "kwh": 40.3,
@@ -2420,7 +2396,7 @@
           "full": true
         },
         {
-          "id": "demo-88",
+          "id": "demo-83",
           "date": "2026-06-22",
           "odometerKm": 44146,
           "kwh": 39.2,
@@ -2428,7 +2404,7 @@
           "full": false
         },
         {
-          "id": "demo-89",
+          "id": "demo-84",
           "date": "2026-06-28",
           "odometerKm": 44323,
           "kwh": 37.8,
@@ -2436,7 +2412,7 @@
           "full": false
         },
         {
-          "id": "demo-8a",
+          "id": "demo-85",
           "date": "2026-07-04",
           "odometerKm": 44527,
           "kwh": 37.6,
@@ -2444,7 +2420,7 @@
           "full": false
         },
         {
-          "id": "demo-8b",
+          "id": "demo-86",
           "date": "2026-07-10",
           "odometerKm": 44687,
           "kwh": 41.4,
@@ -2452,7 +2428,7 @@
           "full": true
         },
         {
-          "id": "demo-8c",
+          "id": "demo-87",
           "date": "2026-07-16",
           "odometerKm": 44956,
           "kwh": 24,
@@ -2460,7 +2436,7 @@
           "full": false
         },
         {
-          "id": "demo-8d",
+          "id": "demo-88",
           "date": "2026-07-22",
           "odometerKm": 45229,
           "kwh": 38,
@@ -2468,7 +2444,7 @@
           "full": false
         },
         {
-          "id": "demo-8e",
+          "id": "demo-89",
           "date": "2026-07-28",
           "odometerKm": 45394,
           "kwh": 43.1,
@@ -2476,7 +2452,7 @@
           "full": false
         },
         {
-          "id": "demo-8f",
+          "id": "demo-8a",
           "date": "2026-08-03",
           "odometerKm": 45642,
           "kwh": 29.3,
@@ -2484,7 +2460,7 @@
           "full": true
         },
         {
-          "id": "demo-8g",
+          "id": "demo-8b",
           "date": "2026-08-09",
           "odometerKm": 45797,
           "kwh": 41.3,
@@ -2492,7 +2468,7 @@
           "full": false
         },
         {
-          "id": "demo-8h",
+          "id": "demo-8c",
           "date": "2026-08-15",
           "odometerKm": 46002,
           "kwh": 30.5,
@@ -2500,7 +2476,7 @@
           "full": false
         },
         {
-          "id": "demo-8i",
+          "id": "demo-8d",
           "date": "2026-08-21",
           "odometerKm": 46268,
           "kwh": 43.5,
@@ -2508,7 +2484,7 @@
           "full": false
         },
         {
-          "id": "demo-8j",
+          "id": "demo-8e",
           "date": "2026-08-27",
           "odometerKm": 46470,
           "kwh": 41.3,
@@ -2516,7 +2492,7 @@
           "full": true
         },
         {
-          "id": "demo-8k",
+          "id": "demo-8f",
           "date": "2026-09-02",
           "odometerKm": 46678,
           "kwh": 24,
@@ -2524,7 +2500,7 @@
           "full": false
         },
         {
-          "id": "demo-8l",
+          "id": "demo-8g",
           "date": "2026-09-08",
           "odometerKm": 46899,
           "kwh": 25.9,
@@ -2532,7 +2508,7 @@
           "full": false
         },
         {
-          "id": "demo-8m",
+          "id": "demo-8h",
           "date": "2026-09-14",
           "odometerKm": 47078,
           "kwh": 40,
@@ -2540,7 +2516,7 @@
           "full": false
         },
         {
-          "id": "demo-8n",
+          "id": "demo-8i",
           "date": "2026-09-20",
           "odometerKm": 47286,
           "kwh": 36.1,
@@ -2548,7 +2524,7 @@
           "full": true
         },
         {
-          "id": "demo-8o",
+          "id": "demo-8j",
           "date": "2026-09-26",
           "odometerKm": 47518,
           "kwh": 39.7,
@@ -2556,7 +2532,7 @@
           "full": false
         },
         {
-          "id": "demo-8p",
+          "id": "demo-8k",
           "date": "2026-10-02",
           "odometerKm": 47772,
           "kwh": 29.7,
@@ -2564,7 +2540,7 @@
           "full": false
         },
         {
-          "id": "demo-8q",
+          "id": "demo-8l",
           "date": "2026-10-08",
           "odometerKm": 48014,
           "kwh": 28.3,
@@ -2572,7 +2548,7 @@
           "full": false
         },
         {
-          "id": "demo-8r",
+          "id": "demo-8m",
           "date": "2026-10-14",
           "odometerKm": 48259,
           "kwh": 40.2,
@@ -2580,7 +2556,7 @@
           "full": true
         },
         {
-          "id": "demo-8s",
+          "id": "demo-8n",
           "date": "2026-10-20",
           "odometerKm": 48456,
           "kwh": 24.9,
@@ -2588,7 +2564,7 @@
           "full": false
         },
         {
-          "id": "demo-8t",
+          "id": "demo-8o",
           "date": "2026-10-26",
           "odometerKm": 48610,
           "kwh": 36.3,
@@ -2599,31 +2575,31 @@
       "loanPeriods": [],
       "costs": [
         {
-          "id": "demo-8u",
+          "id": "demo-8p",
           "date": "2023-07-01",
           "category": "insurance",
           "amount": 560
         },
         {
-          "id": "demo-8v",
+          "id": "demo-8q",
           "date": "2024-07-01",
           "category": "insurance",
           "amount": 572
         },
         {
-          "id": "demo-8w",
+          "id": "demo-8r",
           "date": "2025-07-01",
           "category": "insurance",
           "amount": 584
         },
         {
-          "id": "demo-8x",
+          "id": "demo-8s",
           "date": "2026-07-01",
           "category": "insurance",
           "amount": 596
         },
         {
-          "id": "demo-8y",
+          "id": "demo-8t",
           "date": "2024-03-20",
           "category": "maintenance",
           "amount": 95,
@@ -2631,7 +2607,7 @@
           "odometerKm": 16000
         },
         {
-          "id": "demo-8z",
+          "id": "demo-8u",
           "date": "2025-03-18",
           "category": "maintenance",
           "amount": 110,
@@ -2639,7 +2615,7 @@
           "odometerKm": 28000
         },
         {
-          "id": "demo-90",
+          "id": "demo-8v",
           "date": "2026-03-22",
           "category": "maintenance",
           "amount": 118,
@@ -2647,7 +2623,7 @@
           "odometerKm": 40000
         },
         {
-          "id": "demo-91",
+          "id": "demo-8w",
           "date": "2025-12-04",
           "category": "other",
           "amount": 59,
@@ -2664,7 +2640,9 @@
       "firstInspectionDate": "2028-09-01",
       "acquisitionDate": "2024-09-01",
       "initialOdometerKm": 0,
-      "purchasePrice": 27000,
+      "acquisition": {
+        "initialAmount": 27000
+      },
       "inspectionPeriodMonths": 24,
       "resaleValues": [
         {
@@ -2678,7 +2656,7 @@
       ],
       "fuelUps": [
         {
-          "id": "demo-92",
+          "id": "demo-8x",
           "date": "2024-09-10",
           "odometerKm": 1576,
           "amount": 82.82,
@@ -2686,7 +2664,7 @@
           "volumeLitres": 45.1
         },
         {
-          "id": "demo-93",
+          "id": "demo-8y",
           "date": "2024-10-11",
           "odometerKm": 2801,
           "amount": 92.82,
@@ -2694,7 +2672,7 @@
           "volumeLitres": 51.4
         },
         {
-          "id": "demo-94",
+          "id": "demo-8z",
           "date": "2024-11-11",
           "odometerKm": 4201,
           "amount": 107.93,
@@ -2702,7 +2680,7 @@
           "volumeLitres": 59.3
         },
         {
-          "id": "demo-95",
+          "id": "demo-90",
           "date": "2024-12-12",
           "odometerKm": 6163,
           "amount": 80.8,
@@ -2710,7 +2688,7 @@
           "volumeLitres": 44.2
         },
         {
-          "id": "demo-96",
+          "id": "demo-91",
           "date": "2025-01-12",
           "odometerKm": 7826,
           "amount": 25.05,
@@ -2718,7 +2696,7 @@
           "volumeLitres": 14.1
         },
         {
-          "id": "demo-97",
+          "id": "demo-92",
           "date": "2025-02-12",
           "odometerKm": 9236,
           "amount": 82.19,
@@ -2726,7 +2704,7 @@
           "volumeLitres": 44.9
         },
         {
-          "id": "demo-98",
+          "id": "demo-93",
           "date": "2025-03-15",
           "odometerKm": 11096,
           "amount": 94,
@@ -2734,7 +2712,7 @@
           "volumeLitres": 54.3
         },
         {
-          "id": "demo-99",
+          "id": "demo-94",
           "date": "2025-04-15",
           "odometerKm": 12588,
           "amount": 85.43,
@@ -2742,7 +2720,7 @@
           "volumeLitres": 49.4
         },
         {
-          "id": "demo-9a",
+          "id": "demo-95",
           "date": "2025-05-16",
           "odometerKm": 14277,
           "amount": 87.77,
@@ -2750,7 +2728,7 @@
           "volumeLitres": 49.9
         },
         {
-          "id": "demo-9b",
+          "id": "demo-96",
           "date": "2025-06-16",
           "odometerKm": 15551,
           "amount": 31.94,
@@ -2758,7 +2736,7 @@
           "volumeLitres": 17.8
         },
         {
-          "id": "demo-9c",
+          "id": "demo-97",
           "date": "2025-07-17",
           "odometerKm": 16764,
           "amount": 95.55,
@@ -2766,7 +2744,7 @@
           "volumeLitres": 54.1
         },
         {
-          "id": "demo-9d",
+          "id": "demo-98",
           "date": "2025-08-17",
           "odometerKm": 18044,
           "amount": 88.99,
@@ -2774,7 +2752,7 @@
           "volumeLitres": 50.2
         },
         {
-          "id": "demo-9e",
+          "id": "demo-99",
           "date": "2025-09-17",
           "odometerKm": 19357,
           "amount": 87.92,
@@ -2782,7 +2760,7 @@
           "volumeLitres": 48.8
         },
         {
-          "id": "demo-9f",
+          "id": "demo-9a",
           "date": "2025-10-18",
           "odometerKm": 21100,
           "amount": 99.79,
@@ -2790,7 +2768,7 @@
           "volumeLitres": 56.4
         },
         {
-          "id": "demo-9g",
+          "id": "demo-9b",
           "date": "2025-11-18",
           "odometerKm": 22340,
           "amount": 25.82,
@@ -2798,7 +2776,7 @@
           "volumeLitres": 14
         },
         {
-          "id": "demo-9h",
+          "id": "demo-9c",
           "date": "2025-12-19",
           "odometerKm": 23604,
           "amount": 98.4,
@@ -2806,7 +2784,7 @@
           "volumeLitres": 53.1
         },
         {
-          "id": "demo-9i",
+          "id": "demo-9d",
           "date": "2026-01-19",
           "odometerKm": 25588,
           "amount": 99.57,
@@ -2814,7 +2792,7 @@
           "volumeLitres": 57.8
         },
         {
-          "id": "demo-9j",
+          "id": "demo-9e",
           "date": "2026-02-19",
           "odometerKm": 27602,
           "amount": 93.72,
@@ -2822,7 +2800,7 @@
           "volumeLitres": 51.4
         },
         {
-          "id": "demo-9k",
+          "id": "demo-9f",
           "date": "2026-03-22",
           "odometerKm": 28966,
           "amount": 73.42,
@@ -2830,7 +2808,7 @@
           "volumeLitres": 41.4
         },
         {
-          "id": "demo-9l",
+          "id": "demo-9g",
           "date": "2026-04-22",
           "odometerKm": 30189,
           "amount": 27.25,
@@ -2838,7 +2816,7 @@
           "volumeLitres": 15.2
         },
         {
-          "id": "demo-9m",
+          "id": "demo-9h",
           "date": "2026-05-23",
           "odometerKm": 32172,
           "amount": 71.72,
@@ -2846,7 +2824,7 @@
           "volumeLitres": 41
         },
         {
-          "id": "demo-9n",
+          "id": "demo-9i",
           "date": "2026-06-23",
           "odometerKm": 33691,
           "amount": 103.5,
@@ -2854,7 +2832,7 @@
           "volumeLitres": 58
         },
         {
-          "id": "demo-9o",
+          "id": "demo-9j",
           "date": "2026-07-24",
           "odometerKm": 35053,
           "amount": 86.56,
@@ -2862,7 +2840,7 @@
           "volumeLitres": 50.1
         },
         {
-          "id": "demo-9p",
+          "id": "demo-9k",
           "date": "2026-08-24",
           "odometerKm": 36415,
           "amount": 92.88,
@@ -2870,7 +2848,7 @@
           "volumeLitres": 50.3
         },
         {
-          "id": "demo-9q",
+          "id": "demo-9l",
           "date": "2026-09-24",
           "odometerKm": 37727,
           "amount": 22.94,
@@ -2878,7 +2856,7 @@
           "volumeLitres": 12.9
         },
         {
-          "id": "demo-9r",
+          "id": "demo-9m",
           "date": "2026-10-25",
           "odometerKm": 39191,
           "amount": 85.95,
@@ -2888,7 +2866,7 @@
       ],
       "charges": [
         {
-          "id": "demo-9s",
+          "id": "demo-9n",
           "date": "2024-09-10",
           "odometerKm": 310,
           "kwh": 16.1,
@@ -2896,7 +2874,7 @@
           "full": true
         },
         {
-          "id": "demo-9t",
+          "id": "demo-9o",
           "date": "2024-09-15",
           "odometerKm": 558,
           "kwh": 11.8,
@@ -2904,7 +2882,7 @@
           "full": false
         },
         {
-          "id": "demo-9u",
+          "id": "demo-9p",
           "date": "2024-09-20",
           "odometerKm": 765,
           "kwh": 17.5,
@@ -2912,7 +2890,7 @@
           "full": false
         },
         {
-          "id": "demo-9v",
+          "id": "demo-9q",
           "date": "2024-09-25",
           "odometerKm": 985,
           "kwh": 12,
@@ -2920,7 +2898,7 @@
           "full": false
         },
         {
-          "id": "demo-9w",
+          "id": "demo-9r",
           "date": "2024-09-30",
           "odometerKm": 1321,
           "kwh": 17.4,
@@ -2928,7 +2906,7 @@
           "full": true
         },
         {
-          "id": "demo-9x",
+          "id": "demo-9s",
           "date": "2024-10-05",
           "odometerKm": 1583,
           "kwh": 12.2,
@@ -2936,7 +2914,7 @@
           "full": false
         },
         {
-          "id": "demo-9y",
+          "id": "demo-9t",
           "date": "2024-10-10",
           "odometerKm": 1835,
           "kwh": 13.7,
@@ -2944,7 +2922,7 @@
           "full": false
         },
         {
-          "id": "demo-9z",
+          "id": "demo-9u",
           "date": "2024-10-15",
           "odometerKm": 2076,
           "kwh": 15.5,
@@ -2952,7 +2930,7 @@
           "full": false
         },
         {
-          "id": "demo-a0",
+          "id": "demo-9v",
           "date": "2024-10-20",
           "odometerKm": 2355,
           "kwh": 15.4,
@@ -2960,7 +2938,7 @@
           "full": true
         },
         {
-          "id": "demo-a1",
+          "id": "demo-9w",
           "date": "2024-10-25",
           "odometerKm": 2567,
           "kwh": 17.4,
@@ -2968,7 +2946,7 @@
           "full": false
         },
         {
-          "id": "demo-a2",
+          "id": "demo-9x",
           "date": "2024-10-30",
           "odometerKm": 2899,
           "kwh": 17.5,
@@ -2976,7 +2954,7 @@
           "full": false
         },
         {
-          "id": "demo-a3",
+          "id": "demo-9y",
           "date": "2024-11-04",
           "odometerKm": 3199,
           "kwh": 14.8,
@@ -2984,7 +2962,7 @@
           "full": false
         },
         {
-          "id": "demo-a4",
+          "id": "demo-9z",
           "date": "2024-11-09",
           "odometerKm": 3466,
           "kwh": 14.2,
@@ -2992,7 +2970,7 @@
           "full": true
         },
         {
-          "id": "demo-a5",
+          "id": "demo-a0",
           "date": "2024-11-14",
           "odometerKm": 3701,
           "kwh": 10.6,
@@ -3000,7 +2978,7 @@
           "full": false
         },
         {
-          "id": "demo-a6",
+          "id": "demo-a1",
           "date": "2024-11-19",
           "odometerKm": 3894,
           "kwh": 14.2,
@@ -3008,7 +2986,7 @@
           "full": false
         },
         {
-          "id": "demo-a7",
+          "id": "demo-a2",
           "date": "2024-11-24",
           "odometerKm": 4190,
           "kwh": 10.9,
@@ -3016,7 +2994,7 @@
           "full": false
         },
         {
-          "id": "demo-a8",
+          "id": "demo-a3",
           "date": "2024-11-29",
           "odometerKm": 4417,
           "kwh": 11.9,
@@ -3024,7 +3002,7 @@
           "full": true
         },
         {
-          "id": "demo-a9",
+          "id": "demo-a4",
           "date": "2024-12-04",
           "odometerKm": 4696,
           "kwh": 17.7,
@@ -3032,7 +3010,7 @@
           "full": false
         },
         {
-          "id": "demo-aa",
+          "id": "demo-a5",
           "date": "2024-12-09",
           "odometerKm": 4990,
           "kwh": 10.7,
@@ -3040,7 +3018,7 @@
           "full": false
         },
         {
-          "id": "demo-ab",
+          "id": "demo-a6",
           "date": "2024-12-14",
           "odometerKm": 5257,
           "kwh": 14.4,
@@ -3048,7 +3026,7 @@
           "full": false
         },
         {
-          "id": "demo-ac",
+          "id": "demo-a7",
           "date": "2024-12-19",
           "odometerKm": 5531,
           "kwh": 13.1,
@@ -3056,7 +3034,7 @@
           "full": true
         },
         {
-          "id": "demo-ad",
+          "id": "demo-a8",
           "date": "2024-12-24",
           "odometerKm": 5832,
           "kwh": 11.9,
@@ -3064,7 +3042,7 @@
           "full": false
         },
         {
-          "id": "demo-ae",
+          "id": "demo-a9",
           "date": "2024-12-29",
           "odometerKm": 6127,
           "kwh": 11.7,
@@ -3072,7 +3050,7 @@
           "full": false
         },
         {
-          "id": "demo-af",
+          "id": "demo-aa",
           "date": "2025-01-03",
           "odometerKm": 6462,
           "kwh": 14.6,
@@ -3080,7 +3058,7 @@
           "full": false
         },
         {
-          "id": "demo-ag",
+          "id": "demo-ab",
           "date": "2025-01-08",
           "odometerKm": 6693,
           "kwh": 13.5,
@@ -3088,7 +3066,7 @@
           "full": true
         },
         {
-          "id": "demo-ah",
+          "id": "demo-ac",
           "date": "2025-01-13",
           "odometerKm": 6973,
           "kwh": 18.2,
@@ -3096,7 +3074,7 @@
           "full": false
         },
         {
-          "id": "demo-ai",
+          "id": "demo-ad",
           "date": "2025-01-18",
           "odometerKm": 7291,
           "kwh": 14.9,
@@ -3104,7 +3082,7 @@
           "full": false
         },
         {
-          "id": "demo-aj",
+          "id": "demo-ae",
           "date": "2025-01-23",
           "odometerKm": 7585,
           "kwh": 14.3,
@@ -3112,7 +3090,7 @@
           "full": false
         },
         {
-          "id": "demo-ak",
+          "id": "demo-af",
           "date": "2025-01-28",
           "odometerKm": 7786,
           "kwh": 15.8,
@@ -3120,7 +3098,7 @@
           "full": true
         },
         {
-          "id": "demo-al",
+          "id": "demo-ag",
           "date": "2025-02-02",
           "odometerKm": 8020,
           "kwh": 13,
@@ -3128,7 +3106,7 @@
           "full": false
         },
         {
-          "id": "demo-am",
+          "id": "demo-ah",
           "date": "2025-02-07",
           "odometerKm": 8301,
           "kwh": 10.7,
@@ -3136,7 +3114,7 @@
           "full": false
         },
         {
-          "id": "demo-an",
+          "id": "demo-ai",
           "date": "2025-02-12",
           "odometerKm": 8636,
           "kwh": 11.3,
@@ -3144,7 +3122,7 @@
           "full": false
         },
         {
-          "id": "demo-ao",
+          "id": "demo-aj",
           "date": "2025-02-17",
           "odometerKm": 8850,
           "kwh": 13.6,
@@ -3152,7 +3130,7 @@
           "full": true
         },
         {
-          "id": "demo-ap",
+          "id": "demo-ak",
           "date": "2025-02-22",
           "odometerKm": 9135,
           "kwh": 16.8,
@@ -3160,7 +3138,7 @@
           "full": false
         },
         {
-          "id": "demo-aq",
+          "id": "demo-al",
           "date": "2025-02-27",
           "odometerKm": 9330,
           "kwh": 15.2,
@@ -3168,7 +3146,7 @@
           "full": false
         },
         {
-          "id": "demo-ar",
+          "id": "demo-am",
           "date": "2025-03-04",
           "odometerKm": 9549,
           "kwh": 11.2,
@@ -3176,7 +3154,7 @@
           "full": false
         },
         {
-          "id": "demo-as",
+          "id": "demo-an",
           "date": "2025-03-09",
           "odometerKm": 9791,
           "kwh": 15.9,
@@ -3184,7 +3162,7 @@
           "full": true
         },
         {
-          "id": "demo-at",
+          "id": "demo-ao",
           "date": "2025-03-14",
           "odometerKm": 9989,
           "kwh": 17.3,
@@ -3192,7 +3170,7 @@
           "full": false
         },
         {
-          "id": "demo-au",
+          "id": "demo-ap",
           "date": "2025-03-19",
           "odometerKm": 10197,
           "kwh": 15.2,
@@ -3200,7 +3178,7 @@
           "full": false
         },
         {
-          "id": "demo-av",
+          "id": "demo-aq",
           "date": "2025-03-24",
           "odometerKm": 10437,
           "kwh": 18,
@@ -3208,7 +3186,7 @@
           "full": false
         },
         {
-          "id": "demo-aw",
+          "id": "demo-ar",
           "date": "2025-03-29",
           "odometerKm": 10686,
           "kwh": 13.2,
@@ -3216,7 +3194,7 @@
           "full": true
         },
         {
-          "id": "demo-ax",
+          "id": "demo-as",
           "date": "2025-04-03",
           "odometerKm": 10931,
           "kwh": 12.3,
@@ -3224,7 +3202,7 @@
           "full": false
         },
         {
-          "id": "demo-ay",
+          "id": "demo-at",
           "date": "2025-04-08",
           "odometerKm": 11269,
           "kwh": 17.6,
@@ -3232,7 +3210,7 @@
           "full": false
         },
         {
-          "id": "demo-az",
+          "id": "demo-au",
           "date": "2025-04-13",
           "odometerKm": 11542,
           "kwh": 17.7,
@@ -3240,7 +3218,7 @@
           "full": false
         },
         {
-          "id": "demo-b0",
+          "id": "demo-av",
           "date": "2025-04-18",
           "odometerKm": 11828,
           "kwh": 12,
@@ -3248,7 +3226,7 @@
           "full": true
         },
         {
-          "id": "demo-b1",
+          "id": "demo-aw",
           "date": "2025-04-23",
           "odometerKm": 12061,
           "kwh": 16.9,
@@ -3256,7 +3234,7 @@
           "full": false
         },
         {
-          "id": "demo-b2",
+          "id": "demo-ax",
           "date": "2025-04-28",
           "odometerKm": 12327,
           "kwh": 16.1,
@@ -3264,7 +3242,7 @@
           "full": false
         },
         {
-          "id": "demo-b3",
+          "id": "demo-ay",
           "date": "2025-05-03",
           "odometerKm": 12644,
           "kwh": 14.9,
@@ -3272,7 +3250,7 @@
           "full": false
         },
         {
-          "id": "demo-b4",
+          "id": "demo-az",
           "date": "2025-05-08",
           "odometerKm": 12969,
           "kwh": 13.2,
@@ -3280,7 +3258,7 @@
           "full": true
         },
         {
-          "id": "demo-b5",
+          "id": "demo-b0",
           "date": "2025-05-13",
           "odometerKm": 13276,
           "kwh": 14.4,
@@ -3288,7 +3266,7 @@
           "full": false
         },
         {
-          "id": "demo-b6",
+          "id": "demo-b1",
           "date": "2025-05-18",
           "odometerKm": 13522,
           "kwh": 11.5,
@@ -3296,7 +3274,7 @@
           "full": false
         },
         {
-          "id": "demo-b7",
+          "id": "demo-b2",
           "date": "2025-05-23",
           "odometerKm": 13728,
           "kwh": 18.1,
@@ -3304,7 +3282,7 @@
           "full": false
         },
         {
-          "id": "demo-b8",
+          "id": "demo-b3",
           "date": "2025-05-28",
           "odometerKm": 14004,
           "kwh": 17.2,
@@ -3312,7 +3290,7 @@
           "full": true
         },
         {
-          "id": "demo-b9",
+          "id": "demo-b4",
           "date": "2025-06-02",
           "odometerKm": 14308,
           "kwh": 11,
@@ -3320,7 +3298,7 @@
           "full": false
         },
         {
-          "id": "demo-ba",
+          "id": "demo-b5",
           "date": "2025-06-07",
           "odometerKm": 14644,
           "kwh": 17.2,
@@ -3328,7 +3306,7 @@
           "full": false
         },
         {
-          "id": "demo-bb",
+          "id": "demo-b6",
           "date": "2025-06-12",
           "odometerKm": 14880,
           "kwh": 13.1,
@@ -3336,7 +3314,7 @@
           "full": false
         },
         {
-          "id": "demo-bc",
+          "id": "demo-b7",
           "date": "2025-06-17",
           "odometerKm": 15107,
           "kwh": 14.1,
@@ -3344,7 +3322,7 @@
           "full": true
         },
         {
-          "id": "demo-bd",
+          "id": "demo-b8",
           "date": "2025-06-22",
           "odometerKm": 15345,
           "kwh": 18,
@@ -3352,7 +3330,7 @@
           "full": false
         },
         {
-          "id": "demo-be",
+          "id": "demo-b9",
           "date": "2025-06-27",
           "odometerKm": 15603,
           "kwh": 16.8,
@@ -3360,7 +3338,7 @@
           "full": false
         },
         {
-          "id": "demo-bf",
+          "id": "demo-ba",
           "date": "2025-07-02",
           "odometerKm": 15921,
           "kwh": 15.8,
@@ -3368,7 +3346,7 @@
           "full": false
         },
         {
-          "id": "demo-bg",
+          "id": "demo-bb",
           "date": "2025-07-07",
           "odometerKm": 16219,
           "kwh": 16.7,
@@ -3376,7 +3354,7 @@
           "full": true
         },
         {
-          "id": "demo-bh",
+          "id": "demo-bc",
           "date": "2025-07-12",
           "odometerKm": 16522,
           "kwh": 14.4,
@@ -3384,7 +3362,7 @@
           "full": false
         },
         {
-          "id": "demo-bi",
+          "id": "demo-bd",
           "date": "2025-07-17",
           "odometerKm": 16845,
           "kwh": 16.5,
@@ -3392,7 +3370,7 @@
           "full": false
         },
         {
-          "id": "demo-bj",
+          "id": "demo-be",
           "date": "2025-07-22",
           "odometerKm": 17163,
           "kwh": 16.7,
@@ -3400,7 +3378,7 @@
           "full": false
         },
         {
-          "id": "demo-bk",
+          "id": "demo-bf",
           "date": "2025-07-27",
           "odometerKm": 17489,
           "kwh": 13.7,
@@ -3408,7 +3386,7 @@
           "full": true
         },
         {
-          "id": "demo-bl",
+          "id": "demo-bg",
           "date": "2025-08-01",
           "odometerKm": 17716,
           "kwh": 13.5,
@@ -3416,7 +3394,7 @@
           "full": false
         },
         {
-          "id": "demo-bm",
+          "id": "demo-bh",
           "date": "2025-08-06",
           "odometerKm": 17927,
           "kwh": 14.4,
@@ -3424,7 +3402,7 @@
           "full": false
         },
         {
-          "id": "demo-bn",
+          "id": "demo-bi",
           "date": "2025-08-11",
           "odometerKm": 18116,
           "kwh": 11.8,
@@ -3432,7 +3410,7 @@
           "full": false
         },
         {
-          "id": "demo-bo",
+          "id": "demo-bj",
           "date": "2025-08-16",
           "odometerKm": 18383,
           "kwh": 17.8,
@@ -3440,7 +3418,7 @@
           "full": true
         },
         {
-          "id": "demo-bp",
+          "id": "demo-bk",
           "date": "2025-08-21",
           "odometerKm": 18685,
           "kwh": 11.2,
@@ -3448,7 +3426,7 @@
           "full": false
         },
         {
-          "id": "demo-bq",
+          "id": "demo-bl",
           "date": "2025-08-26",
           "odometerKm": 18870,
           "kwh": 10.5,
@@ -3456,7 +3434,7 @@
           "full": false
         },
         {
-          "id": "demo-br",
+          "id": "demo-bm",
           "date": "2025-08-31",
           "odometerKm": 19108,
           "kwh": 13.8,
@@ -3464,7 +3442,7 @@
           "full": false
         },
         {
-          "id": "demo-bs",
+          "id": "demo-bn",
           "date": "2025-09-05",
           "odometerKm": 19426,
           "kwh": 13.6,
@@ -3472,7 +3450,7 @@
           "full": true
         },
         {
-          "id": "demo-bt",
+          "id": "demo-bo",
           "date": "2025-09-10",
           "odometerKm": 19623,
           "kwh": 17.6,
@@ -3480,7 +3458,7 @@
           "full": false
         },
         {
-          "id": "demo-bu",
+          "id": "demo-bp",
           "date": "2025-09-15",
           "odometerKm": 19867,
           "kwh": 10.1,
@@ -3488,7 +3466,7 @@
           "full": false
         },
         {
-          "id": "demo-bv",
+          "id": "demo-bq",
           "date": "2025-09-20",
           "odometerKm": 20100,
           "kwh": 9.9,
@@ -3496,7 +3474,7 @@
           "full": false
         },
         {
-          "id": "demo-bw",
+          "id": "demo-br",
           "date": "2025-09-25",
           "odometerKm": 20417,
           "kwh": 18.1,
@@ -3504,7 +3482,7 @@
           "full": true
         },
         {
-          "id": "demo-bx",
+          "id": "demo-bs",
           "date": "2025-09-30",
           "odometerKm": 20650,
           "kwh": 11.1,
@@ -3512,7 +3490,7 @@
           "full": false
         },
         {
-          "id": "demo-by",
+          "id": "demo-bt",
           "date": "2025-10-05",
           "odometerKm": 20951,
           "kwh": 16.9,
@@ -3520,7 +3498,7 @@
           "full": false
         },
         {
-          "id": "demo-bz",
+          "id": "demo-bu",
           "date": "2025-10-10",
           "odometerKm": 21143,
           "kwh": 17.6,
@@ -3528,7 +3506,7 @@
           "full": false
         },
         {
-          "id": "demo-c0",
+          "id": "demo-bv",
           "date": "2025-10-15",
           "odometerKm": 21452,
           "kwh": 17.9,
@@ -3536,7 +3514,7 @@
           "full": true
         },
         {
-          "id": "demo-c1",
+          "id": "demo-bw",
           "date": "2025-10-20",
           "odometerKm": 21749,
           "kwh": 17.6,
@@ -3544,7 +3522,7 @@
           "full": false
         },
         {
-          "id": "demo-c2",
+          "id": "demo-bx",
           "date": "2025-10-25",
           "odometerKm": 21992,
           "kwh": 14.2,
@@ -3552,7 +3530,7 @@
           "full": false
         },
         {
-          "id": "demo-c3",
+          "id": "demo-by",
           "date": "2025-10-30",
           "odometerKm": 22179,
           "kwh": 11.3,
@@ -3560,7 +3538,7 @@
           "full": false
         },
         {
-          "id": "demo-c4",
+          "id": "demo-bz",
           "date": "2025-11-04",
           "odometerKm": 22370,
           "kwh": 10,
@@ -3568,7 +3546,7 @@
           "full": true
         },
         {
-          "id": "demo-c5",
+          "id": "demo-c0",
           "date": "2025-11-09",
           "odometerKm": 22623,
           "kwh": 11.8,
@@ -3576,7 +3554,7 @@
           "full": false
         },
         {
-          "id": "demo-c6",
+          "id": "demo-c1",
           "date": "2025-11-14",
           "odometerKm": 22894,
           "kwh": 11.4,
@@ -3584,7 +3562,7 @@
           "full": false
         },
         {
-          "id": "demo-c7",
+          "id": "demo-c2",
           "date": "2025-11-19",
           "odometerKm": 23183,
           "kwh": 14.3,
@@ -3592,7 +3570,7 @@
           "full": false
         },
         {
-          "id": "demo-c8",
+          "id": "demo-c3",
           "date": "2025-11-24",
           "odometerKm": 23394,
           "kwh": 13.4,
@@ -3600,7 +3578,7 @@
           "full": true
         },
         {
-          "id": "demo-c9",
+          "id": "demo-c4",
           "date": "2025-11-29",
           "odometerKm": 23687,
           "kwh": 11,
@@ -3608,7 +3586,7 @@
           "full": false
         },
         {
-          "id": "demo-ca",
+          "id": "demo-c5",
           "date": "2025-12-04",
           "odometerKm": 23973,
           "kwh": 15.1,
@@ -3616,7 +3594,7 @@
           "full": false
         },
         {
-          "id": "demo-cb",
+          "id": "demo-c6",
           "date": "2025-12-09",
           "odometerKm": 24204,
           "kwh": 11,
@@ -3624,7 +3602,7 @@
           "full": false
         },
         {
-          "id": "demo-cc",
+          "id": "demo-c7",
           "date": "2025-12-14",
           "odometerKm": 24504,
           "kwh": 13.8,
@@ -3632,7 +3610,7 @@
           "full": true
         },
         {
-          "id": "demo-cd",
+          "id": "demo-c8",
           "date": "2025-12-19",
           "odometerKm": 24697,
           "kwh": 15.6,
@@ -3640,7 +3618,7 @@
           "full": false
         },
         {
-          "id": "demo-ce",
+          "id": "demo-c9",
           "date": "2025-12-24",
           "odometerKm": 24950,
           "kwh": 15.6,
@@ -3648,7 +3626,7 @@
           "full": false
         },
         {
-          "id": "demo-cf",
+          "id": "demo-ca",
           "date": "2025-12-29",
           "odometerKm": 25218,
           "kwh": 17.9,
@@ -3656,7 +3634,7 @@
           "full": false
         },
         {
-          "id": "demo-cg",
+          "id": "demo-cb",
           "date": "2026-01-03",
           "odometerKm": 25447,
           "kwh": 14.7,
@@ -3664,7 +3642,7 @@
           "full": true
         },
         {
-          "id": "demo-ch",
+          "id": "demo-cc",
           "date": "2026-01-08",
           "odometerKm": 25665,
           "kwh": 12.2,
@@ -3672,7 +3650,7 @@
           "full": false
         },
         {
-          "id": "demo-ci",
+          "id": "demo-cd",
           "date": "2026-01-13",
           "odometerKm": 25928,
           "kwh": 14.5,
@@ -3680,7 +3658,7 @@
           "full": false
         },
         {
-          "id": "demo-cj",
+          "id": "demo-ce",
           "date": "2026-01-18",
           "odometerKm": 26149,
           "kwh": 12.4,
@@ -3688,7 +3666,7 @@
           "full": false
         },
         {
-          "id": "demo-ck",
+          "id": "demo-cf",
           "date": "2026-01-23",
           "odometerKm": 26440,
           "kwh": 16.7,
@@ -3696,7 +3674,7 @@
           "full": true
         },
         {
-          "id": "demo-cl",
+          "id": "demo-cg",
           "date": "2026-01-28",
           "odometerKm": 26700,
           "kwh": 12.2,
@@ -3704,7 +3682,7 @@
           "full": false
         },
         {
-          "id": "demo-cm",
+          "id": "demo-ch",
           "date": "2026-02-02",
           "odometerKm": 27018,
           "kwh": 11.3,
@@ -3712,7 +3690,7 @@
           "full": false
         },
         {
-          "id": "demo-cn",
+          "id": "demo-ci",
           "date": "2026-02-07",
           "odometerKm": 27297,
           "kwh": 10.9,
@@ -3720,7 +3698,7 @@
           "full": false
         },
         {
-          "id": "demo-co",
+          "id": "demo-cj",
           "date": "2026-02-12",
           "odometerKm": 27615,
           "kwh": 17.4,
@@ -3728,7 +3706,7 @@
           "full": true
         },
         {
-          "id": "demo-cp",
+          "id": "demo-ck",
           "date": "2026-02-17",
           "odometerKm": 27797,
           "kwh": 10.4,
@@ -3736,7 +3714,7 @@
           "full": false
         },
         {
-          "id": "demo-cq",
+          "id": "demo-cl",
           "date": "2026-02-22",
           "odometerKm": 28079,
           "kwh": 15.3,
@@ -3744,7 +3722,7 @@
           "full": false
         },
         {
-          "id": "demo-cr",
+          "id": "demo-cm",
           "date": "2026-02-27",
           "odometerKm": 28390,
           "kwh": 14.2,
@@ -3752,7 +3730,7 @@
           "full": false
         },
         {
-          "id": "demo-cs",
+          "id": "demo-cn",
           "date": "2026-03-04",
           "odometerKm": 28710,
           "kwh": 13.8,
@@ -3760,7 +3738,7 @@
           "full": true
         },
         {
-          "id": "demo-ct",
+          "id": "demo-co",
           "date": "2026-03-09",
           "odometerKm": 28932,
           "kwh": 16.9,
@@ -3768,7 +3746,7 @@
           "full": false
         },
         {
-          "id": "demo-cu",
+          "id": "demo-cp",
           "date": "2026-03-14",
           "odometerKm": 29263,
           "kwh": 17.2,
@@ -3776,7 +3754,7 @@
           "full": false
         },
         {
-          "id": "demo-cv",
+          "id": "demo-cq",
           "date": "2026-03-19",
           "odometerKm": 29485,
           "kwh": 15,
@@ -3784,7 +3762,7 @@
           "full": false
         },
         {
-          "id": "demo-cw",
+          "id": "demo-cr",
           "date": "2026-03-24",
           "odometerKm": 29727,
           "kwh": 17.5,
@@ -3792,7 +3770,7 @@
           "full": true
         },
         {
-          "id": "demo-cx",
+          "id": "demo-cs",
           "date": "2026-03-29",
           "odometerKm": 30031,
           "kwh": 10.3,
@@ -3800,7 +3778,7 @@
           "full": false
         },
         {
-          "id": "demo-cy",
+          "id": "demo-ct",
           "date": "2026-04-03",
           "odometerKm": 30215,
           "kwh": 11.1,
@@ -3808,7 +3786,7 @@
           "full": false
         },
         {
-          "id": "demo-cz",
+          "id": "demo-cu",
           "date": "2026-04-08",
           "odometerKm": 30431,
           "kwh": 17.3,
@@ -3816,7 +3794,7 @@
           "full": false
         },
         {
-          "id": "demo-d0",
+          "id": "demo-cv",
           "date": "2026-04-13",
           "odometerKm": 30641,
           "kwh": 14.8,
@@ -3824,7 +3802,7 @@
           "full": true
         },
         {
-          "id": "demo-d1",
+          "id": "demo-cw",
           "date": "2026-04-18",
           "odometerKm": 30831,
           "kwh": 12.8,
@@ -3832,7 +3810,7 @@
           "full": false
         },
         {
-          "id": "demo-d2",
+          "id": "demo-cx",
           "date": "2026-04-23",
           "odometerKm": 31116,
           "kwh": 16.9,
@@ -3840,7 +3818,7 @@
           "full": false
         },
         {
-          "id": "demo-d3",
+          "id": "demo-cy",
           "date": "2026-04-28",
           "odometerKm": 31390,
           "kwh": 11,
@@ -3848,7 +3826,7 @@
           "full": false
         },
         {
-          "id": "demo-d4",
+          "id": "demo-cz",
           "date": "2026-05-03",
           "odometerKm": 31678,
           "kwh": 13.1,
@@ -3856,7 +3834,7 @@
           "full": true
         },
         {
-          "id": "demo-d5",
+          "id": "demo-d0",
           "date": "2026-05-08",
           "odometerKm": 32002,
           "kwh": 12.8,
@@ -3864,7 +3842,7 @@
           "full": false
         },
         {
-          "id": "demo-d6",
+          "id": "demo-d1",
           "date": "2026-05-13",
           "odometerKm": 32309,
           "kwh": 12.6,
@@ -3872,7 +3850,7 @@
           "full": false
         },
         {
-          "id": "demo-d7",
+          "id": "demo-d2",
           "date": "2026-05-18",
           "odometerKm": 32571,
           "kwh": 10.1,
@@ -3880,7 +3858,7 @@
           "full": false
         },
         {
-          "id": "demo-d8",
+          "id": "demo-d3",
           "date": "2026-05-23",
           "odometerKm": 32856,
           "kwh": 14.7,
@@ -3888,7 +3866,7 @@
           "full": true
         },
         {
-          "id": "demo-d9",
+          "id": "demo-d4",
           "date": "2026-05-28",
           "odometerKm": 33141,
           "kwh": 16.3,
@@ -3896,7 +3874,7 @@
           "full": false
         },
         {
-          "id": "demo-da",
+          "id": "demo-d5",
           "date": "2026-06-02",
           "odometerKm": 33376,
           "kwh": 12.2,
@@ -3904,7 +3882,7 @@
           "full": false
         },
         {
-          "id": "demo-db",
+          "id": "demo-d6",
           "date": "2026-06-07",
           "odometerKm": 33686,
           "kwh": 14.3,
@@ -3912,7 +3890,7 @@
           "full": false
         },
         {
-          "id": "demo-dc",
+          "id": "demo-d7",
           "date": "2026-06-12",
           "odometerKm": 33984,
           "kwh": 14,
@@ -3920,7 +3898,7 @@
           "full": true
         },
         {
-          "id": "demo-dd",
+          "id": "demo-d8",
           "date": "2026-06-17",
           "odometerKm": 34276,
           "kwh": 10.1,
@@ -3928,7 +3906,7 @@
           "full": false
         },
         {
-          "id": "demo-de",
+          "id": "demo-d9",
           "date": "2026-06-22",
           "odometerKm": 34515,
           "kwh": 17,
@@ -3936,7 +3914,7 @@
           "full": false
         },
         {
-          "id": "demo-df",
+          "id": "demo-da",
           "date": "2026-06-27",
           "odometerKm": 34782,
           "kwh": 14.4,
@@ -3944,7 +3922,7 @@
           "full": false
         },
         {
-          "id": "demo-dg",
+          "id": "demo-db",
           "date": "2026-07-02",
           "odometerKm": 35046,
           "kwh": 15,
@@ -3952,7 +3930,7 @@
           "full": true
         },
         {
-          "id": "demo-dh",
+          "id": "demo-dc",
           "date": "2026-07-07",
           "odometerKm": 35348,
           "kwh": 12.9,
@@ -3960,7 +3938,7 @@
           "full": false
         },
         {
-          "id": "demo-di",
+          "id": "demo-dd",
           "date": "2026-07-12",
           "odometerKm": 35629,
           "kwh": 11.9,
@@ -3968,7 +3946,7 @@
           "full": false
         },
         {
-          "id": "demo-dj",
+          "id": "demo-de",
           "date": "2026-07-17",
           "odometerKm": 35853,
           "kwh": 12.1,
@@ -3976,7 +3954,7 @@
           "full": false
         },
         {
-          "id": "demo-dk",
+          "id": "demo-df",
           "date": "2026-07-22",
           "odometerKm": 36086,
           "kwh": 12.5,
@@ -3984,7 +3962,7 @@
           "full": true
         },
         {
-          "id": "demo-dl",
+          "id": "demo-dg",
           "date": "2026-07-27",
           "odometerKm": 36372,
           "kwh": 13.8,
@@ -3992,7 +3970,7 @@
           "full": false
         },
         {
-          "id": "demo-dm",
+          "id": "demo-dh",
           "date": "2026-08-01",
           "odometerKm": 36671,
           "kwh": 15.3,
@@ -4000,7 +3978,7 @@
           "full": false
         },
         {
-          "id": "demo-dn",
+          "id": "demo-di",
           "date": "2026-08-06",
           "odometerKm": 36915,
           "kwh": 16.4,
@@ -4008,7 +3986,7 @@
           "full": false
         },
         {
-          "id": "demo-do",
+          "id": "demo-dj",
           "date": "2026-08-11",
           "odometerKm": 37118,
           "kwh": 12.4,
@@ -4016,7 +3994,7 @@
           "full": true
         },
         {
-          "id": "demo-dp",
+          "id": "demo-dk",
           "date": "2026-08-16",
           "odometerKm": 37412,
           "kwh": 15.8,
@@ -4024,7 +4002,7 @@
           "full": false
         },
         {
-          "id": "demo-dq",
+          "id": "demo-dl",
           "date": "2026-08-21",
           "odometerKm": 37634,
           "kwh": 13.5,
@@ -4032,7 +4010,7 @@
           "full": false
         },
         {
-          "id": "demo-dr",
+          "id": "demo-dm",
           "date": "2026-08-26",
           "odometerKm": 37869,
           "kwh": 13.4,
@@ -4040,7 +4018,7 @@
           "full": false
         },
         {
-          "id": "demo-ds",
+          "id": "demo-dn",
           "date": "2026-08-31",
           "odometerKm": 38075,
           "kwh": 15.4,
@@ -4048,7 +4026,7 @@
           "full": true
         },
         {
-          "id": "demo-dt",
+          "id": "demo-do",
           "date": "2026-09-05",
           "odometerKm": 38396,
           "kwh": 15.6,
@@ -4056,7 +4034,7 @@
           "full": false
         },
         {
-          "id": "demo-du",
+          "id": "demo-dp",
           "date": "2026-09-10",
           "odometerKm": 38664,
           "kwh": 10.1,
@@ -4064,7 +4042,7 @@
           "full": false
         },
         {
-          "id": "demo-dv",
+          "id": "demo-dq",
           "date": "2026-09-15",
           "odometerKm": 38870,
           "kwh": 12.1,
@@ -4072,7 +4050,7 @@
           "full": false
         },
         {
-          "id": "demo-dw",
+          "id": "demo-dr",
           "date": "2026-09-20",
           "odometerKm": 39101,
           "kwh": 9.9,
@@ -4080,7 +4058,7 @@
           "full": true
         },
         {
-          "id": "demo-dx",
+          "id": "demo-ds",
           "date": "2026-09-25",
           "odometerKm": 39302,
           "kwh": 14.3,
@@ -4088,7 +4066,7 @@
           "full": false
         },
         {
-          "id": "demo-dy",
+          "id": "demo-dt",
           "date": "2026-09-30",
           "odometerKm": 39526,
           "kwh": 16.7,
@@ -4096,7 +4074,7 @@
           "full": false
         },
         {
-          "id": "demo-dz",
+          "id": "demo-du",
           "date": "2026-10-05",
           "odometerKm": 39776,
           "kwh": 14.1,
@@ -4104,7 +4082,7 @@
           "full": false
         },
         {
-          "id": "demo-e0",
+          "id": "demo-dv",
           "date": "2026-10-10",
           "odometerKm": 40065,
           "kwh": 12.2,
@@ -4112,7 +4090,7 @@
           "full": true
         },
         {
-          "id": "demo-e1",
+          "id": "demo-dw",
           "date": "2026-10-15",
           "odometerKm": 40281,
           "kwh": 16.4,
@@ -4120,7 +4098,7 @@
           "full": false
         },
         {
-          "id": "demo-e2",
+          "id": "demo-dx",
           "date": "2026-10-20",
           "odometerKm": 40493,
           "kwh": 16.8,
@@ -4128,7 +4106,7 @@
           "full": false
         },
         {
-          "id": "demo-e3",
+          "id": "demo-dy",
           "date": "2026-10-25",
           "odometerKm": 40782,
           "kwh": 12.6,
@@ -4139,25 +4117,25 @@
       "loanPeriods": [],
       "costs": [
         {
-          "id": "demo-e4",
+          "id": "demo-dz",
           "date": "2024-09-20",
           "category": "insurance",
           "amount": 690
         },
         {
-          "id": "demo-e5",
+          "id": "demo-e0",
           "date": "2025-09-20",
           "category": "insurance",
           "amount": 700
         },
         {
-          "id": "demo-e6",
+          "id": "demo-e1",
           "date": "2026-09-20",
           "category": "insurance",
           "amount": 710
         },
         {
-          "id": "demo-e7",
+          "id": "demo-e2",
           "date": "2025-09-05",
           "category": "maintenance",
           "amount": 240,
@@ -4165,7 +4143,7 @@
           "odometerKm": 18000
         },
         {
-          "id": "demo-e8",
+          "id": "demo-e3",
           "date": "2026-09-04",
           "category": "maintenance",
           "amount": 255,

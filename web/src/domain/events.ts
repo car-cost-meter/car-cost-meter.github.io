@@ -16,6 +16,39 @@ export const VEHICLE_TYPES: VehicleType[] = ['car', 'utility', 'motorcycle'];
 export type CostCategory =
   'acquisition' | 'maintenance' | 'repair' | 'inspection' | 'insurance' | 'fuel' | 'other';
 
+/** Loan/lease payment frequency. */
+export type LoanPeriodicity = 'monthly' | 'quarterly' | 'yearly';
+
+export const LOAN_PERIODICITIES: LoanPeriodicity[] = ['monthly', 'quarterly', 'yearly'];
+
+/** Months between two payments for a given periodicity. */
+export const LOAN_PERIOD_MONTHS: Record<LoanPeriodicity, number> = {
+  monthly: 1, quarterly: 3, yearly: 12
+};
+
+/** A compact loan/lease schedule, expanded into dated payments by the
+ *  cost engine (`loanPayments` in domain/costs.ts). */
+export interface LoanSchedule {
+  periodicity: LoanPeriodicity;
+  /** Amount of each instalment. */
+  amount: number;
+  /** Number of instalments. */
+  count: number;
+  firstPaymentDate: string;
+}
+
+/** Acquisition block declared on the vehicle: the initial amount paid
+ *  (depreciation anchor, replaces the former `purchasePrice` field) plus
+ *  an optional credit/lease schedule. Other one-off acquisition costs
+ *  (carte grise, options...) stay in `costs` under 'acquisition'. */
+export interface AcquisitionData {
+  initialAmount?: number;
+  /** Carte grise / registration fee — a one-off acquisition cost dated
+   *  on the acquisition date. */
+  registrationFee?: number;
+  loan?: LoanSchedule;
+}
+
 export const COST_CATEGORIES: CostCategory[] = [
   'acquisition', 'maintenance', 'repair', 'inspection', 'insurance', 'fuel', 'other'
 ];

@@ -33,7 +33,7 @@ describe('AppStore', () => {
       vehicles: [{
         id: 'v1', name: 'Zoe', energyType: 'electric', vehicleType: 'car',
         acquisitionDate: '2024-01-15', initialOdometerKm: 12000,
-        purchasePrice: 25000, inspectionPeriodMonths: 24,
+        acquisition: { initialAmount: 25000 }, inspectionPeriodMonths: 24,
         resaleValues: [], fuelUps: [], charges: [], loanPeriods: [],
         costs: [], updatedAt: '2024-01-15T00:00:00Z'
       }]

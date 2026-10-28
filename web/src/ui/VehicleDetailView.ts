@@ -1,14 +1,16 @@
 import { I18n } from '../core/I18n.js';
+import { evalFormula } from '../core/Formula.js';
 import { defaultUnits, formatDistance, litresToDisplay, volumeUnit } from '../core/units.js';
+import { LOAN_PERIODICITIES } from '../domain/events.js';
 import { formatAmount } from './format.js';
 import { componentStyles } from './componentStyles.js';
 import { openChargeEditor, openCostEditor, openFuelUpEditor, openResaleEditor } from './EventEditors.js';
 import { CostsView } from './CostsView.js';
-import { FUEL_ICON, BATTERY_ICON, MAINTENANCE_ICON, REPAIR_ICON, INSPECTION_ICON, INSURANCE_ICON, ACQUISITION_ICON, OTHER_ICON } from './icons.js';
+import { FUEL_ICON, BATTERY_ICON, MAINTENANCE_ICON, REPAIR_ICON, INSPECTION_ICON, INSURANCE_ICON, ACQUISITION_ICON, OTHER_ICON, RESALE_ICON } from './icons.js';
 import { VehicleEditor } from './VehicleEditor.js';
 import type { AppStore } from '../core/AppStore.js';
 import type { Vehicle } from '../domain/Vehicle.js';
-import type { CostCategory } from '../domain/events.js';
+import type { AcquisitionData, CostCategory, LoanPeriodicity } from '../domain/events.js';
 
 const CSS = `
 .detail-tabs, .cost-subtabs {
@@ -99,17 +101,36 @@ const CSS = `
 }
 .inspection-alert.overdue { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 .inspection-alert.soon { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
-.purchase-price {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--space-sm);
+.acq-form {
+  padding: var(--space-sm) var(--space-md);
   margin-bottom: var(--space-sm);
-  border: 1px dashed var(--card-border);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
 }
-.purchase-price .pp-label { color: var(--text-muted); }
-.purchase-price .pp-value { font-weight: var(--font-weight-semibold); }
+.acq-grid {
+  display: grid;
+  /* Columns are capped so fields don't stretch across a wide screen —
+   * leftover space stays empty on the right. */
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 12.5rem));
+  gap: var(--space-xs) var(--space-md);
+  align-items: end;
+}
+/* The hidden attribute loses against display:grid — reassert it. */
+.acq-grid[hidden] { display: none; }
+/* On narrow screens the fields stack full-width. */
+@media (max-width: 640px) {
+  .acq-grid { grid-template-columns: 1fr; }
+}
+.acq-form .form-group { margin-bottom: var(--space-xs); }
+.acq-form .form-group label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.acq-loan-check label { display: flex; align-items: center; gap: var(--space-xs); padding-bottom: 0.35rem; }
+.acq-actions { display: flex; justify-content: flex-end; margin-top: var(--space-xs); }
+.acq-other-title { font-size: var(--font-size-sm); color: var(--text-muted); margin: var(--space-sm) 0; }
 
 /* Page layout: header + tabs fixed, only the list scrolls. The page is
    bounded to the scroll container's visible height — its children can
@@ -153,9 +174,9 @@ const CSS = `
 .fab:hover { filter: brightness(1.15); }
 `;
 
-type Tab = 'costs' | 'resale' | 'analysis' | 'consumption';
-type CostSubTab = 'energy' | CostCategory;
-const COST_SUBTABS: CostSubTab[] = ['energy', 'maintenance', 'repair', 'inspection', 'insurance', 'acquisition', 'other'];
+export type Tab = 'edit' | 'analysis' | 'consumption';
+export type CostSubTab = 'energy' | CostCategory | 'resale';
+const COST_SUBTABS: CostSubTab[] = ['energy', 'maintenance', 'repair', 'inspection', 'insurance', 'acquisition', 'resale', 'other'];
 
 /** Category icons shown at the start of each row. */
 const CATEGORY_ICONS: Record<CostCategory, string> = {
@@ -182,16 +203,23 @@ export class VehicleDetailView {
     private readonly host: HTMLElement,
     private readonly store: AppStore,
     private readonly vehicle: Vehicle,
-    initialTab?: Tab
+    initialTab?: Tab,
+    initialCostSubTab?: CostSubTab
   ) {
     componentStyles('vehicle-detail', CSS);
-    this.tab = initialTab ?? 'costs';
+    this.tab = initialTab ?? 'edit';
+    if (initialCostSubTab) this.costSubTab = initialCostSubTab;
   }
 
   /** Currently selected tab — lets the dashboard restore it after a
    *  state-driven re-render (e.g. save). */
   get currentTab(): Tab {
     return this.tab;
+  }
+
+  /** Currently selected Costs sub-tab — restored like `currentTab`. */
+  get currentCostSubTab(): CostSubTab {
+    return this.costSubTab;
   }
 
   render(): void {
@@ -230,14 +258,15 @@ export class VehicleDetailView {
   };
 
   private visibleTabs(): Tab[] {
-    return ['costs', 'resale', 'analysis', 'consumption'];
+    return ['edit', 'analysis', 'consumption'];
   }
 
   private renderTabs(): void {
     const host = this.host.querySelector('#detail-tabs')!;
-    host.innerHTML = this.visibleTabs().map(t =>
-      `<button class="detail-tab ${t === this.tab ? 'active' : ''}" data-tab="${t}">${I18n.t(`detail.tabs.${t}`)}</button>`
-    ).join('');
+    host.innerHTML = this.visibleTabs().map(t => {
+      const label = I18n.t(`detail.tabs.${t}`);
+      return `<button class="detail-tab ${t === this.tab ? 'active' : ''}" data-tab="${t}">${label}</button>`;
+    }).join('');
     host.querySelectorAll<HTMLButtonElement>('.detail-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         this.tab = btn.dataset.tab as Tab;
@@ -257,10 +286,7 @@ export class VehicleDetailView {
       case 'consumption':
         host.innerHTML = `<div class="detail-scroll"><p class="detail-empty">${I18n.t('detail.notImplemented')}</p></div>`;
         return;
-      case 'resale':
-        this.renderResale(host);
-        return;
-      case 'costs':
+      case 'edit':
         this.renderCosts(host);
         return;
     }
@@ -268,7 +294,14 @@ export class VehicleDetailView {
 
   /* ---------------------------------------------------------------- costs */
 
+  private costSubTabIcon(t: CostSubTab): string {
+    if (t === 'energy') return this.energyIcons();
+    if (t === 'resale') return RESALE_ICON;
+    return CATEGORY_ICONS[t];
+  }
+
   private costSubTabLabel(t: CostSubTab): string {
+    if (t === 'resale') return I18n.t('detail.tabs.resale');
     if (t !== 'energy') return I18n.t(`categories.${t}`);
     switch (this.vehicle.data.energyType) {
       case 'electric': return I18n.t('categories.charges');
@@ -282,7 +315,7 @@ export class VehicleDetailView {
       <div class="cost-subtabs">
         ${COST_SUBTABS.map(t => `
           <button class="cost-subtab ${t === this.costSubTab ? 'active' : ''}" data-subtab="${t}">
-            ${t === 'energy' ? this.energyIcons() : CATEGORY_ICONS[t as CostCategory]}${this.costSubTabLabel(t)}
+            ${this.costSubTabIcon(t)}${this.costSubTabLabel(t)}
           </button>`).join('')}
       </div>
       <div id="cost-fixed"></div>
@@ -308,12 +341,9 @@ export class VehicleDetailView {
   private renderCostSubTab(fixed: HTMLElement, scroll: HTMLElement): void {
     fixed.innerHTML = '';
     if (this.costSubTab === 'energy') { this.renderEnergy(scroll); return; }
+    if (this.costSubTab === 'resale') { this.renderResale(scroll); return; }
     if (this.costSubTab === 'acquisition') {
-      fixed.innerHTML = `
-        <div class="purchase-price">
-          <span class="pp-label">${I18n.t('detail.purchasePriceReadonly')}</span>
-          <span class="pp-value">${formatAmount(this.vehicle.data.purchasePrice)}</span>
-        </div>`;
+      this.renderAcquisitionForm(fixed);
       this.renderAcquisition(scroll);
       return;
     }
@@ -368,13 +398,136 @@ export class VehicleDetailView {
     });
   }
 
-  /** Acquisition: loan/lease payments (purchase price sits in the fixed zone). */
+  /** Acquisition form (fixed zone): initial amount + optional loan/lease
+   *  schedule. Saved as `vehicle.data.acquisition` through updateVehicle. */
+  private renderAcquisitionForm(fixed: HTMLElement): void {
+    const acq = this.vehicle.data.acquisition;
+    const loan = acq?.loan;
+    const periodOptions = LOAN_PERIODICITIES.map(p => {
+      const label = I18n.t(`detail.acq${p[0].toUpperCase()}${p.slice(1)}`);
+      return `<option value="${p}" ${loan?.periodicity === p ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+    fixed.innerHTML = `
+      <div class="acq-form">
+        <div class="acq-grid">
+          <div class="form-group">
+            <label for="acq-initial">${I18n.t('detail.acqInitialAmount')}</label>
+            <input id="acq-initial" class="form-control" type="text" inputmode="decimal" data-formula
+                   value="${acq?.initialAmount ?? ''}" />
+          </div>
+          <div class="form-group">
+            <label for="acq-reg">${I18n.t('detail.acqRegistrationFee')}</label>
+            <input id="acq-reg" class="form-control" type="text" inputmode="decimal" data-formula
+                   value="${acq?.registrationFee ?? ''}" />
+          </div>
+          <div class="form-group acq-loan-check">
+            <label><input id="acq-loan" type="checkbox" ${loan ? 'checked' : ''} /> ${I18n.t('detail.acqLoan')}</label>
+          </div>
+        </div>
+        <div class="acq-grid" id="acq-loan-fields" ${loan ? '' : 'hidden'}>
+          <div class="form-group">
+            <label for="acq-period">${I18n.t('detail.acqPeriodicity')}</label>
+            <select id="acq-period" class="form-control">${periodOptions}</select>
+          </div>
+          <div class="form-group">
+            <label for="acq-amount">${I18n.t('detail.acqAmount')}</label>
+            <input id="acq-amount" class="form-control" type="text" inputmode="decimal" data-formula
+                   value="${loan?.amount ?? ''}" />
+          </div>
+          <div class="form-group">
+            <label for="acq-count">${I18n.t('detail.acqCount')}</label>
+            <input id="acq-count" class="form-control" type="number" min="1" step="1"
+                   value="${loan?.count ?? ''}" />
+          </div>
+          <div class="form-group">
+            <label for="acq-first">${I18n.t('detail.acqFirstDate')}</label>
+            <input id="acq-first" class="form-control" type="date" value="${loan?.firstPaymentDate ?? ''}" />
+          </div>
+        </div>
+        <div class="acq-actions">
+          <button id="acq-save" class="btn-primary">${I18n.t('common.save')}</button>
+        </div>
+      </div>`;
+
+    const $ = <T extends HTMLElement>(sel: string): T => fixed.querySelector(sel) as T;
+    const initialInput = $<HTMLInputElement>('#acq-initial');
+    const regInput = $<HTMLInputElement>('#acq-reg');
+    const loanBox = $<HTMLInputElement>('#acq-loan');
+    const loanFields = $<HTMLDivElement>('#acq-loan-fields');
+    const periodSelect = $<HTMLSelectElement>('#acq-period');
+    const amountInput = $<HTMLInputElement>('#acq-amount');
+    const countInput = $<HTMLInputElement>('#acq-count');
+    const firstInput = $<HTMLInputElement>('#acq-first');
+    const saveBtn = $<HTMLButtonElement>('#acq-save');
+
+    const amountOk = (el: HTMLInputElement): boolean => {
+      const v = el.value.trim();
+      if (v === '') return true;
+      const n = evalFormula(v);
+      return Number.isFinite(n) && n >= 0;
+    };
+    /** Dirty detection — the save button stays invisible (but space is
+     *  reserved, so nothing shifts) until the form differs from its
+     *  initial state; it is then enabled only when every field is valid. */
+    const snapshot = (): string => JSON.stringify([
+      initialInput.value.trim(), regInput.value.trim(), loanBox.checked,
+      periodSelect.value, amountInput.value.trim(),
+      countInput.value.trim(), firstInput.value
+    ]);
+    const baseline = snapshot();
+    const validate = (): void => {
+      const checks: [HTMLInputElement, boolean][] = [
+        [initialInput, amountOk(initialInput)],
+        [regInput, amountOk(regInput)],
+        [amountInput, !loanBox.checked || amountOk(amountInput)],
+        [countInput, !loanBox.checked || Number.parseInt(countInput.value, 10) > 0],
+        [firstInput, !loanBox.checked || firstInput.value.length > 0]
+      ];
+      let ok = true;
+      for (const [input, valid] of checks) {
+        input.classList.toggle('invalid-amount', !valid);
+        if (!valid) ok = false;
+      }
+      saveBtn.style.visibility = snapshot() === baseline ? 'hidden' : 'visible';
+      saveBtn.disabled = !ok;
+    };
+    for (const el of [initialInput, regInput, amountInput, countInput, firstInput]) {
+      el.addEventListener('input', validate);
+    }
+    periodSelect.addEventListener('change', validate);
+    loanBox.addEventListener('change', () => { loanFields.hidden = !loanBox.checked; validate(); });
+    validate();
+
+    saveBtn.addEventListener('click', () => {
+      const next: AcquisitionData = {};
+      const initial = evalFormula(initialInput.value);
+      const reg = evalFormula(regInput.value);
+      if (Number.isFinite(initial) && initial > 0) next.initialAmount = initial;
+      if (Number.isFinite(reg) && reg > 0) next.registrationFee = reg;
+      if (loanBox.checked) {
+        next.loan = {
+          periodicity: periodSelect.value as LoanPeriodicity,
+          amount: evalFormula(amountInput.value),
+          count: Number.parseInt(countInput.value, 10),
+          firstPaymentDate: firstInput.value
+        };
+      }
+      void this.store.updateVehicle(
+        this.vehicle.id,
+        { acquisition: Object.keys(next).length > 0 ? next : undefined }
+      );
+    });
+  }
+
+  /** Acquisition list: one-off acquisition costs (carte grise, options…)
+   *  — the initial amount and loan schedule live in the fixed form above. */
   private renderAcquisition(host: HTMLElement): void {
     const rows = this.vehicle.data.costs
       .filter(c => c.category === 'acquisition')
       .sort((a, b) => b.date.localeCompare(a.date)) // newest first
       .map(c => this.costRow(c.id, 'acquisition', c.date, c.odometerKm, c.comment ?? '', c.amount));
-    host.innerHTML = this.rowsWithFab(rows, 'cost-sub-add');
+    host.innerHTML = `<p class="acq-other-title">${I18n.t('detail.acqOtherCosts')}</p>` +
+      this.rowsWithFab(rows, 'cost-sub-add');
     host.querySelector('#cost-sub-add')!.addEventListener('click', () =>
       openCostEditor(this.vehicle, this.save, undefined, { category: 'acquisition' }));
     this.bindRows(host, id => {
@@ -392,7 +545,7 @@ export class VehicleDetailView {
         <span class="event-main"></span>
         <span class="event-amount">${formatAmount(v.value)}</span>
       </div>`);
-    host.innerHTML = `<div class="detail-scroll">${this.rowsWithFab(rows, 'resale-add')}</div>`;
+    host.innerHTML = this.rowsWithFab(rows, 'resale-add');
     host.querySelector('#resale-add')!.addEventListener('click', () =>
       openResaleEditor(this.vehicle, this.save));
     this.bindRows(host, date =>
@@ -434,7 +587,8 @@ export class VehicleDetailView {
     } else if (e.kwh !== undefined) {
       qty = `${I18n.formatNumber(e.kwh, { maximumFractionDigits: 1 })} kWh`;
     }
-    const main = e.full ? `✓ ${I18n.t(isCharge ? 'events.fullCharge' : 'events.fullTank')}` : (e.comment ?? '');
+    const fullKey = isCharge ? 'events.fullCharge' : 'events.fullTank';
+    const main = e.full ? `✓ ${I18n.t(fullKey)}` : (e.comment ?? '');
     return `<div class="event-row" data-id="${id}">
       <span class="event-date">${I18n.formatDate(e.date)}</span>
       ${this.kmCell(e.odometerKm)}

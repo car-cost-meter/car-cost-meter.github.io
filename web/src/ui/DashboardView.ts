@@ -5,6 +5,7 @@ import type { StorageManager, ProviderName } from 'ts-cloud-storage-manager';
 import type { Vehicle } from '../domain/Vehicle.js';
 import { componentStyles } from './componentStyles.js';
 import { VehicleDetailView } from './VehicleDetailView.js';
+import type { CostSubTab, Tab } from './VehicleDetailView.js';
 import { ADD_ICON, CAR_ICON, VAN_ICON, MOTORCYCLE_ICON, SETTINGS_ICON, LOGOUT_ICON, SIMULATOR_ICON, IMPORT_ICON, EXPORT_ICON, FUEL_ICON, BATTERY_ICON, MENU_ICON, HELP_ICON } from './icons.js';
 
 const CSS = `
@@ -146,9 +147,9 @@ export class DashboardView {
   onImport?: () => void;
   onExport?: () => void;
 
-  private root: HTMLElement;
-  private store: AppStore;
-  private storage: StorageManager;
+  private readonly root: HTMLElement;
+  private readonly store: AppStore;
+  private readonly storage: StorageManager;
   private loading = false;
   private connectFailed = false;
 
@@ -303,7 +304,7 @@ export class DashboardView {
   private detailView?: VehicleDetailView;
 
   /** Shows a vehicle detail page with breadcrumb "Véhicules / name". */
-  showVehicle(vehicle: Vehicle, tab?: 'costs' | 'resale' | 'analysis' | 'consumption'): void {
+  showVehicle(vehicle: Vehicle, tab?: Tab, costSubTab?: CostSubTab): void {
     this.openVehicleId = vehicle.id;
     const bc = this.root.querySelector('#breadcrumb-root') as HTMLElement;
     bc.hidden = false;
@@ -314,7 +315,7 @@ export class DashboardView {
     });
     const content = this.root.querySelector('#dashboard-content') as HTMLElement;
     content.classList.add('detail-mode');
-    this.detailView = new VehicleDetailView(content, this.store, vehicle, tab);
+    this.detailView = new VehicleDetailView(content, this.store, vehicle, tab, costSubTab);
     this.detailView.render();
   }
 
@@ -333,7 +334,7 @@ export class DashboardView {
     if (this.openVehicleId) {
       const vehicle = state.vehicles.find(v => v.id === this.openVehicleId);
       if (vehicle) {
-        this.showVehicle(vehicle, this.detailView?.currentTab);
+        this.showVehicle(vehicle, this.detailView?.currentTab, this.detailView?.currentCostSubTab);
         return;
       }
       this.openVehicleId = undefined;

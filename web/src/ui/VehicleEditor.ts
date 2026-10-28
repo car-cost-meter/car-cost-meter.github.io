@@ -1,5 +1,4 @@
 import { I18n } from '../core/I18n.js';
-import { evalFormula } from '../core/Formula.js';
 import { defaultUnits, displayToKm, kmToDisplay, distanceUnit } from '../core/units.js';
 import { addMonths } from '../core/dates.js';
 import { bindOverlayClose } from './overlayClose.js';
@@ -25,10 +24,14 @@ export class VehicleEditor {
   static open(store: AppStore, vehicle?: Vehicle, container: HTMLElement = document.body): void {
     const units = defaultUnits(I18n.language);
     const editing = vehicle !== undefined;
-    const typeOptions = VEHICLE_TYPES.map(t =>
-      `<option value="${t}" ${vehicle?.data.vehicleType === t ? 'selected' : ''}>${I18n.t(`vehicleType.${t}`)}</option>`).join('');
-    const energyOptions = ENERGY_TYPES.map(t =>
-      `<option value="${t}" ${vehicle?.data.energyType === t ? 'selected' : ''}>${I18n.t(`energy.${t}`)}</option>`).join('');
+    const typeOptions = VEHICLE_TYPES.map(t => {
+      const label = I18n.t(`vehicleType.${t}`);
+      return `<option value="${t}" ${vehicle?.data.vehicleType === t ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+    const energyOptions = ENERGY_TYPES.map(t => {
+      const label = I18n.t(`energy.${t}`);
+      return `<option value="${t}" ${vehicle?.data.energyType === t ? 'selected' : ''}>${label}</option>`;
+    }).join('');
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
@@ -60,11 +63,6 @@ export class VehicleEditor {
           <label for="veh-odo">${I18n.t('vehicles.initialOdometer')} (${distanceUnit(units)})</label>
           <input id="veh-odo" class="form-control" type="number" min="0" step="1"
                  value="${vehicle ? kmToDisplay(vehicle.data.initialOdometerKm, units) : ''}" />
-        </div>
-        <div class="form-group">
-          <label for="veh-price">${I18n.t('vehicles.purchasePrice')}</label>
-          <input id="veh-price" class="form-control" type="text" inputmode="decimal" data-formula
-                 value="${vehicle?.data.purchasePrice ?? ''}" />
         </div>
         <div class="form-group">
           <label><input id="veh-ct-exempt" type="checkbox" ${vehicle?.data.inspectionExempt ? 'checked' : ''} /> ${I18n.t('vehicles.inspectionExempt')}</label>
@@ -105,14 +103,11 @@ export class VehicleEditor {
      *  disabled until all are filled. The first-inspection date is required
      *  unless the vehicle is marked as exempt. */
     const exemptBox = $<HTMLInputElement>('#veh-ct-exempt');
-    const priceInput = $<HTMLInputElement>('#veh-price');
     const validate = (): void => {
       const checks: [HTMLInputElement, boolean][] = [
         [nameInput, nameInput.value.trim().length > 0],
         [dateInput, dateInput.value.length > 0],
-        [firstCtInput, exemptBox.checked || firstCtInput.value.length > 0],
-        // Purchase price accepts formulas — optional but must be valid.
-        [priceInput, priceInput.value.trim() === '' || Number.isFinite(evalFormula(priceInput.value))]
+        [firstCtInput, exemptBox.checked || firstCtInput.value.length > 0]
       ];
       let ok = true;
       for (const [input, valid] of checks) {
@@ -124,7 +119,6 @@ export class VehicleEditor {
     nameInput.addEventListener('input', validate);
     dateInput.addEventListener('input', validate);
     firstCtInput.addEventListener('input', validate);
-    priceInput.addEventListener('input', validate);
 
     // The first inspection date is suggested from the acquisition date:
     // +4 years for a vehicle bought new (odometer 0/empty), +2 years for a
@@ -160,7 +154,6 @@ export class VehicleEditor {
       const date = dateInput.value;
       if (!name || !date) return;
       const odoRaw = Number.parseFloat(odoInput.value);
-      const priceRaw = evalFormula($<HTMLInputElement>('#veh-price').value);
       const ctRaw = Number.parseInt($<HTMLInputElement>('#veh-ct').value, 10);
 
       const patch = {
@@ -169,7 +162,6 @@ export class VehicleEditor {
         energyType: $<HTMLSelectElement>('#veh-energy').value as EnergyType,
         acquisitionDate: date,
         initialOdometerKm: Number.isFinite(odoRaw) ? Math.round(displayToKm(odoRaw, units)) : 0,
-        purchasePrice: Number.isFinite(priceRaw) ? priceRaw : 0,
         inspectionPeriodMonths: Number.isFinite(ctRaw) && ctRaw > 0 ? ctRaw : 24,
         firstInspectionDate: firstCtInput.value || undefined,
         inspectionExempt: exemptBox.checked || undefined

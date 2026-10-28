@@ -1,7 +1,7 @@
 import { addMonths, compareDates, todayString } from '../core/dates.js';
 import { recordById, sortByDate } from './events.js';
 import type {
-  Charge, Cost, DatedValue, EnergyType, FuelUp, LoanPeriod
+  AcquisitionData, Charge, Cost, DatedValue, EnergyType, FuelUp, LoanPeriod
 } from './events.js';
 
 export const DEFAULT_INSPECTION_PERIOD_MONTHS = 24;
@@ -16,7 +16,9 @@ export interface VehicleData {
   energyType: EnergyType;
   acquisitionDate: string;
   initialOdometerKm: number;
-  purchasePrice: number;
+  /** Acquisition block — initial amount (depreciation anchor) + optional
+   *  loan/lease schedule. Absent until filled in the Acquisition tab. */
+  acquisition?: AcquisitionData;
   /** Months between technical inspections (contrôle technique). */
   inspectionPeriodMonths: number;
   /** Due date of the first inspection when none was recorded yet

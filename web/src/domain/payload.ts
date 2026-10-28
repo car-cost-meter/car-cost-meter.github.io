@@ -1,7 +1,6 @@
-import { Vehicle } from './Vehicle.js';
-import { DEFAULT_INSPECTION_PERIOD_MONTHS } from './Vehicle.js';
-import type { VehicleData } from './Vehicle.js';
+import { Vehicle, DEFAULT_INSPECTION_PERIOD_MONTHS, type VehicleData } from './Vehicle.js';
 import { newId } from './events.js';
+import type { AcquisitionData } from './events.js';
 import { todayString } from '../core/dates.js';
 
 export const PAYLOAD_VERSION = '1.0';
@@ -23,7 +22,7 @@ export function createVehicle(input: {
   vehicleType?: VehicleData['vehicleType'];
   acquisitionDate?: string;
   initialOdometerKm?: number;
-  purchasePrice?: number;
+  acquisition?: AcquisitionData;
   inspectionPeriodMonths?: number;
   firstInspectionDate?: string;
   inspectionExempt?: boolean;
@@ -35,7 +34,6 @@ export function createVehicle(input: {
     energyType: input.energyType,
     acquisitionDate: input.acquisitionDate ?? todayString(),
     initialOdometerKm: input.initialOdometerKm ?? 0,
-    purchasePrice: input.purchasePrice ?? 0,
     inspectionPeriodMonths: input.inspectionPeriodMonths ?? DEFAULT_INSPECTION_PERIOD_MONTHS,
     resaleValues: [],
     fuelUps: [],
@@ -44,6 +42,7 @@ export function createVehicle(input: {
     costs: [],
     updatedAt: new Date().toISOString()
   };
+  if (input.acquisition) data.acquisition = input.acquisition;
   if (input.firstInspectionDate) data.firstInspectionDate = input.firstInspectionDate;
   if (input.inspectionExempt) data.inspectionExempt = true;
   return new Vehicle(data);

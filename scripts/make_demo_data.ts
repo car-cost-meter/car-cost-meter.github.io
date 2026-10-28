@@ -13,7 +13,7 @@
  * web/demo.json used as fallback while the gist is unreachable.
  */
 
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 const DAY = 86400000;
 const iso = (t: number): string => new Date(t).toISOString().slice(0, 10);
@@ -133,7 +133,12 @@ const golfFill = fuelUps({
 });
 const golf: Record<string, unknown> = {
   id: 'veh-golf', name: 'Golf TDI', vehicleType: 'car', energyType: 'fuel',
-  acquisitionDate: '2021-03-15', initialOdometerKm: 42000, purchasePrice: 18500,
+  acquisitionDate: '2021-03-15', initialOdometerKm: 42000,
+  acquisition: {
+    initialAmount: 18500,
+    registrationFee: 380,
+    loan: { periodicity: 'monthly', amount: 285, count: 60, firstPaymentDate: '2021-04-05' }
+  },
   inspectionPeriodMonths: 24,
   resaleValues: [
     { date: '2022-03-15', value: 17200 }, { date: '2023-03-15', value: 16000 },
@@ -145,7 +150,7 @@ const golf: Record<string, unknown> = {
   loanPeriods: [golfLoan],
   costs: [
     ...yearlyCosts({ fromYear: 2021, toYear: 2026, monthDay: '04-01', category: 'insurance', amount: 720, driftPerYear: 15, comment: 'Assurance tous risques' }),
-    ...yearlyCosts({ fromYear: 2021, toYear: 2026, monthDay: '05-10', category: 'acquisition', amount: 285, comment: 'Mensualité crédit' }),
+    { id: id(), date: '2021-03-22', category: 'acquisition', amount: 59, comment: 'Frais de dossier' },
     { id: id(), date: '2021-10-12', category: 'maintenance', amount: 149.9, comment: 'Vidange + filtres', odometerKm: 55000 },
     { id: id(), date: '2022-05-30', category: 'maintenance', amount: 412, comment: 'Pneus avant', odometerKm: 78000 },
     { id: id(), date: '2022-09-20', category: 'inspection', amount: 78.5, comment: 'Contrôle technique', odometerKm: 89000 },
@@ -167,7 +172,8 @@ const zoeCharges = charges({
 const zoe: Record<string, unknown> = {
   id: 'veh-zoe', name: 'Zoe', vehicleType: 'car', energyType: 'electric',
   firstInspectionDate: '2027-06-01', // bought second-hand, first CT ~4y after 1st registration
-  acquisitionDate: '2023-06-01', initialOdometerKm: 5000, purchasePrice: 22000,
+  acquisitionDate: '2023-06-01', initialOdometerKm: 5000,
+  acquisition: { initialAmount: 22000 },
   inspectionPeriodMonths: 24,
   resaleValues: [
     { date: '2024-06-01', value: 17800 }, { date: '2025-06-01', value: 14900 },
@@ -198,7 +204,8 @@ const capturCharges = charges({
 const captur: Record<string, unknown> = {
   id: 'veh-captur', name: 'Captur E-Tech', vehicleType: 'car', energyType: 'hybrid',
   firstInspectionDate: '2028-09-01', // new vehicle: first CT 4 years after purchase
-  acquisitionDate: '2024-09-01', initialOdometerKm: 0, purchasePrice: 27000,
+  acquisitionDate: '2024-09-01', initialOdometerKm: 0,
+  acquisition: { initialAmount: 27000 },
   inspectionPeriodMonths: 24,
   resaleValues: [
     { date: '2025-09-01', value: 22600 }, { date: '2026-09-01', value: 20300 }

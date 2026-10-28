@@ -58,10 +58,10 @@ export const HELP_ICON = svgEmoji(
 
 /** Cost-category icons (cost sub-tabs and rows). */
 export const MAINTENANCE_ICON = svgEmoji(
-  '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>', 16);
+  '<path d="M5 21V8a2 2 0 0 1 2-2h7l5 5v10H5z"/><path d="M8 6V3h6v3"/><path d="M12 11c-2.4 3-3 4.4-3 5.7a3 3 0 0 0 6 0c0-1.3-.6-2.7-3-5.7z"/>', 16);
 
 export const REPAIR_ICON = svgEmoji(
-  '<path d="M8.5 21.5l-3-3L12 12l3 3-6.5 6.5z"/><path d="M12 12l2.5-2.5"/><path d="M17.5 5.5l-3-3L12 5l5.5 5.5 2.5-2.5-1-1h-2l-2-2z"/>', 16);
+  '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>', 16);
 
 export const INSPECTION_ICON = svgEmoji(
   '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="m9 13.5 2 2 4-4"/>', 16);

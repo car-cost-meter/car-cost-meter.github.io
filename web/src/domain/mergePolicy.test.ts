@@ -7,7 +7,8 @@ import type { VehicleData } from './Vehicle.js';
 function vehicle(id: string, over: Partial<VehicleData> = {}): VehicleData {
   return {
     id, name: `V-${id}`, energyType: 'fuel', vehicleType: 'car',
-    acquisitionDate: '2024-01-01', initialOdometerKm: 0, purchasePrice: 10000,
+    acquisitionDate: '2024-01-01', initialOdometerKm: 0,
+    acquisition: { initialAmount: 10000 },
     inspectionPeriodMonths: 24,
     resaleValues: [], fuelUps: [], charges: [], loanPeriods: [], costs: [],
     updatedAt: '2024-01-01T00:00:00Z',
@@ -32,10 +33,10 @@ describe('mergePolicy', () => {
       vehicle('b'));
     const remote = payload(
       vehicle('a'),
-      vehicle('b', { purchasePrice: 12000, updatedAt: '2024-02-02T00:00:00Z' }));
+      vehicle('b', { acquisition: { initialAmount: 12000 }, updatedAt: '2024-02-02T00:00:00Z' }));
     const merged = merge(base, local, remote) as ExportPayload;
     expect(merged.vehicles[0].name).toBe('A local');
-    expect(merged.vehicles[1].purchasePrice).toBe(12000);
+    expect(merged.vehicles[1].acquisition?.initialAmount).toBe(12000);
   });
 
   test('vehicles created on either side are kept', () => {

@@ -8,7 +8,7 @@ function makeVehicle(): Vehicle {
     energyType: 'electric',
     acquisitionDate: '2024-01-15',
     initialOdometerKm: 12000,
-    purchasePrice: 25000
+    acquisition: { initialAmount: 25000 }
   });
 }
 
