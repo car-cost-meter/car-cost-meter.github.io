@@ -7,6 +7,7 @@ import { DashboardView } from './ui/DashboardView.js';
 import { VehicleEditor } from './ui/VehicleEditor.js';
 import { SimulatorView } from './ui/SimulatorView.js';
 import { SettingsModal } from './ui/SettingsModal.js';
+import { HelpModal } from './ui/HelpModal.js';
 import { ConfirmDialog } from './ui/ConfirmDialog.js';
 import { SyncBanner } from './ui/SyncBanner.js';
 import { StorageManager } from 'ts-cloud-storage-manager';
@@ -79,6 +80,11 @@ function bootLanding(): void {
       swap();
     });
   });
+  // Footer help link — opens the same help modal as the app toolbar.
+  document.getElementById('landing-help')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    HelpModal.open();
+  });
 }
 
 async function bootApp(appRoot: HTMLElement): Promise<void> {
@@ -109,6 +115,7 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
   };
   dashboard.onLogout = () => { void store.logout(); };
   dashboard.onSimulator = () => SimulatorView.open();
+  dashboard.onHelp = () => HelpModal.open(document.body, storageManager.currentProvider);
   dashboard.onSettings = () => SettingsModal.open(settings, (patch) => {
     if ('theme' in patch) applyTheme(settings.get('theme'));
     if ('language' in patch) {

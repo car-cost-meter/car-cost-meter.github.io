@@ -5,7 +5,7 @@ import type { StorageManager, ProviderName } from 'ts-cloud-storage-manager';
 import type { Vehicle } from '../domain/Vehicle.js';
 import { componentStyles } from './componentStyles.js';
 import { VehicleDetailView } from './VehicleDetailView.js';
-import { ADD_ICON, CAR_ICON, VAN_ICON, MOTORCYCLE_ICON, SETTINGS_ICON, LOGOUT_ICON, SIMULATOR_ICON, IMPORT_ICON, EXPORT_ICON, FUEL_ICON, BATTERY_ICON, MENU_ICON } from './icons.js';
+import { ADD_ICON, CAR_ICON, VAN_ICON, MOTORCYCLE_ICON, SETTINGS_ICON, LOGOUT_ICON, SIMULATOR_ICON, IMPORT_ICON, EXPORT_ICON, FUEL_ICON, BATTERY_ICON, MENU_ICON, HELP_ICON } from './icons.js';
 
 const CSS = `
 .vehicle-grid {
@@ -142,6 +142,7 @@ export class DashboardView {
   onDemo?: () => void;
   onSimulator?: () => void;
   onSettings?: () => void;
+  onHelp?: () => void;
   onImport?: () => void;
   onExport?: () => void;
 
@@ -186,11 +187,13 @@ export class DashboardView {
       <button id="simulator" class="btn-secondary" title="${I18n.t('sim.button')}">${SIMULATOR_ICON}</button>
       ${ioBtns}
       <button id="settings" class="btn-secondary" title="${I18n.t('tools.settings')}">${SETTINGS_ICON}</button>
+      <button id="help" class="btn-secondary" title="${I18n.t('tools.help')}">${HELP_ICON}</button>
       ${logoutBtn}`;
     host.querySelector('#simulator')?.addEventListener('click', () => this.onSimulator?.());
     host.querySelector('#export')?.addEventListener('click', () => this.onExport?.());
     host.querySelector('#import')?.addEventListener('click', () => this.onImport?.());
     host.querySelector('#settings')?.addEventListener('click', () => this.onSettings?.());
+    host.querySelector('#help')?.addEventListener('click', () => this.onHelp?.());
     host.querySelector('#logout')?.addEventListener('click', () => this.onLogout?.());
 
     // Mobile menu — same actions, labelled with the button tooltips.
@@ -203,6 +206,7 @@ export class DashboardView {
           { id: 'import', icon: IMPORT_ICON, label: I18n.t('tools.import') }
         ] : []),
         { id: 'settings', icon: SETTINGS_ICON, label: I18n.t('tools.settings') },
+        { id: 'help', icon: HELP_ICON, label: I18n.t('tools.help') },
         ...(authed ? [{ id: 'logout', icon: LOGOUT_ICON, label: I18n.t('vehicles.logout') }] : [])
       ];
       menuHost.innerHTML = `
@@ -241,6 +245,7 @@ export class DashboardView {
       export: this.onExport,
       import: this.onImport,
       settings: this.onSettings,
+      help: this.onHelp,
       logout: this.onLogout
     };
     handlers[action]?.();
