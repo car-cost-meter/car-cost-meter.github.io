@@ -30,15 +30,20 @@ export function odometerReadings(vehicle: Vehicle, excludeId?: string): Odometer
 }
 
 /**
- * Readings that contradict the (date, km) pair monotonicity: a reading
- * strictly earlier with a higher km, or strictly later with a lower km.
- * Same-date readings are ignored — several events in one day legitimately
- * carry different odometers (two fill-ups morning/evening), and dates
- * alone cannot order them. An empty result means the entry is consistent.
+ * Readings that contradict the (date, km) pair monotonicity: the latest
+ * strictly-earlier reading with a higher km, and/or the earliest
+ * strictly-later reading with a lower km. Only these *immediate*
+ * contradictions are returned — the farther readings they shadow add
+ * noise without helping the user fix the entry. Same-date readings are
+ * ignored — several events in one day legitimately carry different
+ * odometers (two fill-ups morning/evening), and dates alone cannot
+ * order them. An empty result means the entry is consistent.
  */
 export function odometerViolations(
   vehicle: Vehicle, date: string, km: number, excludeId?: string
 ): OdometerReading[] {
-  return odometerReadings(vehicle, excludeId).filter(r =>
-    (r.date < date && r.km > km) || (r.date > date && r.km < km));
+  const readings = odometerReadings(vehicle, excludeId);
+  const earlier = readings.filter(r => r.date < date && r.km > km).at(-1);
+  const later = readings.find(r => r.date > date && r.km < km);
+  return [earlier, later].filter((r): r is OdometerReading => r !== undefined);
 }

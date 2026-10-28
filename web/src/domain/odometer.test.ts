@@ -24,13 +24,14 @@ describe('odometer readings & violations', () => {
     expect(odometerViolations(v, '2021-06-15', 45000)).toEqual([]); // same point as f1
   });
 
-  test('backwards km reports the contradicting readings', () => {
+  test('backwards km reports only the immediate contradicting readings', () => {
     // 44 000 km after the 45 000 km fill-up → contradicts f1 only
     const bad = odometerViolations(v, '2021-07-01', 44000);
     expect(bad.map(r => r.km)).toEqual([45000]);
-    // 65 000 km before the 60 000 km fill-up → contradicts f1, c1 and f2
+    // 65 000 km before the 60 000 km fill-up → the closest later reading
+    // (f1) is the only contradiction reported
     const ahead = odometerViolations(v, '2021-05-01', 65000);
-    expect(ahead.map(r => r.km)).toEqual([45000, 50000, 60000]);
+    expect(ahead.map(r => r.km)).toEqual([45000]);
   });
 
   test('same date with different km is consistent (two fill-ups in one day)', () => {

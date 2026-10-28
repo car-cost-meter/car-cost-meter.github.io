@@ -43,6 +43,8 @@ const CSS = `
 .analysis-chart svg { display: block; width: 100%; height: auto; }
 .analysis-chart-bar { fill: var(--accent); }
 .analysis-chart-label { fill: var(--text-muted); font-size: 10px; font-family: var(--font-base); }
+/* Value drawn inside a bar — right-aligned to the bar's right edge. */
+.analysis-chart-value { fill: #fff; font-size: 10px; font-family: var(--font-base); text-anchor: end; }
 .cat-breakdown { font-size: var(--font-size-sm); }
 .cat-breakdown .cat-row {
   display: flex;
@@ -166,10 +168,17 @@ export class CostsView {
     const bars = report.map((r, i) => {
       const bw = Math.max(1, (r.tco / max) * (w - labelW - 8));
       const y = i * (barH + gap);
+      const value = I18n.formatNumber(r.tco, { maximumFractionDigits: 0 });
+      // The value goes inside the bar, stuck to its right edge, when it
+      // fits (~6px/digit at 10px font); next to the bar otherwise — small
+      // bars leave plenty of room on their right either way.
+      const inside = bw >= value.length * 6 + 12;
+      const vx = inside ? labelW + bw - 4 : labelW + bw + 5;
+      const cls = inside ? 'analysis-chart-value' : 'analysis-chart-label';
       return `
         <text class="analysis-chart-label" x="0" y="${y + barH / 2 + 3}">${r.year}</text>
         <rect class="analysis-chart-bar" x="${labelW}" y="${y}" width="${bw}" height="${barH}" rx="3"/>
-        <text class="analysis-chart-label" x="${labelW + bw + 5}" y="${y + barH / 2 + 3}">${I18n.formatNumber(r.tco, { maximumFractionDigits: 0 })}</text>`;
+        <text class="${cls}" x="${vx}" y="${y + barH / 2 + 3}">${value}</text>`;
     }).join('');
     return `<div class="analysis-chart"><svg viewBox="0 0 ${w} ${h}" role="img">${bars}</svg></div>`;
   }
