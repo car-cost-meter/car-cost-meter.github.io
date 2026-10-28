@@ -33,8 +33,9 @@ describe('odometer readings & violations', () => {
     expect(ahead.map(r => r.km)).toEqual([45000, 50000, 60000]);
   });
 
-  test('same date with different km is inconsistent', () => {
-    expect(odometerViolations(v, '2021-06-15', 46000).map(r => r.km)).toEqual([45000]);
+  test('same date with different km is consistent (two fill-ups in one day)', () => {
+    expect(odometerViolations(v, '2021-06-15', 46000)).toEqual([]);
+    expect(odometerViolations(v, '2021-06-15', 44000)).toEqual([]);
   });
 
   test('excludeId skips the entry being edited', () => {

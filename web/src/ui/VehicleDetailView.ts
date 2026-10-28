@@ -310,6 +310,15 @@ export class VehicleDetailView {
     }
   }
 
+  /** List ordering: newest date first; same-date entries sort by odometer
+   *  descending (the higher reading is the later event of the day). */
+  private static byDateKmDesc(
+    a: { date: string; odometerKm?: number },
+    b: { date: string; odometerKm?: number }
+  ): number {
+    return b.date.localeCompare(a.date) || (b.odometerKm ?? -1) - (a.odometerKm ?? -1);
+  }
+
   private renderCosts(host: HTMLElement): void {
     host.innerHTML = `
       <div class="cost-subtabs">
@@ -350,7 +359,7 @@ export class VehicleDetailView {
     const cat = this.costSubTab;
     const rows = this.vehicle.data.costs
       .filter(c => c.category === cat)
-      .sort((a, b) => b.date.localeCompare(a.date)) // newest first
+      .sort(VehicleDetailView.byDateKmDesc) // newest first, km tie-break
       .map(c => this.costRow(c.id, cat, c.date, c.odometerKm, c.comment ?? '', c.amount));
     scroll.innerHTML = this.rowsWithFab(rows, 'cost-sub-add');
     scroll.querySelector('#cost-sub-add')!.addEventListener('click', () =>
@@ -365,12 +374,12 @@ export class VehicleDetailView {
    *  each opening its own editor. */
   private renderEnergy(host: HTMLElement): void {
     const rows = [
-      ...this.vehicle.data.fuelUps.map(f => ({ date: f.date, html: this.energyRow(`fuelUp:${f.id}`, f) })),
-      ...this.vehicle.data.charges.map(c => ({ date: c.date, html: this.energyRow(`charge:${c.id}`, c) })),
+      ...this.vehicle.data.fuelUps.map(f => ({ date: f.date, odometerKm: f.odometerKm, html: this.energyRow(`fuelUp:${f.id}`, f) })),
+      ...this.vehicle.data.charges.map(c => ({ date: c.date, odometerKm: c.odometerKm, html: this.energyRow(`charge:${c.id}`, c) })),
       // Fuel costs recorded without a fill-up entry stay visible here too.
       ...this.vehicle.data.costs.filter(c => c.category === 'fuel')
-        .map(c => ({ date: c.date, html: this.energyRow(`cost:${c.id}`, c) }))
-    ].sort((a, b) => b.date.localeCompare(a.date)).map(r => r.html); // newest first
+        .map(c => ({ date: c.date, odometerKm: c.odometerKm, html: this.energyRow(`cost:${c.id}`, c) }))
+    ].sort(VehicleDetailView.byDateKmDesc).map(r => r.html); // newest first, km tie-break
     const addLabel = this.vehicle.data.energyType === 'electric'
       ? I18n.t('detail.addCharge')
       : I18n.t('detail.addFuelUp');
@@ -524,7 +533,7 @@ export class VehicleDetailView {
   private renderAcquisition(host: HTMLElement): void {
     const rows = this.vehicle.data.costs
       .filter(c => c.category === 'acquisition')
-      .sort((a, b) => b.date.localeCompare(a.date)) // newest first
+      .sort(VehicleDetailView.byDateKmDesc) // newest first, km tie-break
       .map(c => this.costRow(c.id, 'acquisition', c.date, c.odometerKm, c.comment ?? '', c.amount));
     host.innerHTML = `<p class="acq-other-title">${I18n.t('detail.acqOtherCosts')}</p>` +
       this.rowsWithFab(rows, 'cost-sub-add');

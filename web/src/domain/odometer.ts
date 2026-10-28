@@ -31,12 +31,14 @@ export function odometerReadings(vehicle: Vehicle, excludeId?: string): Odometer
 
 /**
  * Readings that contradict the (date, km) pair monotonicity: a reading
- * earlier-or-same day with a higher km, or a later-or-same day with a
- * lower km. An empty result means the entry is consistent.
+ * strictly earlier with a higher km, or strictly later with a lower km.
+ * Same-date readings are ignored — several events in one day legitimately
+ * carry different odometers (two fill-ups morning/evening), and dates
+ * alone cannot order them. An empty result means the entry is consistent.
  */
 export function odometerViolations(
   vehicle: Vehicle, date: string, km: number, excludeId?: string
 ): OdometerReading[] {
   return odometerReadings(vehicle, excludeId).filter(r =>
-    (r.date <= date && r.km > km) || (r.date >= date && r.km < km));
+    (r.date < date && r.km > km) || (r.date > date && r.km < km));
 }
