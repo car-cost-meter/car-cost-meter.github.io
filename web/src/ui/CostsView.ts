@@ -2,11 +2,9 @@ import { I18n } from '../core/I18n.js';
 import { defaultUnits, formatDistance, distanceUnit } from '../core/units.js';
 import { formatAmount } from './format.js';
 import { todayString } from '../core/dates.js';
-import { loadInflationIndex } from '../core/inflation.js';
-import type { InflationIndex } from '../core/inflation.js';
+import { loadInflationIndex, type InflationIndex, type CpiSeries } from '../core/inflation.js';
 import { Settings } from '../core/settings.js';
-import type { CpiSeries } from '../core/inflation.js';
-import { yearlyReport, costsByCategory } from '../domain/costs.js';
+import { yearlyReport, costsByCategory, isRented } from '../domain/costs.js';
 import type { YearReport } from '../domain/costs.js';
 import { COST_CATEGORIES } from '../domain/events.js';
 import type { CostCategory } from '../domain/events.js';
@@ -28,8 +26,17 @@ const CSS = `
   text-align: right;
   border-bottom: 1px solid var(--card-border);
 }
-.analysis-table th:first-child, .analysis-table td:first-child { text-align: left; }
-.analysis-table th { color: var(--text-muted); font-weight: var(--font-weight-semibold); }
+.analysis-table th:first-child, .analysis-table td:first-child {
+  text-align: left;
+  width: 1%; /* year column shrinks to its content */
+  white-space: nowrap;
+}
+.analysis-table th { color: var(--text-muted); font-weight: var(--font-weight-semibold); text-align: center; }
+.analysis-table tfoot td {
+  border-top: 2px solid var(--card-border);
+  border-bottom: none;
+  font-weight: var(--font-weight-semibold);
+}
 .analysis-period {
   display: flex;
   flex-wrap: wrap;
@@ -43,6 +50,37 @@ const CSS = `
 .analysis-chart svg { display: block; width: 100%; height: auto; }
 .analysis-chart-bar { fill: var(--accent); }
 .analysis-chart-label { fill: var(--text-muted); font-size: 10px; font-family: var(--font-base); }
+/* "Euros constants" stays outside the collapsible category filters —
+ * it's a display option, not a filter. */
+.constant-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-md);
+}
+/* Filters collapse into a dropdown on narrow screens. */
+.analysis-filter-wrap { position: relative; }
+.filters-toggle { display: none; }
+@media (max-width: 640px) {
+  .filters-toggle { display: inline-flex; margin-bottom: var(--space-sm); }
+  .analysis-filters {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 60;
+    flex-direction: column;
+    min-width: 13rem;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+  .analysis-filter-wrap.open .analysis-filters { display: flex; }
+}
 /* Value drawn inside a bar — right-aligned to the bar's right edge. */
 .analysis-chart-value { fill: #fff; font-size: 10px; font-family: var(--font-base); text-anchor: end; }
 .cat-breakdown { font-size: var(--font-size-sm); }
@@ -52,6 +90,10 @@ const CSS = `
   padding: var(--space-xs) 0;
   border-bottom: 1px dashed var(--card-border);
 }
+/* "Dépenses" (cash outflows) is tinted to stand out from the cost view. */
+.analysis-table td.col-expenses, .analysis-table th.col-expenses {
+  background: var(--color-accent-soft);
+}
 `;
 
 /**
@@ -60,21 +102,24 @@ const CSS = `
  * chart. Category checkboxes exclude costs from every figure.
  */
 export class CostsView {
-  private filter = new Set<CostCategory>(COST_CATEGORIES);
+  private readonly filter = new Set<CostCategory>(COST_CATEGORIES);
+  /** Mobile filter menu open state — survives the re-render every
+   *  checkbox change triggers. */
+  private filtersOpen = false;
   private from: string;
   private to = todayString();
   private constantEuros = false;
   private index?: InflationIndex;
   private indexFailed = false;
 
-  constructor(private vehicle: Vehicle, private host: HTMLElement) {
+  constructor(private readonly vehicle: Vehicle, private readonly host: HTMLElement) {
     componentStyles('costs-view', CSS);
     this.from = vehicle.data.acquisitionDate;
     this.render();
   }
 
   /** Price-level factor for display: INSEE factor in constant euros, 1 otherwise. */
-  private factor = (date: string): number =>
+  private readonly factor = (date: string): number =>
     this.constantEuros && this.index ? this.index.factorFor(date) : 1;
 
   private render(): void {
@@ -82,11 +127,25 @@ export class CostsView {
     const report = yearlyReport(this.vehicle, this.filter, undefined, this.factor);
     const breakdown = costsByCategory(this.vehicle, this.from, this.to, this.factor);
 
+    const rented = isRented(this.vehicle); // rented vehicles have no depreciation column
+    const total = report.reduce((acc, r) => ({
+      expenses: acc.expenses + r.expenses,
+      costs: acc.costs + r.costs,
+      depreciation: acc.depreciation + r.depreciation,
+      tco: acc.tco + r.tco,
+      km: (acc.km ?? 0) + (r.km ?? 0)
+    }), { expenses: 0, costs: 0, depreciation: 0, tco: 0, km: 0 });
+    const totalCostPerKm = total.km > 0 ? total.tco / total.km : undefined;
     this.host.innerHTML = `
-      <div class="analysis-filters">
-        ${COST_CATEGORIES.map(c => `
-          <label><input type="checkbox" data-cat="${c}" ${this.filter.has(c) ? 'checked' : ''} /> ${I18n.t(`categories.${c}`)}</label>`).join('')}
-        <label title="${I18n.t('analysis.constantEurosHint')}">
+      <div class="analysis-filter-wrap" id="an-filter-wrap">
+        <button class="btn-secondary filters-toggle" id="an-filters-toggle">${I18n.t('analysis.filters')}</button>
+        <div class="analysis-filters">
+        ${COST_CATEGORIES.map(c => {
+          const label = I18n.t(`categories.${c}`);
+          return `<label><input type="checkbox" data-cat="${c}" ${this.filter.has(c) ? 'checked' : ''} /> ${label}</label>`;
+        }).join('')}
+        </div>
+        <label class="constant-label" title="${I18n.t('analysis.constantEurosHint')}">
           <input type="checkbox" id="an-constant" ${this.constantEuros ? 'checked' : ''} ${this.indexFailed ? 'disabled' : ''} />
           ${I18n.t('analysis.constantEuros')} <span class="category-chip">${I18n.t('analysis.franceBadge')}</span>
         </label>
@@ -96,8 +155,9 @@ export class CostsView {
       <table class="analysis-table">
         <thead><tr>
           <th>${I18n.t('analysis.year')}</th>
-          <th>${I18n.t('analysis.costs')}</th>
-          <th>${I18n.t('analysis.depreciation')}</th>
+          <th class="col-expenses" title="${I18n.t('analysis.expensesHint')}">${I18n.t('analysis.expenses')}</th>
+          <th title="${I18n.t(rented ? 'analysis.costsHintRented' : 'analysis.costsHint')}">${I18n.t('analysis.costs')}</th>
+          ${rented ? '' : `<th>${I18n.t('analysis.depreciation')}</th>`}
           <th>${I18n.t('analysis.tco')}</th>
           <th>${distanceUnit(units)}</th>
           <th>${I18n.t('analysis.costPerKm')}</th>
@@ -105,13 +165,23 @@ export class CostsView {
         <tbody>
           ${report.map(r => `<tr>
             <td>${r.year}</td>
+            <td class="col-expenses">${formatAmount(r.expenses)}</td>
             <td>${formatAmount(r.costs)}</td>
-            <td>${formatAmount(r.depreciation)}</td>
+            ${rented ? '' : `<td>${formatAmount(r.depreciation)}</td>`}
             <td><strong>${formatAmount(r.tco)}</strong></td>
             <td>${r.km !== undefined ? formatDistance(r.km, units) : '—'}</td>
             <td>${r.costPerKm !== undefined ? formatAmount(r.costPerKm) : '—'}</td>
           </tr>`).join('')}
         </tbody>
+        <tfoot><tr>
+          <td>${I18n.t('analysis.total')}</td>
+          <td class="col-expenses">${formatAmount(total.expenses)}</td>
+          <td>${formatAmount(total.costs)}</td>
+          ${rented ? '' : `<td>${formatAmount(total.depreciation)}</td>`}
+          <td>${formatAmount(total.tco)}</td>
+          <td>${total.km > 0 ? formatDistance(total.km, units) : '—'}</td>
+          <td>${totalCostPerKm !== undefined ? formatAmount(totalCostPerKm) : '—'}</td>
+        </tr></tfoot>
       </table>
       <div class="analysis-period">
         <div class="form-group">
@@ -124,8 +194,10 @@ export class CostsView {
         </div>
       </div>
       <div class="cat-breakdown">
-        ${[...breakdown.entries()].sort((a, b) => b[1] - a[1]).map(([cat, amount]) => `
-          <div class="cat-row"><span>${I18n.t(`categories.${cat}`)}</span><strong>${formatAmount(amount)}</strong></div>`).join('')}
+        ${[...breakdown.entries()].sort((a, b) => b[1] - a[1]).map(([cat, amount]) => {
+          const label = I18n.t(`categories.${cat}`);
+          return `<div class="cat-row"><span>${label}</span><strong>${formatAmount(amount)}</strong></div>`;
+        }).join('')}
         ${breakdown.size === 0 ? `<p class="detail-empty">${I18n.t('detail.empty')}</p>` : ''}
       </div>`;
 
@@ -138,6 +210,23 @@ export class CostsView {
           .catch(err => { console.error('INSEE index unavailable:', err); this.indexFailed = true; this.constantEuros = false; this.render(); });
       }
       this.render();
+    });
+    // Mobile filters menu — opens below the button, closes on outside
+    // click; `filtersOpen` restores it after each render.
+    const wrap = this.host.querySelector<HTMLElement>('#an-filter-wrap')!;
+    wrap.classList.toggle('open', this.filtersOpen);
+    const onDocClick = (e: Event): void => {
+      if (!wrap.contains(e.target as Node)) {
+        this.filtersOpen = false;
+        wrap.classList.remove('open');
+        document.removeEventListener('click', onDocClick);
+      }
+    };
+    this.host.querySelector('#an-filters-toggle')!.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.filtersOpen = !this.filtersOpen;
+      wrap.classList.toggle('open', this.filtersOpen);
+      if (this.filtersOpen) document.addEventListener('click', onDocClick);
     });
     this.host.querySelectorAll<HTMLInputElement>('[data-cat]').forEach(cb => {
       cb.addEventListener('change', () => {

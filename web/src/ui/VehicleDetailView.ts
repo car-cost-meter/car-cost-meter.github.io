@@ -2,6 +2,7 @@ import { I18n } from '../core/I18n.js';
 import { evalFormula } from '../core/Formula.js';
 import { defaultUnits, formatDistance, litresToDisplay, volumeUnit } from '../core/units.js';
 import { LOAN_PERIODICITIES } from '../domain/events.js';
+import { isRented } from '../domain/costs.js';
 import { formatAmount } from './format.js';
 import { componentStyles } from './componentStyles.js';
 import { openChargeEditor, openCostEditor, openFuelUpEditor, openResaleEditor } from './EventEditors.js';
@@ -322,7 +323,7 @@ export class VehicleDetailView {
   private renderCosts(host: HTMLElement): void {
     host.innerHTML = `
       <div class="cost-subtabs">
-        ${COST_SUBTABS.map(t => `
+        ${COST_SUBTABS.filter(t => t !== 'resale' || !isRented(this.vehicle)).map(t => `
           <button class="cost-subtab ${t === this.costSubTab ? 'active' : ''}" data-subtab="${t}">
             ${this.costSubTabIcon(t)}${this.costSubTabLabel(t)}
           </button>`).join('')}
@@ -412,6 +413,16 @@ export class VehicleDetailView {
   private renderAcquisitionForm(fixed: HTMLElement): void {
     const acq = this.vehicle.data.acquisition;
     const loan = acq?.loan;
+    // Financing selector value derived from the saved loan.
+    const fin = loan === undefined ? ''
+      : loan.kind === 'lease' ? (loan.optionAmount !== undefined || loan.optionExercised ? 'loa' : 'lld')
+      : 'credit';
+    const finOptions = [
+      { value: '', key: 'acqFinCash' },
+      { value: 'credit', key: 'acqFinCredit' },
+      { value: 'lld', key: 'acqFinLld' },
+      { value: 'loa', key: 'acqFinLoa' }
+    ].map(o => `<option value="${o.value}" ${fin === o.value ? 'selected' : ''}>${I18n.t(`detail.${o.key}`)}</option>`).join('');
     const periodOptions = LOAN_PERIODICITIES.map(p => {
       const label = I18n.t(`detail.acq${p[0].toUpperCase()}${p.slice(1)}`);
       return `<option value="${p}" ${loan?.periodicity === p ? 'selected' : ''}>${label}</option>`;
@@ -429,11 +440,12 @@ export class VehicleDetailView {
             <input id="acq-reg" class="form-control" type="text" inputmode="decimal" data-formula
                    value="${acq?.registrationFee ?? ''}" />
           </div>
-          <div class="form-group acq-loan-check">
-            <label><input id="acq-loan" type="checkbox" ${loan ? 'checked' : ''} /> ${I18n.t('detail.acqLoan')}</label>
+          <div class="form-group">
+            <label for="acq-fin">${I18n.t('detail.acqFinancing')}</label>
+            <select id="acq-fin" class="form-control">${finOptions}</select>
           </div>
         </div>
-        <div class="acq-grid" id="acq-loan-fields" ${loan ? '' : 'hidden'}>
+        <div class="acq-grid" id="acq-loan-fields" ${fin ? '' : 'hidden'}>
           <div class="form-group">
             <label for="acq-period">${I18n.t('detail.acqPeriodicity')}</label>
             <select id="acq-period" class="form-control">${periodOptions}</select>
@@ -453,6 +465,16 @@ export class VehicleDetailView {
             <input id="acq-first" class="form-control" type="date" value="${loan?.firstPaymentDate ?? ''}" />
           </div>
         </div>
+        <div class="acq-grid" id="acq-loa-fields" ${fin === 'loa' ? '' : 'hidden'}>
+          <div class="form-group">
+            <label for="acq-option">${I18n.t('detail.acqOptionAmount')}</label>
+            <input id="acq-option" class="form-control" type="text" inputmode="decimal" data-formula
+                   value="${loan?.optionAmount ?? ''}" />
+          </div>
+          <div class="form-group acq-loan-check">
+            <label><input id="acq-exercised" type="checkbox" ${loan?.optionExercised ? 'checked' : ''} /> ${I18n.t('detail.acqOptionExercised')}</label>
+          </div>
+        </div>
         <div class="acq-actions">
           <button id="acq-save" class="btn-primary">${I18n.t('common.save')}</button>
         </div>
@@ -461,12 +483,15 @@ export class VehicleDetailView {
     const $ = <T extends HTMLElement>(sel: string): T => fixed.querySelector(sel) as T;
     const initialInput = $<HTMLInputElement>('#acq-initial');
     const regInput = $<HTMLInputElement>('#acq-reg');
-    const loanBox = $<HTMLInputElement>('#acq-loan');
+    const finSelect = $<HTMLSelectElement>('#acq-fin');
     const loanFields = $<HTMLDivElement>('#acq-loan-fields');
+    const loaFields = $<HTMLDivElement>('#acq-loa-fields');
     const periodSelect = $<HTMLSelectElement>('#acq-period');
     const amountInput = $<HTMLInputElement>('#acq-amount');
     const countInput = $<HTMLInputElement>('#acq-count');
     const firstInput = $<HTMLInputElement>('#acq-first');
+    const optionInput = $<HTMLInputElement>('#acq-option');
+    const exercisedBox = $<HTMLInputElement>('#acq-exercised');
     const saveBtn = $<HTMLButtonElement>('#acq-save');
 
     const amountOk = (el: HTMLInputElement): boolean => {
@@ -479,18 +504,21 @@ export class VehicleDetailView {
      *  reserved, so nothing shifts) until the form differs from its
      *  initial state; it is then enabled only when every field is valid. */
     const snapshot = (): string => JSON.stringify([
-      initialInput.value.trim(), regInput.value.trim(), loanBox.checked,
-      periodSelect.value, amountInput.value.trim(),
-      countInput.value.trim(), firstInput.value
+      initialInput.value.trim(), regInput.value.trim(), finSelect.value,
+      periodSelect.value, amountInput.value.trim(), countInput.value.trim(),
+      firstInput.value, optionInput.value.trim(), exercisedBox.checked
     ]);
     const baseline = snapshot();
     const validate = (): void => {
+      const loanOn = finSelect.value !== '';
+      const loaOn = finSelect.value === 'loa';
       const checks: [HTMLInputElement, boolean][] = [
         [initialInput, amountOk(initialInput)],
         [regInput, amountOk(regInput)],
-        [amountInput, !loanBox.checked || amountOk(amountInput)],
-        [countInput, !loanBox.checked || Number.parseInt(countInput.value, 10) > 0],
-        [firstInput, !loanBox.checked || firstInput.value.length > 0]
+        [amountInput, !loanOn || amountOk(amountInput)],
+        [countInput, !loanOn || Number.parseInt(countInput.value, 10) > 0],
+        [firstInput, !loanOn || firstInput.value.length > 0],
+        [optionInput, !loaOn || amountOk(optionInput)]
       ];
       let ok = true;
       for (const [input, valid] of checks) {
@@ -500,11 +528,16 @@ export class VehicleDetailView {
       saveBtn.style.visibility = snapshot() === baseline ? 'hidden' : 'visible';
       saveBtn.disabled = !ok;
     };
-    for (const el of [initialInput, regInput, amountInput, countInput, firstInput]) {
+    for (const el of [initialInput, regInput, amountInput, countInput, firstInput, optionInput]) {
       el.addEventListener('input', validate);
     }
     periodSelect.addEventListener('change', validate);
-    loanBox.addEventListener('change', () => { loanFields.hidden = !loanBox.checked; validate(); });
+    exercisedBox.addEventListener('change', validate);
+    finSelect.addEventListener('change', () => {
+      loanFields.hidden = finSelect.value === '';
+      loaFields.hidden = finSelect.value !== 'loa';
+      validate();
+    });
     validate();
 
     saveBtn.addEventListener('click', () => {
@@ -513,13 +546,19 @@ export class VehicleDetailView {
       const reg = evalFormula(regInput.value);
       if (Number.isFinite(initial) && initial > 0) next.initialAmount = initial;
       if (Number.isFinite(reg) && reg > 0) next.registrationFee = reg;
-      if (loanBox.checked) {
+      if (finSelect.value !== '') {
         next.loan = {
+          kind: finSelect.value === 'credit' ? 'credit' : 'lease',
           periodicity: periodSelect.value as LoanPeriodicity,
           amount: evalFormula(amountInput.value),
           count: Number.parseInt(countInput.value, 10),
           firstPaymentDate: firstInput.value
         };
+        if (finSelect.value === 'loa') {
+          const option = evalFormula(optionInput.value);
+          if (Number.isFinite(option) && option > 0) next.loan.optionAmount = option;
+          if (exercisedBox.checked) next.loan.optionExercised = true;
+        }
       }
       void this.store.updateVehicle(
         this.vehicle.id,

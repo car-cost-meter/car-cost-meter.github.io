@@ -12,10 +12,17 @@ On peut considérer que les véhicules sont des "objets" fonctionnels distincts.
 
 Lors de la création d'un véhicule, l'utilisateur doit renseigner le nom du véhicule, le type de véhicule (voiture, utilitaire, moto — pour l'icône de la carte), le type d'énergie utilisé (carburant, électrique, ou hybride rechargeable — la seule distinction utile est le(s) flux d'énergie : litres, kWh, ou les deux), le kilométrage initial, la date d'acquisition, et les paramètres du contrôle technique.
 
-L'onglet "Coûts / Acquisition" regroupe tout ce qui concerne le financement du véhicule :
-- le **montant initial** versé à l'achat (ancre de la courbe de dépréciation) ;
-- une case à cocher **« Crédit / loyer »** qui déclare un échéancier : périodicité (mensuel — par défaut, trimestriel, annuel), montant des échéances, nombre d'échéances et date de la première échéance — les versements sont déduits automatiquement de cet échéancier, pas saisis un par un ;
-- la **liste des autres coûts d'acquisition** (carte grise, options, frais de dossier…), saisis comme des coûts datés ordinaires.
+L'onglet "Édition / Acquisition" regroupe tout ce qui concerne le financement du véhicule :
+- le **montant initial** versé à la signature (apport ou premier loyer majoré) ;
+- la **carte grise** ;
+- un sélecteur de **financement** : comptant, crédit, LLD ou LOA. Hors comptant, on déclare un échéancier (périodicité mensuelle par défaut, montant, nombre et date de première échéance — les versements sont déduits automatiquement) ; pour une LOA on précise aussi le montant de levée d'option et si elle est exercée ;
+- la **liste des autres coûts d'acquisition**, saisis comme des coûts datés ordinaires.
+
+Deux régimes de calcul en découlent :
+- **Possédé** (comptant, crédit, LOA avec option levée) : la dépréciation s'applique — sa courbe est ancrée sur le *total investi* (montant initial + toutes les mensualités + la levée d'option éventuelle, intérêts inclus) à la date d'acquisition. Les mensualités et le versement initial ne sont alors **pas** des coûts : ce sont des dépenses de financement déjà portées par la dépréciation.
+- **Loué** (LLD, LOA sans levée) : pas de dépréciation ni de valeur de revente (le sous-onglet Revente est masqué, les données éventuelles sont conservées mais ignorées) ; les loyers sont des coûts, et le versement initial est amorti sur la durée du contrat.
+
+La synthèse distingue deux colonnes : **Dépenses** (sorties de trésorerie réelles : versement initial, mensualités, levée d'option, coûts — fond coloré) et **Coûts** (vision économique : charges courantes + dépréciation pour les véhicules possédés, ou loyers + amortissement du versement initial pour les véhicules loués). Pour une location, le tableau s'étend jusqu'à la fin du contrat afin de montrer tout l'engagement, levée d'option comprise.
 
 ### Suivi des coûts
 
@@ -67,7 +74,7 @@ On peut exclure certains coûts de ces calculs via un filtrage par catégorie (A
 On peut afficher des graphiques d'évolution par an pour visualiser les coûts et la consommation.
 On peut détailler les coûts par catégorie, pour une période librement définie.
 
-Dans les calculs de coûts l'acquisition est constituée du montant initial versé à l'achat du véhicule, moins sa valeur de revente (dépréciation), plus les échéances de l'éventuel échéancier crédit/loyer et les autres coûts d'acquisition enregistrés. Quand une date ne tombe pas exactement sur une date pour laquelle on a une valeur de revente, on interpole linéairement la valeur de revente entre points connus (c'est une approximation, on marquera ça en TODO).
+Dans les calculs de coûts, la part « acquisition » d'un véhicule possédé est la dépréciation : total investi à l'acquisition (versement initial + mensualités + levée d'option, intérêts inclus) moins la valeur de revente. Pour un véhicule loué, ce sont les loyers versés plus le versement initial amorti sur la durée du contrat. Quand une date ne tombe pas exactement sur une date pour laquelle on a une valeur de revente, on interpole linéairement la valeur de revente entre points connus (c'est une approximation, on marquera ça en TODO).
 
 ### Rappel des contrôles techniques
 

@@ -137,7 +137,7 @@ const golf: Record<string, unknown> = {
   acquisition: {
     initialAmount: 18500,
     registrationFee: 380,
-    loan: { periodicity: 'monthly', amount: 285, count: 60, firstPaymentDate: '2021-04-05' }
+    loan: { kind: 'credit', periodicity: 'monthly', amount: 285, count: 60, firstPaymentDate: '2021-04-05' }
   },
   inspectionPeriodMonths: 24,
   resaleValues: [
@@ -205,7 +205,13 @@ const captur: Record<string, unknown> = {
   id: 'veh-captur', name: 'Captur E-Tech', vehicleType: 'car', energyType: 'hybrid',
   firstInspectionDate: '2028-09-01', // new vehicle: first CT 4 years after purchase
   acquisitionDate: '2024-09-01', initialOdometerKm: 0,
-  acquisition: { initialAmount: 27000 },
+  // Captur is on a long-term lease (LLD): upfront payment + monthly rents —
+  // the resale estimates below are kept in the file but ignored by the
+  // cost engine while the vehicle stays in the rented regime.
+  acquisition: {
+    initialAmount: 2500,
+    loan: { kind: 'lease', periodicity: 'monthly', amount: 380, count: 36, firstPaymentDate: '2024-09-15' }
+  },
   inspectionPeriodMonths: 24,
   resaleValues: [
     { date: '2025-09-01', value: 22600 }, { date: '2026-09-01', value: 20300 }

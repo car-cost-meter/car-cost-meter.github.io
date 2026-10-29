@@ -12,6 +12,7 @@
         "initialAmount": 18500,
         "registrationFee": 380,
         "loan": {
+          "kind": "credit",
           "periodicity": "monthly",
           "amount": 285,
           "count": 60,
@@ -2641,7 +2642,14 @@
       "acquisitionDate": "2024-09-01",
       "initialOdometerKm": 0,
       "acquisition": {
-        "initialAmount": 27000
+        "initialAmount": 2500,
+        "loan": {
+          "kind": "lease",
+          "periodicity": "monthly",
+          "amount": 380,
+          "count": 36,
+          "firstPaymentDate": "2024-09-15"
+        }
       },
       "inspectionPeriodMonths": 24,
       "resaleValues": [

@@ -1,7 +1,8 @@
 import { describe, test, expect } from 'bun:test';
 import { createVehicle } from './payload.js';
-import { resaleValueAt, odometerAt, kmInPeriod, costsInPeriod, costsByCategory, depreciation, yearlyReport, loanPayments } from './costs.js';
+import { resaleValueAt, odometerAt, kmInPeriod, costsInPeriod, costsByCategory, depreciation, yearlyReport, loanPayments, expensesInPeriod, isRented, totalInvested } from './costs.js';
 import { newId } from './events.js';
+import { todayString, yearOf } from '../core/dates.js';
 
 function golf(): ReturnType<typeof createVehicle> {
   const v = createVehicle({
@@ -92,22 +93,77 @@ describe('costs engine', () => {
     expect(loanPayments(v)).toEqual([]);
   });
 
-  test('loan instalments count as acquisition costs', () => {
+  test('credit instalments are excluded from costs but counted as expenses', () => {
     const v = golf();
     v.data.acquisition = {
       initialAmount: 18500,
-      loan: { periodicity: 'monthly', amount: 285, count: 3, firstPaymentDate: '2021-04-05' }
+      loan: { kind: 'credit', periodicity: 'monthly', amount: 285, count: 3, firstPaymentDate: '2021-04-05' }
     };
-    // The 3 instalments (Apr/May/Jun 2021) fall in 2021, none in 2022.
-    expect(costsInPeriod(v, '2021-01-01', '2021-12-31', new Set(['acquisition']))).toBe(855);
-    expect(costsInPeriod(v, '2022-01-01', '2022-12-31', new Set(['acquisition']))).toBe(0);
-    expect(costsByCategory(v, '2021-01-01', '2021-12-31').get('acquisition')).toBe(855);
+    // Credit: financing is carried by depreciation, not by cost entries.
+    expect(costsInPeriod(v, '2021-01-01', '2021-12-31', new Set(['acquisition']))).toBe(0);
+    // …but the cash outflows are real: initial + 3 instalments.
+    expect(expensesInPeriod(v, '2021-01-01', '2021-12-31', new Set(['acquisition'])))
+      .toBe(18500 + 855);
+    expect(isRented(v)).toBe(false);
+    expect(totalInvested(v)).toBe(19355);
   });
 
-  test('registration fee counts as an acquisition cost on the purchase date', () => {
+  test('lease instalments count as costs, with the initial payment amortized', () => {
     const v = golf();
+    v.data.acquisition = {
+      initialAmount: 900,
+      loan: { kind: 'lease', periodicity: 'monthly', amount: 300, count: 3, firstPaymentDate: '2021-04-05' }
+    };
+    // LLD: each instalment costs 300 + 900/3 = 600 → 3 × 600 = 1800.
+    expect(isRented(v)).toBe(true);
+    expect(costsInPeriod(v, '2021-01-01', '2021-12-31', new Set(['acquisition']))).toBe(1800);
+    // No depreciation for a rented vehicle.
+    expect(depreciation(v, '2021-01-01', '2021-12-31')).toBe(0);
+    // Expenses reflect real outflows: initial lump + raw instalments.
+    expect(expensesInPeriod(v, '2021-01-01', '2021-12-31', new Set(['acquisition']))).toBe(900 + 900);
+    expect(costsByCategory(v, '2021-01-01', '2021-12-31').get('acquisition')).toBe(1800);
+  });
+
+  test('LOA buyout counts in the invested amount when exercised', () => {
+    const v = golf();
+    v.data.acquisition = {
+      initialAmount: 2000,
+      loan: { kind: 'lease', periodicity: 'monthly', amount: 300, count: 3, firstPaymentDate: '2021-04-05', optionAmount: 8000, optionExercised: true }
+    };
+    expect(isRented(v)).toBe(false); // exercised → owned
+    expect(totalInvested(v)).toBe(2000 + 900 + 8000);
+    // The buyout is an outflow on the last instalment date (2021-06-05).
+    expect(expensesInPeriod(v, '2021-06-01', '2021-06-30', new Set(['acquisition']))).toBe(300 + 8000);
+    // …and not a cost entry.
+    expect(costsInPeriod(v, '2021-01-01', '2021-12-31', new Set(['acquisition']))).toBe(0);
+  });
+
+  test('a finished credit does not truncate the yearly report', () => {
+    const v = golf(); // costs in 2021 and 2022
+    // One-year credit ended mid-2021 — rows after the contract end must
+    // still report real costs and a positive depreciation.
+    v.data.acquisition = {
+      initialAmount: 18500,
+      loan: { kind: 'credit', periodicity: 'monthly', amount: 285, count: 12, firstPaymentDate: '2020-07-05' }
+    };
+    const report = yearlyReport(v, undefined, yearOf(todayString()) > 2022 ? 2022 : yearOf(todayString()));
+    const y2022 = report.find(r => r.year === 2022)!;
+    expect(y2022.costs).toBe(780); // 720 insurance + 60€ fill-up
+    expect(y2022.expenses).toBeGreaterThanOrEqual(780);
+    expect(y2022.depreciation).toBeGreaterThanOrEqual(0);
+  });
+
+  test('registration fee: expense everywhere, cost only when rented', () => {
+    const v = golf();
+    // Owned: the fee is a cash outflow, never a cost entry.
     v.data.acquisition = { initialAmount: 18500, registrationFee: 380 };
+    expect(costsInPeriod(v, '2021-03-01', '2021-03-31', new Set(['acquisition']))).toBe(0);
+    expect(expensesInPeriod(v, '2021-03-01', '2021-03-31', new Set(['acquisition']))).toBe(380 + 18500);
+    // Rented: no depreciation carries it — it stays a cost.
+    v.data.acquisition = {
+      initialAmount: 900, registrationFee: 380,
+      loan: { kind: 'lease', periodicity: 'monthly', amount: 300, count: 3, firstPaymentDate: '2021-04-05' }
+    };
     expect(costsInPeriod(v, '2021-03-01', '2021-03-31', new Set(['acquisition']))).toBe(380);
-    expect(costsInPeriod(v, '2021-04-01', '2021-04-30', new Set(['acquisition']))).toBe(0);
   });
 });

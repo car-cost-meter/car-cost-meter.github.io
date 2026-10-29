@@ -26,15 +26,31 @@ export const LOAN_PERIOD_MONTHS: Record<LoanPeriodicity, number> = {
   monthly: 1, quarterly: 3, yearly: 12
 };
 
+/** Loan/lease payment frequency. */
+export type LoanKind =
+  /** Credit — instalments finance a purchase: excluded from costs
+   *  (the depreciation anchor covers the whole invested amount). */
+  | 'credit'
+  /** Lease — LLD/LOA rental: rents are real costs (plus amortized initial
+   *  payment) unless the LOA buyout is exercised. */
+  | 'lease';
+
 /** A compact loan/lease schedule, expanded into dated payments by the
  *  cost engine (`loanPayments` in domain/costs.ts). */
 export interface LoanSchedule {
+  /** 'credit' (default when absent) or 'lease' (LLD/LOA). */
+  kind?: LoanKind;
   periodicity: LoanPeriodicity;
   /** Amount of each instalment. */
   amount: number;
   /** Number of instalments. */
   count: number;
   firstPaymentDate: string;
+  /** LOA only: price of the buyout option, paid at contract end. */
+  optionAmount?: number;
+  /** LOA only: the buyout option is exercised — the vehicle is kept
+   *  (owned regime) rather than returned (rented regime). */
+  optionExercised?: boolean;
 }
 
 /** Acquisition block declared on the vehicle: the initial amount paid
