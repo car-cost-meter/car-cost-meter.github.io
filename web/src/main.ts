@@ -95,7 +95,14 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
 
   dashboard.onProviderPick = async (name) => {
     storageManager.useProviderByName(name);
-    dashboard.showLoading(true);
+    // The "connecting" placeholder only suits popup flows (the consent
+    // window is up while the page stays). A redirect flow leaves
+    // immediately — keeping the picker on screen is what the bfcache
+    // restores if the user hits the browser's back button on the
+    // provider's page.
+    if (storageManager.currentProvider.authResponseParams.length === 0) {
+      dashboard.showLoading(true);
+    }
     try {
       await store.login();
     } catch (error) {

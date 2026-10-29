@@ -268,7 +268,12 @@ export function expensesInPeriod(
  *  deflated by its own factor. */
 export function depreciation(vehicle: Vehicle, from: string, to: string, factor: PriceFactor = NOMINAL): number {
   if (isRented(vehicle)) return 0; // no asset owned — no depreciation
-  return resaleValueAt(vehicle, from) * factor(from) - resaleValueAt(vehicle, to) * factor(to);
+  const nominal = resaleValueAt(vehicle, from) - resaleValueAt(vehicle, to);
+  // The period's nominal decline is restated in current euros at the
+  // factor of its start (1/1 or the acquisition date). Deflating each
+  // bound separately would wrongly add the inflation erosion of the
+  // residual value to the year's depreciation.
+  return nominal * factor(from);
 }
 
 /** One row of the yearly report. */

@@ -5,6 +5,8 @@ import { todayString } from '../core/dates.js';
 import { loadInflationIndex, type InflationIndex, type CpiSeries } from '../core/inflation.js';
 import { Settings } from '../core/settings.js';
 import { yearlyReport, costsByCategory, isRented } from '../domain/costs.js';
+import { HelpPopover } from './HelpPopover.js';
+import { DropdownMenu } from './DropdownMenu.js';
 import type { YearReport } from '../domain/costs.js';
 import { COST_CATEGORIES } from '../domain/events.js';
 import type { CostCategory } from '../domain/events.js';
@@ -12,14 +14,6 @@ import type { Vehicle } from '../domain/Vehicle.js';
 import { componentStyles } from './componentStyles.js';
 
 const CSS = `
-.analysis-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm) var(--space-md);
-  margin-bottom: var(--space-md);
-  font-size: var(--font-size-sm);
-}
-.analysis-filters label { display: flex; align-items: center; gap: var(--space-xs); color: var(--text-muted); }
 .analysis-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
 .analysis-table th, .analysis-table td {
   padding: var(--space-xs) var(--space-sm);
@@ -60,27 +54,7 @@ const CSS = `
   font-size: var(--font-size-sm);
   margin-bottom: var(--space-md);
 }
-/* Filters collapse into a dropdown on narrow screens. */
-.analysis-filter-wrap { position: relative; }
-.filters-toggle { display: none; }
-@media (max-width: 640px) {
-  .filters-toggle { display: inline-flex; margin-bottom: var(--space-sm); }
-  .analysis-filters {
-    display: none;
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    z-index: 60;
-    flex-direction: column;
-    min-width: 13rem;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-md);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  }
-  .analysis-filter-wrap.open .analysis-filters { display: flex; }
-}
+
 /* Value drawn inside a bar — right-aligned to the bar's right edge. */
 .analysis-chart-value { fill: #fff; font-size: 10px; font-family: var(--font-base); text-anchor: end; }
 .cat-breakdown { font-size: var(--font-size-sm); }
@@ -90,9 +64,9 @@ const CSS = `
   padding: var(--space-xs) 0;
   border-bottom: 1px dashed var(--card-border);
 }
-/* "Dépenses" (cash outflows) is tinted to stand out from the cost view. */
+/* "Dépenses" (cash outflows) gets a neutral pale-grey tint. */
 .analysis-table td.col-expenses, .analysis-table th.col-expenses {
-  background: var(--color-accent-soft);
+  background: rgba(128, 128, 128, 0.12);
 }
 `;
 
@@ -103,9 +77,6 @@ const CSS = `
  */
 export class CostsView {
   private readonly filter = new Set<CostCategory>(COST_CATEGORIES);
-  /** Mobile filter menu open state — survives the re-render every
-   *  checkbox change triggers. */
-  private filtersOpen = false;
   private from: string;
   private to = todayString();
   private constantEuros = false;
@@ -137,14 +108,12 @@ export class CostsView {
     }), { expenses: 0, costs: 0, depreciation: 0, tco: 0, km: 0 });
     const totalCostPerKm = total.km > 0 ? total.tco / total.km : undefined;
     this.host.innerHTML = `
-      <div class="analysis-filter-wrap" id="an-filter-wrap">
-        <button class="btn-secondary filters-toggle" id="an-filters-toggle">${I18n.t('analysis.filters')}</button>
-        <div class="analysis-filters">
-        ${COST_CATEGORIES.map(c => {
-          const label = I18n.t(`categories.${c}`);
-          return `<label><input type="checkbox" data-cat="${c}" ${this.filter.has(c) ? 'checked' : ''} /> ${label}</label>`;
-        }).join('')}
-        </div>
+      <div>
+        ${DropdownMenu.getHtml({
+          id: 'analysis-filters',
+          label: I18n.t('analysis.filters'),
+          active: this.filter.size < COST_CATEGORIES.length
+        })}
         <label class="constant-label" title="${I18n.t('analysis.constantEurosHint')}">
           <input type="checkbox" id="an-constant" ${this.constantEuros ? 'checked' : ''} ${this.indexFailed ? 'disabled' : ''} />
           ${I18n.t('analysis.constantEuros')} <span class="category-chip">${I18n.t('analysis.franceBadge')}</span>
@@ -155,8 +124,8 @@ export class CostsView {
       <table class="analysis-table">
         <thead><tr>
           <th>${I18n.t('analysis.year')}</th>
-          <th class="col-expenses" title="${I18n.t('analysis.expensesHint')}">${I18n.t('analysis.expenses')}</th>
-          <th title="${I18n.t(rented ? 'analysis.costsHintRented' : 'analysis.costsHint')}">${I18n.t('analysis.costs')}</th>
+          <th class="col-expenses">${I18n.t('analysis.expenses')}${HelpPopover.getHtml('expenses')}</th>
+          <th>${I18n.t('analysis.costs')}${HelpPopover.getHtml('costs')}</th>
           ${rented ? '' : `<th>${I18n.t('analysis.depreciation')}</th>`}
           <th>${I18n.t('analysis.tco')}</th>
           <th>${distanceUnit(units)}</th>
@@ -211,30 +180,27 @@ export class CostsView {
       }
       this.render();
     });
-    // Mobile filters menu — opens below the button, closes on outside
-    // click; `filtersOpen` restores it after each render.
-    const wrap = this.host.querySelector<HTMLElement>('#an-filter-wrap')!;
-    wrap.classList.toggle('open', this.filtersOpen);
-    const onDocClick = (e: Event): void => {
-      if (!wrap.contains(e.target as Node)) {
-        this.filtersOpen = false;
-        wrap.classList.remove('open');
-        document.removeEventListener('click', onDocClick);
-      }
-    };
-    this.host.querySelector('#an-filters-toggle')!.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.filtersOpen = !this.filtersOpen;
-      wrap.classList.toggle('open', this.filtersOpen);
-      if (this.filtersOpen) document.addEventListener('click', onDocClick);
-    });
-    this.host.querySelectorAll<HTMLInputElement>('[data-cat]').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const cat = cb.dataset.cat as CostCategory;
-        if (cb.checked) this.filter.add(cat); else this.filter.delete(cat);
-        this.render();
+    // The category checkboxes live in the DropdownMenu panel, attached
+    // to document.body — it survives the re-render every toggle triggers.
+    const bindFilterCheckboxes = (root: ParentNode): void => {
+      root.querySelectorAll<HTMLInputElement>('[data-cat]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const cat = cb.dataset.cat as CostCategory;
+          if (cb.checked) this.filter.add(cat); else this.filter.delete(cat);
+          this.render();
+        });
       });
-    });
+    };
+    DropdownMenu.register('analysis-filters',
+      () => COST_CATEGORIES.map(c => this.filterLabelHtml(c)).join(''),
+      bindFilterCheckboxes,
+      () => { COST_CATEGORIES.forEach(c => this.filter.add(c)); this.render(); });
+    // Circled "?" buttons explain the difference between the two columns.
+    const costsHintKey = rented ? 'analysis.costsHintRented' : 'analysis.costsHint';
+    HelpPopover.bind(this.host, key => ({
+      title: I18n.t(`analysis.${key}`),
+      body: I18n.t(key === 'expenses' ? 'analysis.expensesHint' : costsHintKey)
+    }));
     this.host.querySelector('#an-from')!.addEventListener('change', (e) => {
       this.from = (e.target as HTMLInputElement).value;
       this.render();
@@ -243,6 +209,12 @@ export class CostsView {
       this.to = (e.target as HTMLInputElement).value;
       this.render();
     });
+  }
+
+  /** One category checkbox row — used by the inline row and the mobile panel. */
+  private filterLabelHtml(c: CostCategory): string {
+    const label = I18n.t(`categories.${c}`);
+    return `<label><input type="checkbox" data-cat="${c}" ${this.filter.has(c) ? 'checked' : ''} /> ${label}</label>`;
   }
 
   /** Simple SVG bar chart of yearly TCO. */
