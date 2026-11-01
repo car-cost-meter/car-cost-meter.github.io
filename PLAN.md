@@ -35,9 +35,9 @@ car-cost-meter.github.io/
     privacy.html, terms.html
     favicon.svg, manifest.json, sw.template.js
     css/main.css            # design tokens, thèmes clair/sombre, utilitaires
-    package.json            # dep "ts-cloud-storage-manager": "file:../ts-cloud-storage-manager"
+    package.json            # dep "ts-cloud-storage-manager": "github:fathzer/ts-cloud-storage-manager#v0.0.1-preview"
     tsconfig.json, tsconfig.test.json   # copiés de mon-patrimoine
-    vendor/ts-cloud-storage-manager/    # dist .js vendored (bun run vendor)
+    vendor/ts-cloud-storage-manager/    # dist .js vendored — généré, gitignoré (bun run vendor)
     src/
       main.ts               # boot landing vs app, config providers, SW
       core/    AppStore.ts, EventBus.ts, I18n.ts, settings.ts, units.ts,
@@ -50,7 +50,7 @@ car-cost-meter.github.io/
     tests/                  # tests hors src/
 ```
 
-Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (état + hydrate/export + save via `storageManager.save`), `SyncBanner`, `ConfirmDialog`, `datedInput`, Service Worker `sw.template.js` avec `BUILD_HASH` injecté par le workflow, `deploy.yml` qui checkout `fathzer/ts-cloud-storage-manager` (branche `first`), le build, puis assemble `_site/` (dist aplati, `dist/main.js`→`main.js`, vendor, css, pages, sw avec hash, `.nojekyll`).
+Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (état + hydrate/export + save via `storageManager.save`), `SyncBanner`, `ConfirmDialog`, `datedInput`, Service Worker `sw.template.js` avec `BUILD_HASH` injecté par le workflow, `deploy.yml` qui résout la lib via la dépendance `github:` pinnée (fetch + build au `bun install` via `prepare`/`trustedDependencies`), puis assemble `_site/` (dist aplati, `dist/main.js`→`main.js`, vendor, css, pages, sw avec hash, `.nojekyll`).
 
 ## Modèle de données — `car-cost-meter.json`
 
@@ -84,7 +84,7 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 
 ### Étape 0 ✅ — Socle du repo
 
-- `package.json` (bun, typescript, `file:` dep vers `../ts-cloud-storage-manager`, scripts `dev/build/test/typecheck/vendor` + `postinstall`), `tsconfig*.json` copiés, `.gitignore`, `scripts/vendor-csm.sh`.
+- `package.json` (bun, typescript, dep `github:` tagguée vers `fathzer/ts-cloud-storage-manager`, scripts `dev/build/test/typecheck/vendor` + `postinstall`/`predev` + `trustedDependencies`), `tsconfig*.json` copiés, `.gitignore`, `scripts/vendor-csm.sh`.
 - `APPLICATION.md` complété avec les décisions tranchées ; `README.md` amorcé.
 - Vérif : `bun install` + `bun run build` compilent un `main.ts` trivial.
 

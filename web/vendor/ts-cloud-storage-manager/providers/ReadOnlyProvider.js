@@ -1,1 +1,0 @@
-/home/jma/git/ts-cloud-storage-manager/dist/providers/ReadOnlyProvider.js
