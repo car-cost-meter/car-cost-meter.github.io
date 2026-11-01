@@ -35,9 +35,17 @@ function resolveTheme(theme: Theme): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
 
+// Page background colors, used as the browser theme color (status/navigation bars).
+const THEME_COLORS = { light: '#f4f6f8', dark: '#0b0f17' } as const;
+
 function applyTheme(theme: Theme): void {
+  const resolved = resolveTheme(theme);
   document.body.classList.remove('light-theme', 'dark-theme');
-  document.body.classList.add(`${resolveTheme(theme)}-theme`);
+  document.body.classList.add(`${resolved}-theme`);
+  // Keep the system bars in sync with the chosen theme, whatever the OS preference is.
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach(meta => {
+    meta.content = THEME_COLORS[resolved];
+  });
 }
 
 applyTheme(settings.get('theme'));
