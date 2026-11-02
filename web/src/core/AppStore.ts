@@ -140,8 +140,9 @@ export class AppStore extends EventBus<AppStoreEvents> {
       throw new Error('Invalid payload');
     }
     this._hydrateState(raw as Partial<ExportPayload>);
-    await this.save();
+    // Notify before persisting — views must not wait for the network.
     this.emit('state:changed', this.state);
+    await this.save();
   }
 
   findVehicle(id: string): Vehicle | undefined {
@@ -151,8 +152,8 @@ export class AppStore extends EventBus<AppStoreEvents> {
   async addVehicle(input: Parameters<typeof createVehicle>[0]): Promise<Vehicle> {
     const vehicle = createVehicle(input);
     this.state.vehicles.push(vehicle);
-    await this.save();
     this.emit('state:changed', this.state);
+    await this.save();
     return vehicle;
   }
 
@@ -161,14 +162,14 @@ export class AppStore extends EventBus<AppStoreEvents> {
     if (!vehicle) return;
     Object.assign(vehicle.data, patch);
     vehicle.data.updatedAt = new Date().toISOString();
-    await this.save();
     this.emit('state:changed', this.state);
+    await this.save();
   }
 
   async removeVehicle(id: string): Promise<void> {
     this.state.vehicles = this.state.vehicles.filter(v => v.id !== id);
-    await this.save();
     this.emit('state:changed', this.state);
+    await this.save();
   }
 
   _hydrateState(rawData: Partial<ExportPayload>): void {

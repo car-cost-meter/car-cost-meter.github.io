@@ -254,8 +254,10 @@ export class VehicleDetailView {
   }
 
   private readonly save = async (): Promise<void> => {
-    await this.store.save();
+    // Refresh now — the in-memory change is already applied; the cloud
+    // write continues in the background (failures surface via save:error).
     this.render(); // re-render header too (inspection alert, updated name)
+    await this.store.save();
   };
 
   private visibleTabs(): Tab[] {
