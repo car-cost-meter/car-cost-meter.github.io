@@ -92,6 +92,8 @@ L'application permet de simuler les coûts de propriété d'un véhicule en fonc
 
 L'application permet de prendre en compte l'inflation dans tous les calculs de coûts. en utilisant les barêmes publiés par l'INSEE disponible dans le gist https://gist.github.com/fathzer/5646b5558f759655717914400cc50a03.
 
+Pour la dépréciation en euros constants, chaque borne de la période (le total investi à l'acquisition, puis la valeur de revente en fin de chaque période) est convertie au facteur de sa propre date ; la dépréciation affichée est la différence entre la valeur constante précédente et la valeur constante courante.
+
 ## Sauvegarde des données
 
 Les données seront sauvegardées grâce à l'API de https://github.com/fathzer/ts-cloud-storage-manager.

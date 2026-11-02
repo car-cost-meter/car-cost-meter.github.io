@@ -60,6 +60,19 @@ describe('costs engine', () => {
     expect(depreciation(v, '2021-03-15', '2022-03-15')).toBeCloseTo(1300, 0);
   });
 
+  test('depreciation in constant euros deflates each bound by its own factor', () => {
+    const v = golf();
+    // 18500 @2021-03-15 → 14500 @2024-03-15, price level +10% between them
+    // (2021 euros are worth 1.1 today's euros — see InflationIndex.factorFor):
+    // 18500×1.1 − 14500×1.0 = 5850 — the loss also carries the inflation
+    // erosion of the residual value, so it exceeds the nominal 4000 drop.
+    const inflation = (date: string): number => (date < '2024' ? 1.1 : 1);
+    expect(depreciation(v, '2021-03-15', '2024-03-15', inflation)).toBeCloseTo(5850, 6);
+    // Deflation shrinks the loss instead: 18500×1.0 − 14500×1.1 = 2550.
+    const deflation = (date: string): number => (date < '2024' ? 1 : 1.1);
+    expect(depreciation(v, '2021-03-15', '2024-03-15', deflation)).toBeCloseTo(2550, 6);
+  });
+
   test('yearlyReport covers acquisition year → current year', () => {
     const v = golf();
     const report = yearlyReport(v, undefined, 2022);

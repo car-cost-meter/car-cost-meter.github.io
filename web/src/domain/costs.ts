@@ -265,15 +265,11 @@ export function expensesInPeriod(
 
 /** Depreciation between two dates: drop of the interpolated resale value
  *  (≥ 0 for a normal depreciation curve). In constant euros each bound is
- *  deflated by its own factor. */
+ *  deflated by its own factor, so the loss also carries the inflation
+ *  erosion of the residual value. */
 export function depreciation(vehicle: Vehicle, from: string, to: string, factor: PriceFactor = NOMINAL): number {
   if (isRented(vehicle)) return 0; // no asset owned — no depreciation
-  const nominal = resaleValueAt(vehicle, from) - resaleValueAt(vehicle, to);
-  // The period's nominal decline is restated in current euros at the
-  // factor of its start (1/1 or the acquisition date). Deflating each
-  // bound separately would wrongly add the inflation erosion of the
-  // residual value to the year's depreciation.
-  return nominal * factor(from);
+  return resaleValueAt(vehicle, from) * factor(from) - resaleValueAt(vehicle, to) * factor(to);
 }
 
 /** One row of the yearly report. */

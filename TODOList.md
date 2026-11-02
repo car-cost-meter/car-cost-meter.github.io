@@ -3,7 +3,6 @@
 ## Synthèse (onglet Analyse) — revue complète à faire
 
 Points probables à investiguer :
-- Valeurs  de dépréciation en euros constants INSEE
 - Graphe SVG
 - Récapitualtif final qui semble incomplet. Peut-être que la plage de date pourrait aussi filtrer le reste de la page.
 
