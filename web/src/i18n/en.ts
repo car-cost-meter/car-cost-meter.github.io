@@ -36,14 +36,27 @@ export const en = {
     motorcycle: 'Motorcycle'
   },
   syncBanner: {
-    conflict: 'Changes made on another device conflict with yours. Which ones should be kept?',
+    conflictOne: 'The vehicle "{name}" was changed here and on another device. Which version should be kept?',
+    conflictMany: '{count} vehicles were changed here and on another device.',
     keepLocal: 'Keep my changes',
     keepCloud: 'Keep the cloud version',
+    resolve: 'Resolve…',
     savePending: 'Save pending — retrying {time}',
     retryAt: 'at {time}',
     retrySoon: 'soon',
     remoteUpdate: 'A new version of your data is available.',
     update: 'Update'
+  },
+  conflictDialog: {
+    title: 'Sync conflicts',
+    intro: 'These vehicles were changed here and on another device. Pick the version to keep for each one: those you leave aside stay to be resolved.',
+    local: 'My version',
+    cloud: 'Cloud version',
+    deleted: 'deleted',
+    entries: 'entries: {count}',
+    keepAllLocal: 'Keep all mine',
+    keepAllCloud: 'Keep all from the cloud',
+    apply: 'Apply'
   },
   vehicles: {
     empty: 'No vehicle yet.',

@@ -43,7 +43,7 @@ car-cost-meter.github.io/
       core/    AppStore.ts, EventBus.ts, I18n.ts, settings.ts, units.ts,
                inflation.ts, dates.ts
       domain/  Vehicle.ts, events.ts (types + helpers datés),
-               consumption.ts, costs.ts, mergePolicy.ts, payload.ts
+               consumption.ts, costs.ts, conflicts.ts, payload.ts
       i18n/    fr.ts, en.ts
       ui/      composants autonomes (classe TS ; markup + CSS encapsulés
                dans le fichier — jamais de CSS/JS dans index.html)
@@ -56,7 +56,7 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 
 ```jsonc
 {
-  "version": "1.0",
+  "version": "1.1",
   "vehicles": [{
     "id": "uuid",
     "name": "...",
@@ -67,17 +67,16 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
     "purchasePrice": 12345,
     "inspectionPeriodMonths": 24,      // défaut 24, modifiable
     "resaleValues": [{ "date", "value" }],           // estimations datées
-    "fuelUps": [{ "id", "date", "odometerKm"?, "volumeLitres"?, "amount"?, "full": true }],
-    "charges":  [{ "id", "date", "odometerKm"?, "kwh"?, "amount"?, "full"?: true }], // electric/hybrid
-    "loanPeriods": [{ "id", "from", "to", "note"? }], // prêt/location/vol
-    "costs": [{ "id", "date", "category": "acquisition|maintenance|inspection|insurance|fuel|other",
-                "amount", "comment"?, "odoKm"? }],
-    "updatedAt": "ISO"                 // horodatage pour le merge par grains
+    "fuelUps": [{ "date", "odometerKm"?, "volumeLitres"?, "amount"?, "full": true }],
+    "charges":  [{ "date", "odometerKm"?, "kwh"?, "amount"?, "full"?: true }], // electric/hybrid
+    "loanPeriods": [{ "from", "to", "note"? }],      // prêt/location/vol
+    "costs": [{ "date", "category": "acquisition|maintenance|inspection|insurance|fuel|other",
+                "amount", "comment"?, "odoKm"? }]
   }]
 }
 ```
 
-- Le **grain de merge = le véhicule** (spec : réconciliation par véhicule). La `MergePolicy` ({ base, local, remote } → merged | UNRECONCILABLE) apparie les véhicules par `id` : modifié d'un seul côté → ce côté gagne ; des deux côtés → **merge intra-véhicule** : union des collections d'événements par `id` (événements traités comme immuables — une édition = nouveau contenu sous même id, l'écart scalaire tranché par `updatedAt`) ; conflit uniquement sur les scalaires du véhicule (nom, params) modifiés des deux côtés → UNRECONCILABLE → UI de résolution (reprendre le pattern SyncBanner + dialogue de mon-patrimoine).
+- Le **grain de merge = le véhicule**, sans distinction des champs. L'app ne fournit que le `GrainCodec` `vehicleGrains` (`domain/payload.ts` : `split` = un grain par véhicule, passé par `hydrateVehicles` pour que les deux côtés soient hashés sous la même forme normalisée ; `join` = le fichier reconstruit). La lib réconcilie par **hash de grain** (`docs/sync-engine.md`) : elle ne garde que `readRev` et, par véhicule, le hash de la version cloud lue — jamais de copie de la source. Un véhicule modifié ici seul est gardé, modifié dans le cloud seul est pris, modifié des deux côtés différemment est un **conflit** ; suppressions et créations suivent les mêmes règles (pas de tombstones, pas de `rev`/`dirty`/`updatedAt` dans les données). Les événements n'ont pas d'`id` — inutile sans réconciliation par entrée — ce qui allège le fichier d'environ un tiers ; à l'hydratation, les `id` d'événements et le `updatedAt` des fichiers 1.0 sont retirés (code jettable, format 1.1 ; aucune donnée n'a jamais été écrite dans un format intermédiaire). **UI de résolution** (`SyncBanner` + `ConflictDialog`) : un seul véhicule en conflit → bandeau nommant le véhicule + choix « ma version » / « version du cloud » ; plusieurs → message générique + dialogue de résolution véhicule par véhicule (résolution partielle possible : ceux laissés de côté restent à résoudre).
 - **Settings hors fichier** : `localStorage` (langue, thème, unités, devise, série INSEE choisie, provider préféré).
 
 ## Étapes
@@ -100,7 +99,7 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 
 ### Étape 2 ✅ — Modèle de domaine + AppStore
 
-- `domain/events.ts` : types des collections datées + helpers (`sortByDate`, `recordById`, tombstones éventuels), `compareDates`, `todayString` (généraliser `DatedHistory` de mon-patrimoine).
+- `domain/events.ts` : types des collections datées + helpers (`sortByDate`, `recordById`), `compareDates`, `todayString` (généraliser `DatedHistory` de mon-patrimoine).
 - `domain/Vehicle.ts` : classe par véhicule (ajout/édition/suppression d'événements, dernier CT = dernière entrée de coût catégorie `inspection`, prochain CT = +`inspectionPeriodMonths`).
 - `domain/payload.ts` : `ExportPayload`, `_getDefaultData()`, hydrate/migration `version`.
 - `core/AppStore.ts` + `EventBus` : état `vehicles[]`, `state:changed`, `save:error`, save → `storageManager.save(exportPayload)` ; `loginDemo()` via `ReadOnlyProvider`.
@@ -115,10 +114,10 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 
 ### Étape 4 ✅ — Stockage cloud + sync + merge par véhicule
 
-- `main.ts` : `STORAGE_CONFIG = { fileName: 'car-cost-meter.json', dropbox: { appKey }, oneDrive: { clientId }, sync: { policy: mergePolicy, eagerPull: false } }` — déclarer les apps Dropbox/OneDrive (PKCE) et documenter les consoles dans README (copier les sections de mon-patrimoine ; URIs de redirect `<origine>/app/`).
-- `domain/mergePolicy.ts` : merge par véhicule décrit plus haut + tests (véhicules disjoints auto-merge, conflit scalaire → UNRECONCILABLE).
+- `main.ts` : `STORAGE_CONFIG = { fileName: 'car-cost-meter.json', dropbox: { appKey }, oneDrive: { clientId }, sync: { grains: vehicleGrains, eagerPull: false } }` — déclarer les apps Dropbox/OneDrive (PKCE) et documenter les consoles dans README (copier les sections de mon-patrimoine ; URIs de redirect `<origine>/app/`).
+- `domain/payload.ts` : `vehicleGrains` (un grain par véhicule) + tests ; `domain/conflicts.ts` : nom et résumé d'un véhicule en conflit pour l'UI.
 - Picker provider (Dropbox/OneDrive/démo) — flow redirect+PKCE géré par la lib (`authenticate`/`resumeAuth`).
-- Vérif : tests mergePolicy ; `bun test` vert ; parcours auth Dropbox en local.
+- Vérif : tests `vehicleGrains` ; `bun test` vert ; parcours auth Dropbox en local.
 
 ### Étape 5 ✅ — UI véhicules (CRUD)
 
@@ -188,7 +187,7 @@ Points d'architecture repris de mon-patrimoine : `EventBus` typé, `AppStore` (�
 ## Risques / points ouverts
 
 - **Spec partielle** : la section « calcul de la consommation » contient un `//TODO` et l'approche « entre pleins » est remise en question — l'étape 11 démarre par une **session de conception dédiée** ; `APPLICATION.md` sera mis à jour au fil des décisions.
-- **Conflit intra-véhicule** : le merge unionne les événements par `id` ; un conflit de scalaires parque chez l'utilisateur (UNRECONCILABLE) — cohérent avec la lib.
+- **Conflit intra-véhicule** : le grain est le véhicule entier — deux appareils qui modifient le même véhicule (même sur des champs différents) donnent un conflit que l'utilisateur tranche véhicule par véhicule ; pour fusionner plus finement, il faudrait des grains plus fins.
 - **Interpolation de revente** : approximation assumée par la spec (TODO conservé dans le code + doc).
 - **CT = dernière entrée catégorie « Contrôles »** : simple, sans double saisie ; si une entrée de cette catégorie n'est pas un CT, la date de rappel peut être faussée → à confirmer.
 - **Multi-onglets** : `BroadcastChannel`/Web Locks non implémentés dans la lib aujourd'hui — hors scope v1.

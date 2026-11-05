@@ -3,11 +3,11 @@ import { evalFormula } from '../core/Formula.js';
 import { defaultUnits, displayToKm, kmToDisplay, distanceUnit, litresToDisplay, volumeUnit, formatDistance } from '../core/units.js';
 import { odometerViolations } from '../domain/odometer.js';
 import { todayString } from '../core/dates.js';
-import { newId } from '../domain/events.js';
 import type { Charge, Cost, CostCategory, FuelUp, LoanPeriod } from '../domain/events.js';
 import type { Vehicle } from '../domain/Vehicle.js';
 import { bindOverlayClose } from './overlayClose.js';
 import { ConfirmDialog } from './ConfirmDialog.js';
+import { escapeHtml } from './format.js';
 
 /**
  * Modal editors for the dated event collections of a vehicle. Every editor
@@ -136,11 +136,11 @@ function readingLabel(r: { kind: string; category?: string }): string {
  * known readings. Violations are listed in the dialog's alert block —
  * returns false so the caller can keep the modal open.
  */
-function checkOdometer(root: HTMLElement, vehicle: Vehicle, date: string, km: number | undefined, excludeId?: string): boolean {
+function checkOdometer(root: HTMLElement, vehicle: Vehicle, date: string, km: number | undefined, exclude?: FuelUp | Charge | Cost): boolean {
   const alert = root.querySelector('#ev-alert') as HTMLElement;
   if (km === undefined) { alert.hidden = true; return true; }
   const units = defaultUnits(I18n.language);
-  const violations = odometerViolations(vehicle, date, km, excludeId);
+  const violations = odometerViolations(vehicle, date, km, exclude);
   if (violations.length === 0) { alert.hidden = true; return true; }
   alert.innerHTML = `
     <strong>${I18n.t('events.odoRegression')}</strong>
@@ -168,22 +168,21 @@ export function openFuelUpEditor(vehicle: Vehicle, save: () => Promise<void>, en
       `<div class="form-group"><label><input id="ev-full" type="checkbox" ${entry?.full !== false ? 'checked' : ''} /> ${I18n.t('events.fullTank')}</label></div>` +
       amountField(entry?.amount),
     required: ['#ev-date'],
-    onDelete: entry ? async () => { vehicle.removeEvent(entry.id); await save(); } : undefined,
+    onDelete: entry ? async () => { vehicle.removeEvent(entry); await save(); } : undefined,
     onSave: (root) => {
       const date = str(root, '#ev-date');
       if (!date) return false;
       const vol = num(root, '#ev-volume');
       const litresPerUnit = units === 'imperial' ? 3.785411784 : 1;
       const odoKm = odo(root, units);
-      if (!checkOdometer(root, vehicle, date, odoKm, entry?.id)) return false;
+      if (!checkOdometer(root, vehicle, date, odoKm, entry)) return false;
       vehicle.recordFuelUp({
-        id: entry?.id ?? newId(),
         date,
         odometerKm: odoKm,
         volumeLitres: vol === undefined ? undefined : vol * litresPerUnit,
         amount: amount(root, '#ev-amount'),
         full: checked(root, '#ev-full')
-      });
+      }, entry);
       void save();
       return true;
     }
@@ -203,20 +202,19 @@ export function openChargeEditor(vehicle: Vehicle, save: () => Promise<void>, en
       `<div class="form-group"><label><input id="ev-full" type="checkbox" ${entry?.full ? 'checked' : ''} /> ${I18n.t('events.fullCharge')}</label></div>` +
       amountField(entry?.amount),
     required: ['#ev-date'],
-    onDelete: entry ? async () => { vehicle.removeEvent(entry.id); await save(); } : undefined,
+    onDelete: entry ? async () => { vehicle.removeEvent(entry); await save(); } : undefined,
     onSave: (root) => {
       const date = str(root, '#ev-date');
       if (!date) return false;
       const odoKm = odo(root, units);
-      if (!checkOdometer(root, vehicle, date, odoKm, entry?.id)) return false;
+      if (!checkOdometer(root, vehicle, date, odoKm, entry)) return false;
       vehicle.recordCharge({
-        id: entry?.id ?? newId(),
         date,
         odometerKm: odoKm,
         kwh: num(root, '#ev-kwh'),
         amount: amount(root, '#ev-amount'),
         full: checked(root, '#ev-full') || undefined
-      });
+      }, entry);
       void save();
       return true;
     }
@@ -243,24 +241,23 @@ export function openCostEditor(
       // Odometer is meaningless for acquisition and insurance costs — hidden.
       ((category === 'acquisition' || category === 'insurance') ? '' : odoField(I18n.t('events.odometer'), entry?.odometerKm, units)) +
       field('ev-comment', I18n.t('events.comment'),
-        `<input id="ev-comment" class="form-control" type="text" value="${entry?.comment ?? ''}" />`),
+        `<input id="ev-comment" class="form-control" type="text" value="${escapeHtml(entry?.comment ?? '')}" />`),
     required: ['#ev-date', '#ev-amount'],
-    onDelete: entry ? async () => { vehicle.removeEvent(entry.id); await save(); } : undefined,
+    onDelete: entry ? async () => { vehicle.removeEvent(entry); await save(); } : undefined,
     onSave: (root) => {
       const date = str(root, '#ev-date');
       const amountVal = amount(root, '#ev-amount');
       if (!date || amountVal === undefined) return false;
       const comment = str(root, '#ev-comment');
       const odoKm = odo(root, units);
-      if (!checkOdometer(root, vehicle, date, odoKm, entry?.id)) return false;
+      if (!checkOdometer(root, vehicle, date, odoKm, entry)) return false;
       vehicle.recordCost({
-        id: entry?.id ?? newId(),
         date,
         category,
         amount: amountVal,
         odometerKm: odoKm,
         comment: comment || undefined
-      });
+      }, entry);
       void save();
       return true;
     }
@@ -301,17 +298,16 @@ export function openLoanEditor(vehicle: Vehicle, save: () => Promise<void>, entr
       field('ev-note', I18n.t('events.note'),
         `<input id="ev-note" class="form-control" type="text" value="${entry?.note ?? ''}" />`),
     required: ['#ev-from', '#ev-to'],
-    onDelete: entry ? async () => { vehicle.removeEvent(entry.id); await save(); } : undefined,
+    onDelete: entry ? async () => { vehicle.removeEvent(entry); await save(); } : undefined,
     onSave: (root) => {
       const from = str(root, '#ev-from');
       const to = str(root, '#ev-to');
       if (!from || !to || to < from) return false;
       const note = str(root, '#ev-note');
       vehicle.recordLoanPeriod({
-        id: entry?.id ?? newId(),
         from, to,
         note: note || undefined
-      });
+      }, entry);
       void save();
       return true;
     }

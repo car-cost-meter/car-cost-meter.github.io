@@ -1,7 +1,6 @@
 import { describe, test, expect } from 'bun:test';
 import { createVehicle } from './payload.js';
 import { resaleValueAt, odometerAt, kmInPeriod, costsInPeriod, costsByCategory, depreciation, yearlyReport, loanPayments, expensesInPeriod, isRented, totalInvested } from './costs.js';
-import { newId } from './events.js';
 import { todayString, yearOf } from '../core/dates.js';
 
 function golf(): ReturnType<typeof createVehicle> {
@@ -12,11 +11,11 @@ function golf(): ReturnType<typeof createVehicle> {
   });
   v.recordResaleValue({ date: '2022-03-15', value: 17200 });
   v.recordResaleValue({ date: '2024-03-15', value: 14500 });
-  v.recordFuelUp({ id: newId(), date: '2021-06-15', odometerKm: 45000, volumeLitres: 50, amount: 50, full: true });
-  v.recordFuelUp({ id: newId(), date: '2022-06-15', odometerKm: 60000, volumeLitres: 50, amount: 60, full: true });
-  v.recordCost({ id: newId(), date: '2021-06-01', category: 'insurance', amount: 700 });
-  v.recordCost({ id: newId(), date: '2021-09-10', category: 'maintenance', amount: 300 });
-  v.recordCost({ id: newId(), date: '2022-04-01', category: 'insurance', amount: 720 });
+  v.recordFuelUp({ date: '2021-06-15', odometerKm: 45000, volumeLitres: 50, amount: 50, full: true });
+  v.recordFuelUp({ date: '2022-06-15', odometerKm: 60000, volumeLitres: 50, amount: 60, full: true });
+  v.recordCost({ date: '2021-06-01', category: 'insurance', amount: 700 });
+  v.recordCost({ date: '2021-09-10', category: 'maintenance', amount: 300 });
+  v.recordCost({ date: '2022-04-01', category: 'insurance', amount: 720 });
   return v;
 }
 

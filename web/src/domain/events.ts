@@ -2,8 +2,8 @@ import { compareDates } from '../core/dates.js';
 
 /**
  * Domain event types — the dated collections attached to a vehicle.
- * Every event carries a stable `id` so the merge policy can union the
- * collections across devices (edits keep the id, deletions remove it).
+ * Events carry no id: the merge policy reconciles each collection as a
+ * whole (same collection changed on both sides → conflict).
  */
 
 export type EnergyType = 'fuel' | 'electric' | 'hybrid';
@@ -80,7 +80,6 @@ export interface DatedValue {
  *  e.g. reconstructed history); such entries make the surrounding
  *  consumption windows "unknown". */
 export interface FuelUp {
-  id: string;
   date: string;
   odometerKm?: number;
   volumeLitres?: number;
@@ -91,7 +90,6 @@ export interface FuelUp {
 /** A battery charge (electric / hybrid vehicles). Same optionality rules
  *  as FuelUp — `full` marks a complete charge. */
 export interface Charge {
-  id: string;
   date: string;
   odometerKm?: number;
   kwh?: number;
@@ -103,7 +101,6 @@ export interface Charge {
  *  rental, theft): third-party fuel/charges are not recorded, so the
  *  overlapping consumption windows are reported as "unknown". */
 export interface LoanPeriod {
-  id: string;
   from: string;
   to: string;
   note?: string;
@@ -111,7 +108,6 @@ export interface LoanPeriod {
 
 /** A dated expense in one of the fixed categories. */
 export interface Cost {
-  id: string;
   date: string;
   category: CostCategory;
   amount: number;
@@ -124,9 +120,10 @@ export function sortByDate<T extends { date: string }>(entries: T[]): T[] {
   return entries.sort((a, b) => compareDates(a.date, b.date));
 }
 
-/** Inserts or replaces (same id) a dated entry, keeping the list sorted. */
-export function recordById<T extends { id: string; date: string }>(entries: T[], entry: T): T[] {
-  const rest = entries.filter(e => e.id !== entry.id);
+/** Inserts a dated entry, replacing `replaced` (same object reference)
+ *  when provided, and keeping the list sorted. */
+export function recordEntry<T extends { date: string }>(entries: T[], entry: T, replaced?: T): T[] {
+  const rest = replaced === undefined ? entries : entries.filter(e => e !== replaced);
   rest.push(entry);
   return sortByDate(rest);
 }

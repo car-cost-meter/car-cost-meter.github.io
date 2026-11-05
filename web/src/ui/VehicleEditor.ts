@@ -3,6 +3,7 @@ import { defaultUnits, displayToKm, kmToDisplay, distanceUnit } from '../core/un
 import { addMonths } from '../core/dates.js';
 import { bindOverlayClose } from './overlayClose.js';
 import { ConfirmDialog } from './ConfirmDialog.js';
+import { escapeHtml } from './format.js';
 import type { AppStore } from '../core/AppStore.js';
 import type { Vehicle } from '../domain/Vehicle.js';
 import type { EnergyType, VehicleType } from '../domain/events.js';
@@ -40,7 +41,7 @@ export class VehicleEditor {
         <div class="form-group">
           <label for="veh-name">${I18n.t('vehicles.name')} *</label>
           <input id="veh-name" class="form-control" type="text" required
-                 value="${vehicle?.name ?? ''}" />
+                 value="${escapeHtml(vehicle?.name ?? '')}" />
         </div>
         <div class="form-group">
           <label for="veh-type">${I18n.t('vehicles.vehicleType')}</label>

@@ -18,6 +18,6 @@
   "type": "module",
   "trustedDependencies": ["ts-cloud-storage-manager"],
   "dependencies": {
-    "ts-cloud-storage-manager": "github:fathzer/ts-cloud-storage-manager#v0.0.1-preview"
+    "ts-cloud-storage-manager": "github:fathzer/ts-cloud-storage-manager#v0.0.3-preview"
   }
 }

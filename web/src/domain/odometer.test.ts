@@ -1,15 +1,14 @@
 import { describe, test, expect } from 'bun:test';
 import { createVehicle } from './payload.js';
-import { newId } from './events.js';
 import { odometerReadings, odometerViolations } from './odometer.js';
 
 const v = createVehicle({
   name: 'Golf', energyType: 'fuel',
   acquisitionDate: '2021-03-15', initialOdometerKm: 42000
 });
-v.recordFuelUp({ id: 'f1', date: '2021-06-15', odometerKm: 45000, full: true });
-v.recordFuelUp({ id: 'f2', date: '2022-06-15', odometerKm: 60000, full: true });
-v.recordCost({ id: 'c1', date: '2021-12-01', category: 'maintenance', amount: 100, odometerKm: 50000 });
+v.recordFuelUp({ date: '2021-06-15', odometerKm: 45000, full: true });
+v.recordFuelUp({ date: '2022-06-15', odometerKm: 60000, full: true });
+v.recordCost({ date: '2021-12-01', category: 'maintenance', amount: 100, odometerKm: 50000 });
 
 describe('odometer readings & violations', () => {
   test('readings include initial + all event odometers, sorted', () => {
@@ -39,7 +38,7 @@ describe('odometer readings & violations', () => {
     expect(odometerViolations(v, '2021-06-15', 44000)).toEqual([]);
   });
 
-  test('excludeId skips the entry being edited', () => {
-    expect(odometerViolations(v, '2021-06-15', 46000, 'f1')).toEqual([]);
+  test('exclude skips the entry being edited', () => {
+    expect(odometerViolations(v, '2021-06-15', 46000, v.data.fuelUps[0])).toEqual([]);
   });
 });

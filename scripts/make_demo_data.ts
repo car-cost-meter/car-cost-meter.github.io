@@ -29,15 +29,12 @@ const noise = (i: number, amp = 1): number => {
 
 const TODAY = iso(Date.now());
 
-let seq = 0;
-const id = (): string => `demo-${(seq++).toString(36)}`;
-
 // ---------------------------------------------------------------- builders
 
-interface FuelUp { id: string; date: string; odometerKm?: number; volumeLitres?: number; amount?: number; full: boolean; }
-interface Charge { id: string; date: string; odometerKm?: number; kwh?: number; amount?: number; full?: boolean; }
-interface Cost { id: string; date: string; category: string; amount: number; comment?: string; odometerKm?: number; }
-interface LoanPeriod { id: string; from: string; to: string; note?: string; }
+interface FuelUp { date: string; odometerKm?: number; volumeLitres?: number; amount?: number; full: boolean; }
+interface Charge { date: string; odometerKm?: number; kwh?: number; amount?: number; full?: boolean; }
+interface Cost { date: string; category: string; amount: number; comment?: string; odometerKm?: number; }
+interface LoanPeriod { from: string; to: string; note?: string; }
 interface DatedValue { date: string; value: number; }
 
 /**
@@ -68,7 +65,7 @@ function fuelUps(opts: {
     const volume = full ? Math.round(litres * 10) / 10 : Math.round(litres * 3) / 10;
     litres = 0;
     const entry: FuelUp = {
-      id: id(), date,
+      date,
       odometerKm: Math.round(km),
       amount: round2(volume * opts.pricePerLitre * (1 + noise(j + 2, 0.04))),
       full
@@ -92,7 +89,7 @@ function charges(opts: {
     km += opts.kmPerDay * opts.everyDays * (1 + noise(j, 0.3));
     const kwh = Math.round(opts.kwhPerDay * opts.everyDays * (1 + noise(j + 1, 0.3)) * 10) / 10;
     entries.push({
-      id: id(), date: iso(t),
+      date: iso(t),
       odometerKm: Math.round(km),
       kwh,
       amount: round2(kwh * opts.pricePerKwh * (1 + noise(j + 2, 0.15))),
@@ -112,7 +109,7 @@ function yearlyCosts(opts: {
     const date = `${y}-${opts.monthDay}`;
     if (date > TODAY) break;
     out.push({
-      id: id(), date, category: opts.category,
+      date, category: opts.category,
       amount: round2(opts.amount + (opts.driftPerYear ?? 0) * (y - opts.fromYear)),
       comment: opts.comment
     });
@@ -124,7 +121,7 @@ function yearlyCosts(opts: {
 
 // 1. Golf TDI — bought second-hand in March 2021, ~110 km/day weekday use.
 const golfLoan: LoanPeriod = {
-  id: id(), from: '2023-07-10', to: '2023-08-05', note: 'Prêt à mon frère (déménagement)'
+  from: '2023-07-10', to: '2023-08-05', note: 'Prêt à mon frère (déménagement)'
 };
 const golfFill = fuelUps({
   from: '2021-03-20', to: TODAY, everyDays: 23, startKm: 42000,
@@ -150,18 +147,17 @@ const golf: Record<string, unknown> = {
   loanPeriods: [golfLoan],
   costs: [
     ...yearlyCosts({ fromYear: 2021, toYear: 2026, monthDay: '04-01', category: 'insurance', amount: 720, driftPerYear: 15, comment: 'Assurance tous risques' }),
-    { id: id(), date: '2021-03-22', category: 'acquisition', amount: 59, comment: 'Frais de dossier' },
-    { id: id(), date: '2021-10-12', category: 'maintenance', amount: 149.9, comment: 'Vidange + filtres', odometerKm: 55000 },
-    { id: id(), date: '2022-05-30', category: 'maintenance', amount: 412, comment: 'Pneus avant', odometerKm: 78000 },
-    { id: id(), date: '2022-09-20', category: 'inspection', amount: 78.5, comment: 'Contrôle technique', odometerKm: 89000 },
-    { id: id(), date: '2023-02-14', category: 'maintenance', amount: 233.4, comment: 'Plaquettes de frein', odometerKm: 105000 },
-    { id: id(), date: '2024-06-18', category: 'maintenance', amount: 186.2, comment: 'Vidange + filtres', odometerKm: 138000 },
-    { id: id(), date: '2024-09-22', category: 'inspection', amount: 82, comment: 'Contrôle technique', odometerKm: 152000 },
-    { id: id(), date: '2025-04-08', category: 'maintenance', amount: 640, comment: 'Distribution', odometerKm: 172000 },
-    { id: id(), date: '2025-11-25', category: 'maintenance', amount: 390, comment: 'Pneus 4 saisons', odometerKm: 190000 },
-    { id: id(), date: '2026-08-30', category: 'other', amount: 96.5, comment: 'Vignette + péages vacances' }
-  ],
-  updatedAt: '2026-09-01T08:30:00.000Z'
+    { date: '2021-03-22', category: 'acquisition', amount: 59, comment: 'Frais de dossier' },
+    { date: '2021-10-12', category: 'maintenance', amount: 149.9, comment: 'Vidange + filtres', odometerKm: 55000 },
+    { date: '2022-05-30', category: 'maintenance', amount: 412, comment: 'Pneus avant', odometerKm: 78000 },
+    { date: '2022-09-20', category: 'inspection', amount: 78.5, comment: 'Contrôle technique', odometerKm: 89000 },
+    { date: '2023-02-14', category: 'maintenance', amount: 233.4, comment: 'Plaquettes de frein', odometerKm: 105000 },
+    { date: '2024-06-18', category: 'maintenance', amount: 186.2, comment: 'Vidange + filtres', odometerKm: 138000 },
+    { date: '2024-09-22', category: 'inspection', amount: 82, comment: 'Contrôle technique', odometerKm: 152000 },
+    { date: '2025-04-08', category: 'maintenance', amount: 640, comment: 'Distribution', odometerKm: 172000 },
+    { date: '2025-11-25', category: 'maintenance', amount: 390, comment: 'Pneus 4 saisons', odometerKm: 190000 },
+    { date: '2026-08-30', category: 'other', amount: 96.5, comment: 'Vignette + péages vacances' }
+  ]
 };
 
 // 2. Zoe — bought in June 2023, urban use ~35 km/day.
@@ -184,12 +180,11 @@ const zoe: Record<string, unknown> = {
   loanPeriods: [],
   costs: [
     ...yearlyCosts({ fromYear: 2023, toYear: 2026, monthDay: '07-01', category: 'insurance', amount: 560, driftPerYear: 12 }),
-    { id: id(), date: '2024-03-20', category: 'maintenance', amount: 95, comment: 'Révision annuelle', odometerKm: 16000 },
-    { id: id(), date: '2025-03-18', category: 'maintenance', amount: 110, comment: 'Révision annuelle', odometerKm: 28000 },
-    { id: id(), date: '2026-03-22', category: 'maintenance', amount: 118, comment: 'Révision annuelle', odometerKm: 40000 },
-    { id: id(), date: '2025-12-04', category: 'other', amount: 59, comment: 'Badge télépéage' }
-  ],
-  updatedAt: '2026-10-20T18:00:00.000Z'
+    { date: '2024-03-20', category: 'maintenance', amount: 95, comment: 'Révision annuelle', odometerKm: 16000 },
+    { date: '2025-03-18', category: 'maintenance', amount: 110, comment: 'Révision annuelle', odometerKm: 28000 },
+    { date: '2026-03-22', category: 'maintenance', amount: 118, comment: 'Révision annuelle', odometerKm: 40000 },
+    { date: '2025-12-04', category: 'other', amount: 59, comment: 'Badge télépéage' }
+  ]
 };
 
 // 3. Captur E-Tech — hybrid bought new in Sept 2024, mixed use.
@@ -221,16 +216,15 @@ const captur: Record<string, unknown> = {
   loanPeriods: [],
   costs: [
     ...yearlyCosts({ fromYear: 2024, toYear: 2026, monthDay: '09-20', category: 'insurance', amount: 690, driftPerYear: 10 }),
-    { id: id(), date: '2025-09-05', category: 'maintenance', amount: 240, comment: 'Révision 1 an', odometerKm: 18000 },
-    { id: id(), date: '2026-09-04', category: 'maintenance', amount: 255, comment: 'Révision 2 ans', odometerKm: 37000 }
-  ],
-  updatedAt: '2026-10-15T19:45:00.000Z'
+    { date: '2025-09-05', category: 'maintenance', amount: 240, comment: 'Révision 1 an', odometerKm: 18000 },
+    { date: '2026-09-04', category: 'maintenance', amount: 255, comment: 'Révision 2 ans', odometerKm: 37000 }
+  ]
 };
 
 // ---------------------------------------------------------------- payload
 
 const payload = {
-  version: '1.0',
+  version: '1.1',
   vehicles: [golf, zoe, captur]
 };
 

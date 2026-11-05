@@ -3,7 +3,7 @@ import { evalFormula } from '../core/Formula.js';
 import { defaultUnits, formatDistance, litresToDisplay, volumeUnit } from '../core/units.js';
 import { LOAN_PERIODICITIES } from '../domain/events.js';
 import { isRented } from '../domain/costs.js';
-import { formatAmount } from './format.js';
+import { escapeHtml, formatAmount } from './format.js';
 import { componentStyles } from './componentStyles.js';
 import { openChargeEditor, openCostEditor, openFuelUpEditor, openResaleEditor } from './EventEditors.js';
 import { CostsView } from './CostsView.js';
@@ -228,7 +228,7 @@ export class VehicleDetailView {
       <div class="detail-page">
         <div class="detail-header">
           <div class="detail-title">
-            <h2>${this.vehicle.name}</h2>
+            <h2>${escapeHtml(this.vehicle.name)}</h2>
             ${this.inspectionAlertHtml()}
           </div>
           <button class="btn-secondary" id="detail-edit-vehicle">${I18n.t('detail.editVehicle')}</button>
@@ -361,15 +361,15 @@ export class VehicleDetailView {
     }
     const cat = this.costSubTab;
     const rows = this.vehicle.data.costs
-      .filter(c => c.category === cat)
-      .sort(VehicleDetailView.byDateKmDesc) // newest first, km tie-break
-      .map(c => this.costRow(c.id, cat, c.date, c.odometerKm, c.comment ?? '', c.amount));
+      .map((c, i) => ({ c, i }))
+      .filter(x => x.c.category === cat)
+      .sort((a, b) => VehicleDetailView.byDateKmDesc(a.c, b.c)) // newest first, km tie-break
+      .map(x => this.costRow(String(x.i), cat, x.c.date, x.c.odometerKm, x.c.comment ?? '', x.c.amount));
     scroll.innerHTML = this.rowsWithFab(rows, 'cost-sub-add');
     scroll.querySelector('#cost-sub-add')!.addEventListener('click', () =>
       openCostEditor(this.vehicle, this.save, undefined, { category: cat }));
-    this.bindRows(scroll, id => {
-      const e = this.vehicle.data.costs.find(c => c.id === id);
-      openCostEditor(this.vehicle, this.save, e);
+    this.bindRows(scroll, idx => {
+      openCostEditor(this.vehicle, this.save, this.vehicle.data.costs[Number(idx)]);
     });
   }
 
@@ -377,11 +377,13 @@ export class VehicleDetailView {
    *  each opening its own editor. */
   private renderEnergy(host: HTMLElement): void {
     const rows = [
-      ...this.vehicle.data.fuelUps.map(f => ({ date: f.date, odometerKm: f.odometerKm, html: this.energyRow(`fuelUp:${f.id}`, f) })),
-      ...this.vehicle.data.charges.map(c => ({ date: c.date, odometerKm: c.odometerKm, html: this.energyRow(`charge:${c.id}`, c) })),
+      ...this.vehicle.data.fuelUps.map((f, i) => ({ date: f.date, odometerKm: f.odometerKm, html: this.energyRow(`fuelUp:${i}`, f) })),
+      ...this.vehicle.data.charges.map((c, i) => ({ date: c.date, odometerKm: c.odometerKm, html: this.energyRow(`charge:${i}`, c) })),
       // Fuel costs recorded without a fill-up entry stay visible here too.
-      ...this.vehicle.data.costs.filter(c => c.category === 'fuel')
-        .map(c => ({ date: c.date, odometerKm: c.odometerKm, html: this.energyRow(`cost:${c.id}`, c) }))
+      ...this.vehicle.data.costs
+        .map((c, i) => ({ c, i }))
+        .filter(x => x.c.category === 'fuel')
+        .map(x => ({ date: x.c.date, odometerKm: x.c.odometerKm, html: this.energyRow(`cost:${x.i}`, x.c) }))
     ].sort(VehicleDetailView.byDateKmDesc).map(r => r.html); // newest first, km tie-break
     const addLabel = this.vehicle.data.energyType === 'electric'
       ? I18n.t('detail.addCharge')
@@ -403,10 +405,11 @@ export class VehicleDetailView {
     host.querySelector('#add-fuel')?.addEventListener('click', () => openFuelUpEditor(this.vehicle, this.save));
     host.querySelector('#add-charge')?.addEventListener('click', () => openChargeEditor(this.vehicle, this.save));
     this.bindRows(host, rawId => {
-      const [kind, id] = rawId.split(':', 2);
-      if (kind === 'fuelUp') openFuelUpEditor(this.vehicle, this.save, this.vehicle.data.fuelUps.find(f => f.id === id));
-      else if (kind === 'charge') openChargeEditor(this.vehicle, this.save, this.vehicle.data.charges.find(c => c.id === id));
-      else openCostEditor(this.vehicle, this.save, this.vehicle.data.costs.find(c => c.id === id));
+      const [kind, idx] = rawId.split(':', 2);
+      const i = Number(idx);
+      if (kind === 'fuelUp') openFuelUpEditor(this.vehicle, this.save, this.vehicle.data.fuelUps[i]);
+      else if (kind === 'charge') openChargeEditor(this.vehicle, this.save, this.vehicle.data.charges[i]);
+      else openCostEditor(this.vehicle, this.save, this.vehicle.data.costs[i]);
     });
   }
 
@@ -573,16 +576,16 @@ export class VehicleDetailView {
    *  — the initial amount and loan schedule live in the fixed form above. */
   private renderAcquisition(host: HTMLElement): void {
     const rows = this.vehicle.data.costs
-      .filter(c => c.category === 'acquisition')
-      .sort(VehicleDetailView.byDateKmDesc) // newest first, km tie-break
-      .map(c => this.costRow(c.id, 'acquisition', c.date, c.odometerKm, c.comment ?? '', c.amount));
+      .map((c, i) => ({ c, i }))
+      .filter(x => x.c.category === 'acquisition')
+      .sort((a, b) => VehicleDetailView.byDateKmDesc(a.c, b.c)) // newest first, km tie-break
+      .map(x => this.costRow(String(x.i), 'acquisition', x.c.date, x.c.odometerKm, x.c.comment ?? '', x.c.amount));
     host.innerHTML = `<p class="acq-other-title">${I18n.t('detail.acqOtherCosts')}</p>` +
       this.rowsWithFab(rows, 'cost-sub-add');
     host.querySelector('#cost-sub-add')!.addEventListener('click', () =>
       openCostEditor(this.vehicle, this.save, undefined, { category: 'acquisition' }));
-    this.bindRows(host, id => {
-      const e = this.vehicle.data.costs.find(c => c.id === id);
-      openCostEditor(this.vehicle, this.save, e);
+    this.bindRows(host, idx => {
+      openCostEditor(this.vehicle, this.save, this.vehicle.data.costs[Number(idx)]);
     });
   }
 
@@ -625,7 +628,7 @@ export class VehicleDetailView {
 
   /** Energy row (fill-up, charge or fuel cost): icon + date + km +
    *  volume/kWh column + main + amount. */
-  private energyRow(id: string, e: {
+  private energyRow(key: string, e: {
     date: string; odometerKm?: number; amount?: number;
     volumeLitres?: number; kwh?: number; full?: boolean; comment?: string;
   }): string {
@@ -638,8 +641,8 @@ export class VehicleDetailView {
       qty = `${I18n.formatNumber(e.kwh, { maximumFractionDigits: 1 })} kWh`;
     }
     const fullKey = isCharge ? 'events.fullCharge' : 'events.fullTank';
-    const main = e.full ? `✓ ${I18n.t(fullKey)}` : (e.comment ?? '');
-    return `<div class="event-row" data-id="${id}">
+    const main = e.full ? `✓ ${I18n.t(fullKey)}` : escapeHtml(e.comment ?? '');
+    return `<div class="event-row" data-id="${key}">
       <span class="event-date">${I18n.formatDate(e.date)}</span>
       ${this.kmCell(e.odometerKm)}
       <span class="event-qty">${qty}</span>
@@ -649,13 +652,13 @@ export class VehicleDetailView {
   }
 
   /** Cost row: date + km (when the category can hold one) + comment + amount. */
-  private costRow(id: string, category: CostCategory, date: string, odometerKm: number | undefined, comment: string, amount: number): string {
+  private costRow(key: string, category: CostCategory, date: string, odometerKm: number | undefined, comment: string, amount: number): string {
     // Acquisition and insurance have no odometer field — no km column.
     const km = category === 'acquisition' || category === 'insurance' ? '' : this.kmCell(odometerKm);
-    return `<div class="event-row" data-id="${id}">
+    return `<div class="event-row" data-id="${key}">
       <span class="event-date">${I18n.formatDate(date)}</span>
       ${km}
-      <span class="event-main">${comment}</span>
+      <span class="event-main">${escapeHtml(comment)}</span>
       <span class="event-amount">${formatAmount(amount)}</span>
     </div>`;
   }

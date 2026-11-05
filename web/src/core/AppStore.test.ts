@@ -35,7 +35,7 @@ describe('AppStore', () => {
         acquisitionDate: '2024-01-15', initialOdometerKm: 12000,
         acquisition: { initialAmount: 25000 }, inspectionPeriodMonths: 24,
         resaleValues: [], fuelUps: [], charges: [], loanPeriods: [],
-        costs: [], updatedAt: '2024-01-15T00:00:00Z'
+        costs: []
       }]
     };
     const store = new AppStore(fakeManager(raw));
@@ -51,7 +51,7 @@ describe('AppStore', () => {
     await store.init();
     const vehicle = await store.addVehicle({ name: 'Golf', energyType: 'fuel' });
     const payload = manager._saved.at(-1) as ExportPayload;
-    expect(payload.version).toBe('1.0');
+    expect(payload.version).toBe('1.1');
     expect(payload.vehicles).toHaveLength(1);
     expect(payload.vehicles[0].name).toBe('Golf');
     expect(store.findVehicle(vehicle.id)).toBe(vehicle);

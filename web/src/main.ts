@@ -2,7 +2,7 @@ import { I18n } from './core/I18n.js';
 import { Settings } from './core/settings.js';
 import type { Theme } from './core/settings.js';
 import { AppStore } from './core/AppStore.js';
-import { mergePolicy } from './domain/mergePolicy.js';
+import { vehicleGrains } from './domain/payload.js';
 import { DashboardView } from './ui/DashboardView.js';
 import { VehicleEditor } from './ui/VehicleEditor.js';
 import { SimulatorView } from './ui/SimulatorView.js';
@@ -25,9 +25,10 @@ const STORAGE_CONFIG: StorageConfig = {
   fileName: 'car-cost-meter.json',
   dropbox: { appKey: DROPBOX_APP_KEY },
   oneDrive: { clientId: ONEDRIVE_CLIENT_ID },
-  // Offline-first sync with per-vehicle merge; remote updates wait for the
-  // banner's update button instead of reloading data under the user's eyes.
-  sync: { policy: mergePolicy, eagerPull: false }
+  // Offline-first sync with per-vehicle merge (one grain per vehicle);
+  // remote updates wait for the banner's update button instead of
+  // reloading data under the user's eyes.
+  sync: { grains: vehicleGrains, eagerPull: false }
 };
 
 const settings = Settings.load();

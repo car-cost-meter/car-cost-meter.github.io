@@ -161,7 +161,6 @@ export class AppStore extends EventBus<AppStoreEvents> {
     const vehicle = this.findVehicle(id);
     if (!vehicle) return;
     Object.assign(vehicle.data, patch);
-    vehicle.data.updatedAt = new Date().toISOString();
     this.emit('state:changed', this.state);
     await this.save();
   }

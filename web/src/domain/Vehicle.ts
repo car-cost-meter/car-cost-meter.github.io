@@ -1,12 +1,12 @@
 import { addMonths, compareDates, todayString } from '../core/dates.js';
-import { recordById, sortByDate } from './events.js';
+import { recordEntry, sortByDate } from './events.js';
 import type {
   AcquisitionData, Charge, Cost, DatedValue, EnergyType, FuelUp, LoanPeriod
 } from './events.js';
 
 export const DEFAULT_INSPECTION_PERIOD_MONTHS = 24;
 
-/** Serialized vehicle shape — the merge grain inside car-cost-meter.json. */
+/** Serialized vehicle shape — the sync grain inside car-cost-meter.json. */
 export interface VehicleData {
   id: string;
   name: string;
@@ -33,8 +33,6 @@ export interface VehicleData {
   charges: Charge[];
   loanPeriods: LoanPeriod[];
   costs: Cost[];
-  /** Last local modification — used to break scalar merge ties. */
-  updatedAt: string;
 }
 
 export class Vehicle {
@@ -57,25 +55,18 @@ export class Vehicle {
   /** Whether the vehicle uses the kWh stream (electric, hybrid). */
   usesElectricity(): boolean { return this.data.energyType !== 'fuel'; }
 
-  /** Stamps the vehicle as locally modified (called on every mutation). */
-  private touch(): void {
-    this.data.updatedAt = new Date().toISOString();
+  /** Records a fuel fill-up — replaces `replace` (the edited entry) when
+   *  provided. */
+  recordFuelUp(entry: FuelUp, replace?: FuelUp): void {
+    this.data.fuelUps = recordEntry(this.data.fuelUps, entry, replace);
   }
 
-  /** Records (or replaces, same id) a fuel fill-up. */
-  recordFuelUp(entry: FuelUp): void {
-    this.data.fuelUps = recordById(this.data.fuelUps, entry);
-    this.touch();
+  recordCharge(entry: Charge, replace?: Charge): void {
+    this.data.charges = recordEntry(this.data.charges, entry, replace);
   }
 
-  recordCharge(entry: Charge): void {
-    this.data.charges = recordById(this.data.charges, entry);
-    this.touch();
-  }
-
-  recordCost(entry: Cost): void {
-    this.data.costs = recordById(this.data.costs, entry);
-    this.touch();
+  recordCost(entry: Cost, replace?: Cost): void {
+    this.data.costs = recordEntry(this.data.costs, entry, replace);
   }
 
   /** Records a dated resale-value estimate (one per date — an entry on an
@@ -84,38 +75,32 @@ export class Vehicle {
     const rest = this.data.resaleValues.filter(v => v.date !== entry.date);
     rest.push(entry);
     this.data.resaleValues = sortByDate(rest);
-    this.touch();
   }
 
-  recordLoanPeriod(entry: LoanPeriod): void {
-    const rest = this.data.loanPeriods.filter(p => p.id !== entry.id);
+  recordLoanPeriod(entry: LoanPeriod, replace?: LoanPeriod): void {
+    const rest = replace === undefined
+      ? this.data.loanPeriods
+      : this.data.loanPeriods.filter(p => p !== replace);
     rest.push(entry);
     rest.sort((a, b) => compareDates(a.from, b.from));
     this.data.loanPeriods = rest;
-    this.touch();
   }
 
   /** Removes the resale-value estimate pinned at `date`, if any. */
   removeResaleValue(date: string): void {
-    this.data.resaleValues = this.data.resaleValues.filter(v => v.date !== date);
-    this.touch();
+    const next = this.data.resaleValues.filter(v => v.date !== date);
+    if (next.length === this.data.resaleValues.length) return;
+    this.data.resaleValues = next;
   }
 
-  /** Removes an event by id, whatever collection it belongs to. */
-  removeEvent(id: string): void {
-    this.data.fuelUps = this.data.fuelUps.filter(e => e.id !== id);
-    this.data.charges = this.data.charges.filter(e => e.id !== id);
-    this.data.costs = this.data.costs.filter(e => e.id !== id);
-    this.data.loanPeriods = this.data.loanPeriods.filter(e => e.id !== id);
-    this.touch();
-  }
-
-  /** Finds the event with this id across all dated collections. */
-  findEvent(id: string): FuelUp | Charge | Cost | LoanPeriod | undefined {
-    return this.data.fuelUps.find(e => e.id === id)
-      ?? this.data.charges.find(e => e.id === id)
-      ?? this.data.costs.find(e => e.id === id)
-      ?? this.data.loanPeriods.find(e => e.id === id);
+  /** Removes an event (same object reference), whatever collection it
+   *  belongs to. */
+  removeEvent(entry: FuelUp | Charge | Cost | LoanPeriod): void {
+    const drop = <T extends object>(list: T[]): T[] => list.filter(e => e !== entry);
+    this.data.fuelUps = drop(this.data.fuelUps);
+    this.data.charges = drop(this.data.charges);
+    this.data.costs = drop(this.data.costs);
+    this.data.loanPeriods = drop(this.data.loanPeriods);
   }
 
   /** Date of the last recorded technical inspection, if any — the latest

@@ -36,14 +36,27 @@ export const fr = {
     motorcycle: 'Moto'
   },
   syncBanner: {
-    conflict: 'Des modifications sur un autre appareil sont en conflit avec les vôtres. Que faut-il garder ?',
+    conflictOne: 'Le véhicule « {name} » a été modifié ici et sur un autre appareil. Quelle version garder ?',
+    conflictMany: '{count} véhicules ont été modifiés ici et sur un autre appareil.',
     keepLocal: 'Garder mes modifications',
     keepCloud: 'Garder la version du cloud',
+    resolve: 'Résoudre…',
     savePending: 'Sauvegarde en attente — nouvelle tentative {time}',
     retryAt: 'à {time}',
     retrySoon: 'bientôt',
     remoteUpdate: 'Une nouvelle version de vos données est disponible.',
     update: 'Mettre à jour'
+  },
+  conflictDialog: {
+    title: 'Conflits de synchronisation',
+    intro: 'Ces véhicules ont été modifiés ici et sur un autre appareil. Choisissez la version à garder pour chacun : ceux que vous laissez de côté restent à résoudre.',
+    local: 'Ma version',
+    cloud: 'Version du cloud',
+    deleted: 'supprimé',
+    entries: 'saisies : {count}',
+    keepAllLocal: 'Tout garder en local',
+    keepAllCloud: 'Tout garder du cloud',
+    apply: 'Appliquer'
   },
   vehicles: {
     empty: 'Aucun véhicule pour le moment.',

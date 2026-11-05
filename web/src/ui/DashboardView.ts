@@ -4,6 +4,7 @@ import type { AppStore, AppState } from '../core/AppStore.js';
 import type { StorageManager, ProviderName } from 'ts-cloud-storage-manager';
 import type { Vehicle } from '../domain/Vehicle.js';
 import { componentStyles } from './componentStyles.js';
+import { escapeHtml } from './format.js';
 import { VehicleDetailView } from './VehicleDetailView.js';
 import type { CostSubTab, Tab } from './VehicleDetailView.js';
 import { ADD_ICON, CAR_ICON, VAN_ICON, MOTORCYCLE_ICON, SETTINGS_ICON, LOGOUT_ICON, SIMULATOR_ICON, IMPORT_ICON, EXPORT_ICON, FUEL_ICON, BATTERY_ICON, MENU_ICON, HELP_ICON } from './icons.js';
@@ -308,7 +309,7 @@ export class DashboardView {
     this.openVehicleId = vehicle.id;
     const bc = this.root.querySelector('#breadcrumb-root') as HTMLElement;
     bc.hidden = false;
-    bc.innerHTML = `<a id="bc-list">${I18n.t('nav.vehicles')}</a><span class="bc-sep">/</span><span>${vehicle.name}</span>`;
+    bc.innerHTML = `<a id="bc-list">${I18n.t('nav.vehicles')}</a><span class="bc-sep">/</span><span>${escapeHtml(vehicle.name)}</span>`;
     bc.querySelector('#bc-list')!.addEventListener('click', () => {
       this.openVehicleId = undefined;
       this.render(this.store.state);
@@ -382,7 +383,7 @@ export class DashboardView {
       <article class="vehicle-card" data-vehicle-id="${vehicle.id}">
         <div class="vehicle-card-header">
           <span class="vehicle-card-icon">${icon}</span>
-          <h3 class="vehicle-card-name">${vehicle.name}</h3>
+          <h3 class="vehicle-card-name">${escapeHtml(vehicle.name)}</h3>
           <span class="vehicle-energy-chip">${energy}</span>
         </div>
         <div class="vehicle-card-meta">
