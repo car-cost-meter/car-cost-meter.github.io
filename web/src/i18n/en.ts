@@ -1,7 +1,8 @@
 export const en = {
   app: {
     title: 'Car Cost Meter',
-    tagline: 'A free and open source app to compute the real cost of your vehicles — purchase, maintenance, insurance, fuel — and track their consumption.'
+    tagline: 'A free and open source app to compute the real cost of your vehicles — purchase, maintenance, insurance, fuel — and track their consumption.',
+    preliminary: 'Early version — please be gentle'
   },
   landing: {
     connect: 'Sign in',
@@ -23,6 +24,7 @@ export const en = {
     chooseProvider: 'Choose your storage space',
     connecting: 'Connecting…',
     connectFailed: 'Connection failed. Please try again.',
+    comingSoon: 'Coming soon',
     demoButton: 'Demo mode'
   },
   energy: {

@@ -58,6 +58,8 @@ Il y a plusieurs cas de figure suivant le type d'appoint de carburant :
 - Le plus simple : L'utilisateur a fait le plein et a noté la quantité consommée.
 - //TODO
 
+**Implémenté (liste de l'onglet Édition)** : chaque plein ou charge affiche le **prix unitaire** (€/L ou €/gal, €/kWh) dès que la quantité et le montant sont connus, et la **consommation de la fenêtre** quand l'entrée est marquée « complet » : elle est calculée entre le kilométrage du précédent plein complet et celui du plein courant, en sommant tous les appoints postérieurs au plein précédent (le volume du plein précédent, brûlé avant son relevé kilométrique, est exclu). La fenêtre est « inconnue » — rien n'est affiché — si un appoint sans volume, un coût de catégorie Carburant ou une période de prêt s'y trouve.
+
 ### Calcul des coûts
 
 L'application calcule les coûts de propriété d'un véhicule en fonction des données saisies par l'utilisateur.

@@ -29,7 +29,7 @@ const svgEmoji = (body: string, size = 24): string =>
 /** Vehicle-type icons (card header) — side silhouettes facing right. */
 export const CAR_ICON = svgEmoji(
   '<circle cx="7.2" cy="16" r="2.3"/><circle cx="16.8" cy="16" r="2.3"/>' +
-  '<path d="M2.5 13.5 L5.5 13 L7 9 Q7.5 7 10 7 L13.5 7 Q16 7 17 9.5 L18.5 12.5 L21.5 13.5"/>' +
+  '<path d="M2.5 13.5 L6 7.8 Q6.5 7 7.6 7 L13.5 7 Q16 7 17 9.5 L18.5 12.5 L21.5 13.5"/>' +
   '<path d="M2.5 16 H5 M9.5 16 H14.5 M19 16 H21.5"/><path d="M21.5 13.5 V16"/>');
 
 export const VAN_ICON = svgEmoji(

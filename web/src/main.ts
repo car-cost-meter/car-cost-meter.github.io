@@ -31,6 +31,12 @@ const STORAGE_CONFIG: StorageConfig = {
   sync: { grains: vehicleGrains, eagerPull: false }
 };
 
+// Providers whose OAuth app is not registered yet (placeholder client
+// id) are shown greyed out in the picker instead of failing at connect.
+const COMING_SOON_PROVIDERS: ReadonlySet<string> = new Set(
+  ONEDRIVE_CLIENT_ID.startsWith('TODO') ? ['onedrive'] : []
+);
+
 const settings = Settings.load();
 I18n.setLanguage(settings.get('language') ?? I18n.detectLanguage());
 
@@ -79,9 +85,18 @@ function bootLanding(): void {
       const text = I18n.t(key);
       if (text !== key) el.textContent = text;
     });
+    document.querySelectorAll<HTMLButtonElement>('.demo-banner .banner-close').forEach(btn => {
+      btn.title = I18n.t('common.close');
+      btn.setAttribute('aria-label', btn.title);
+    });
     document.documentElement.lang = I18n.language;
   };
   if (I18n.language !== 'fr') swap();
+  // The preliminary banner can be dismissed for the session — a reload
+  // shows it again (nothing persisted).
+  document.querySelectorAll<HTMLElement>('.demo-banner .banner-close').forEach(btn => {
+    btn.addEventListener('click', () => btn.closest('.demo-banner')?.remove());
+  });
   // FR/EN switcher — persists in settings and re-translates in place.
   document.querySelectorAll<HTMLElement>('[data-lang-switch]').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -103,6 +118,7 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
   const storageManager = new StorageManager(STORAGE_CONFIG);
   const store = new AppStore(storageManager);
   const dashboard = new DashboardView(appRoot, store, storageManager);
+  dashboard.comingSoonProviders = COMING_SOON_PROVIDERS;
   mountSyncBanner(storageManager);
 
   dashboard.onProviderPick = async (name) => {
@@ -227,7 +243,7 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
     // auth flow; a bare ?connect shows the picker card instead.
     const wanted = params.get('connect');
     const provider = storageManager.availableProviders().find(p => p.name === wanted);
-    if (provider) {
+    if (provider && !COMING_SOON_PROVIDERS.has(provider.name)) {
       await dashboard.onProviderPick(provider.name);
     } else {
       dashboard.showProviderPicker();

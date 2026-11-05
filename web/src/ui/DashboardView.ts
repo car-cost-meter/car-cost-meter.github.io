@@ -114,6 +114,20 @@ const CSS = `
   color: var(--danger);
   margin-bottom: var(--space-md);
 }
+/* Provider buttons may carry a note in their bottom-right corner —
+   symmetric block padding keeps the label vertically centered. */
+.provider-btn {
+  position: relative;
+  padding-block: 1.5rem;
+}
+.provider-btn .btn-note {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.3rem;
+  font-size: var(--font-size-xs);
+  font-weight: normal;
+  opacity: 0.75;
+}
 .empty-state {
   text-align: center;
   color: var(--text-muted);
@@ -153,6 +167,12 @@ export class DashboardView {
   private readonly storage: StorageManager;
   private loading = false;
   private connectFailed = false;
+  /** The "early version" banner once dismissed — session-only, a reload
+   *  shows it again. */
+  private prelimDismissed = false;
+  /** Provider names shown disabled in the picker — wired by main.ts
+   *  (e.g. a provider whose OAuth app is not registered yet). */
+  comingSoonProviders: ReadonlySet<string> = new Set();
 
   constructor(root: HTMLElement, store: AppStore, storage: StorageManager) {
     this.root = root;
@@ -253,13 +273,22 @@ export class DashboardView {
     handlers[action]?.();
   }
 
-  /** Demo/read-only banner, shown while the active provider is read-only. */
+  /** Top strips: the always-on "early version" banner plus the
+   *  demo/read-only banner while the active provider is read-only. */
   renderDemoBanner(): void {
     const host = this.root.querySelector('#demo-banner-root');
     if (!host) return;
-    host.innerHTML = this.storage.currentProvider.isReadOnly()
+    const demo = this.storage.currentProvider.isReadOnly()
       ? `<div class="demo-banner">${I18n.t('demo.banner')}</div>`
       : '';
+    const close = I18n.t('common.close');
+    const prelim = this.prelimDismissed ? ''
+      : `<div class="demo-banner">${I18n.t('app.preliminary')}<button class="banner-close" title="${close}" aria-label="${close}">×</button></div>`;
+    host.innerHTML = `${prelim}${demo}`;
+    host.querySelector('.banner-close')?.addEventListener('click', () => {
+      this.prelimDismissed = true;
+      this.renderDemoBanner();
+    });
   }
 
   showLoading(isLoading: boolean): void {
@@ -285,7 +314,11 @@ export class DashboardView {
         <h2>${I18n.t('auth.chooseProvider')}</h2>
         ${this.connectFailed ? `<p class="connect-error">${I18n.t('auth.connectFailed')}</p>` : ''}
         <div class="provider-buttons">
-          ${providers.map(p => `<button class="btn-primary" data-provider="${p.name}">${p.label}</button>`).join('')}
+          ${providers.map(p => {
+            const soon = this.comingSoonProviders.has(p.name);
+            const note = soon ? `<span class="btn-note">${I18n.t('auth.comingSoon')}</span>` : '';
+            return `<button class="btn-primary provider-btn" data-provider="${p.name}" ${soon ? 'disabled' : ''}>${p.label}${note}</button>`;
+          }).join('')}
         </div>
         <a href="#" class="demo-link" id="demo-entry">${I18n.t('landing.tryDemo')}</a>
       </div>`;

@@ -1,8 +1,9 @@
 import { I18n } from '../core/I18n.js';
 import { evalFormula } from '../core/Formula.js';
-import { defaultUnits, formatDistance, litresToDisplay, volumeUnit } from '../core/units.js';
+import { defaultUnits, formatDistance, formatElecConsumption, formatFuelConsumption, litresToDisplay, volumeUnit } from '../core/units.js';
 import { LOAN_PERIODICITIES } from '../domain/events.js';
 import { isRented } from '../domain/costs.js';
+import { chargeConsumption, fuelUpConsumption } from '../domain/consumption.js';
 import { escapeHtml, formatAmount } from './format.js';
 import { componentStyles } from './componentStyles.js';
 import { openChargeEditor, openCostEditor, openFuelUpEditor, openResaleEditor } from './EventEditors.js';
@@ -11,7 +12,7 @@ import { FUEL_ICON, BATTERY_ICON, MAINTENANCE_ICON, REPAIR_ICON, INSPECTION_ICON
 import { VehicleEditor } from './VehicleEditor.js';
 import type { AppStore } from '../core/AppStore.js';
 import type { Vehicle } from '../domain/Vehicle.js';
-import type { AcquisitionData, CostCategory, LoanPeriodicity } from '../domain/events.js';
+import type { AcquisitionData, CostCategory, LoanPeriodicity, LoanSchedule } from '../domain/events.js';
 
 const CSS = `
 .detail-tabs, .cost-subtabs {
@@ -20,7 +21,12 @@ const CSS = `
   border-bottom: 1px solid var(--card-border);
   margin-bottom: var(--space-md);
   overflow-x: auto;
+  /* Never squeeze the strip when the content below is too tall. */
+  flex-shrink: 0;
 }
+/* The fixed zone (acquisition form) scrolls internally when taller than
+   the space left — it must not push the tab strip out of view. */
+#cost-fixed { overflow-y: auto; min-height: 0; }
 .detail-tab, .cost-subtab {
   border: none;
   background: none;
@@ -64,6 +70,25 @@ const CSS = `
   text-align: right;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+.event-row .event-sub {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+.event-row .event-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--accent);
+}
+.event-row .event-full svg { width: 0.9rem; height: 0.9rem; }
+/* Compact rows on phones: no horizontal scroll, slimmer columns. */
+@media (max-width: 640px) {
+  .event-row { gap: var(--space-sm); padding: var(--space-sm) var(--space-xs); }
+  .event-row .event-date { min-width: 4.2rem; }
+  .event-row .event-km { min-width: 4.6rem; }
+  .event-row .event-qty { min-width: 3.4rem; }
 }
 .event-row .event-main { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .event-row .event-amount { font-weight: var(--font-weight-semibold); white-space: nowrap; }
@@ -179,6 +204,9 @@ export type Tab = 'edit' | 'analysis' | 'consumption';
 export type CostSubTab = 'energy' | CostCategory | 'resale';
 const COST_SUBTABS: CostSubTab[] = ['energy', 'maintenance', 'repair', 'inspection', 'insurance', 'acquisition', 'resale', 'other'];
 
+/** Second muted line inside a row cell. */
+const subLine = (text: string): string => `<span class="event-sub">${text}</span>`;
+
 /** Category icons shown at the start of each row. */
 const CATEGORY_ICONS: Record<CostCategory, string> = {
   acquisition: ACQUISITION_ICON,
@@ -199,6 +227,12 @@ const CATEGORY_ICONS: Record<CostCategory, string> = {
 export class VehicleDetailView {
   private tab: Tab;
   private costSubTab: CostSubTab = 'energy';
+  /** Which cost sub-tab's list is currently in the DOM — the key under
+   *  which its scroll position is saved. */
+  private renderedSubTab?: CostSubTab;
+  /** Scroll position remembered per cost sub-tab — survives the DOM
+   *  rebuild on tab switches and saves. */
+  private readonly scrollTops = new Map<CostSubTab, number>();
 
   constructor(
     private readonly host: HTMLElement,
@@ -224,6 +258,8 @@ export class VehicleDetailView {
   }
 
   render(): void {
+    // Keep the open list's scroll position before the DOM rebuild wipes it.
+    this.captureScroll();
     this.host.innerHTML = `
       <div class="detail-page">
         <div class="detail-header">
@@ -272,8 +308,10 @@ export class VehicleDetailView {
     }).join('');
     host.querySelectorAll<HTMLButtonElement>('.detail-tab').forEach(btn => {
       btn.addEventListener('click', () => {
+        // Toggle the class in place — rebuilding the strip would reset
+        // its own horizontal scroll on narrow screens.
         this.tab = btn.dataset.tab as Tab;
-        this.renderTabs();
+        host.querySelectorAll('.detail-tab').forEach(b => b.classList.toggle('active', b === btn));
         this.renderList();
       });
     });
@@ -281,6 +319,7 @@ export class VehicleDetailView {
 
   private renderList(): void {
     const host = this.host.querySelector('#detail-body') as HTMLElement;
+    this.captureScroll();
     switch (this.tab) {
       case 'analysis':
         host.innerHTML = '<div class="detail-scroll"></div>';
@@ -323,6 +362,7 @@ export class VehicleDetailView {
   }
 
   private renderCosts(host: HTMLElement): void {
+    this.captureScroll();
     host.innerHTML = `
       <div class="cost-subtabs">
         ${COST_SUBTABS.filter(t => t !== 'resale' || !isRented(this.vehicle)).map(t => `
@@ -332,16 +372,37 @@ export class VehicleDetailView {
       </div>
       <div id="cost-fixed"></div>
       <div class="detail-scroll" id="cost-scroll"></div>`;
+    const fixed = host.querySelector('#cost-fixed') as HTMLElement;
+    const scroll = host.querySelector('#cost-scroll') as HTMLElement;
     host.querySelectorAll<HTMLButtonElement>('.cost-subtab').forEach(btn => {
       btn.addEventListener('click', () => {
+        // Only the content under the tab strip is rebuilt — the strip
+        // itself (and its own scroll) stays untouched.
+        this.captureScroll();
         this.costSubTab = btn.dataset.subtab as CostSubTab;
-        this.renderCosts(host);
+        host.querySelectorAll('.cost-subtab').forEach(b => b.classList.toggle('active', b === btn));
+        this.showCostSubTab(fixed, scroll);
       });
     });
-    this.renderCostSubTab(
-      host.querySelector('#cost-fixed') as HTMLElement,
-      host.querySelector('#cost-scroll') as HTMLElement
-    );
+    this.showCostSubTab(fixed, scroll);
+  }
+
+  /** Renders the current cost sub-tab's content and restores the scroll
+   *  position remembered for it. */
+  private showCostSubTab(fixed: HTMLElement, scroll: HTMLElement): void {
+    this.renderCostSubTab(fixed, scroll);
+    this.renderedSubTab = this.costSubTab;
+    scroll.scrollTop = this.scrollTops.get(this.costSubTab) ?? 0;
+  }
+
+  /** Saves the scroll position of the visible cost list under its
+   *  sub-tab — called just before the DOM is rebuilt; a no-op outside
+   *  the Costs tab. */
+  private captureScroll(): void {
+    const scroll = this.host.querySelector<HTMLElement>('#cost-scroll');
+    if (scroll && this.renderedSubTab !== undefined) {
+      this.scrollTops.set(this.renderedSubTab, scroll.scrollTop);
+    }
   }
 
   private energyIcons(): string {
@@ -377,8 +438,8 @@ export class VehicleDetailView {
    *  each opening its own editor. */
   private renderEnergy(host: HTMLElement): void {
     const rows = [
-      ...this.vehicle.data.fuelUps.map((f, i) => ({ date: f.date, odometerKm: f.odometerKm, html: this.energyRow(`fuelUp:${i}`, f) })),
-      ...this.vehicle.data.charges.map((c, i) => ({ date: c.date, odometerKm: c.odometerKm, html: this.energyRow(`charge:${i}`, c) })),
+      ...this.vehicle.data.fuelUps.map((f, i) => ({ date: f.date, odometerKm: f.odometerKm, html: this.energyRow(`fuelUp:${i}`, f, this.consumptionLabel(fuelUpConsumption(this.vehicle.data, i)?.per100km, 'fuel')) })),
+      ...this.vehicle.data.charges.map((c, i) => ({ date: c.date, odometerKm: c.odometerKm, html: this.energyRow(`charge:${i}`, c, this.consumptionLabel(chargeConsumption(this.vehicle.data, i)?.per100km, 'elec')) })),
       // Fuel costs recorded without a fill-up entry stay visible here too.
       ...this.vehicle.data.costs
         .map((c, i) => ({ c, i }))
@@ -419,15 +480,21 @@ export class VehicleDetailView {
     const acq = this.vehicle.data.acquisition;
     const loan = acq?.loan;
     // Financing selector value derived from the saved loan.
-    const fin = loan === undefined ? ''
-      : loan.kind === 'lease' ? (loan.optionAmount !== undefined || loan.optionExercised ? 'loa' : 'lld')
-      : 'credit';
+    let fin = '';
+    if (loan?.kind === 'lease') {
+      fin = loan.optionAmount !== undefined || loan.optionExercised ? 'loa' : 'lld';
+    } else if (loan !== undefined) {
+      fin = 'credit';
+    }
     const finOptions = [
       { value: '', key: 'acqFinCash' },
       { value: 'credit', key: 'acqFinCredit' },
       { value: 'lld', key: 'acqFinLld' },
       { value: 'loa', key: 'acqFinLoa' }
-    ].map(o => `<option value="${o.value}" ${fin === o.value ? 'selected' : ''}>${I18n.t(`detail.${o.key}`)}</option>`).join('');
+    ].map(o => {
+      const label = I18n.t(`detail.${o.key}`);
+      return `<option value="${o.value}" ${fin === o.value ? 'selected' : ''}>${label}</option>`;
+    }).join('');
     const periodOptions = LOAN_PERIODICITIES.map(p => {
       const label = I18n.t(`detail.acq${p[0].toUpperCase()}${p.slice(1)}`);
       return `<option value="${p}" ${loan?.periodicity === p ? 'selected' : ''}>${label}</option>`;
@@ -545,26 +612,33 @@ export class VehicleDetailView {
     });
     validate();
 
+    /** Reads the loan/lease schedule fields — undefined when financing
+     *  is cash. */
+    const buildLoan = (): LoanSchedule | undefined => {
+      if (finSelect.value === '') return undefined;
+      const schedule: LoanSchedule = {
+        kind: finSelect.value === 'credit' ? 'credit' : 'lease',
+        periodicity: periodSelect.value as LoanPeriodicity,
+        amount: evalFormula(amountInput.value),
+        count: Number.parseInt(countInput.value, 10),
+        firstPaymentDate: firstInput.value
+      };
+      if (finSelect.value === 'loa') {
+        const option = evalFormula(optionInput.value);
+        if (Number.isFinite(option) && option > 0) schedule.optionAmount = option;
+        if (exercisedBox.checked) schedule.optionExercised = true;
+      }
+      return schedule;
+    };
+
     saveBtn.addEventListener('click', () => {
       const next: AcquisitionData = {};
       const initial = evalFormula(initialInput.value);
       const reg = evalFormula(regInput.value);
       if (Number.isFinite(initial) && initial > 0) next.initialAmount = initial;
       if (Number.isFinite(reg) && reg > 0) next.registrationFee = reg;
-      if (finSelect.value !== '') {
-        next.loan = {
-          kind: finSelect.value === 'credit' ? 'credit' : 'lease',
-          periodicity: periodSelect.value as LoanPeriodicity,
-          amount: evalFormula(amountInput.value),
-          count: Number.parseInt(countInput.value, 10),
-          firstPaymentDate: firstInput.value
-        };
-        if (finSelect.value === 'loa') {
-          const option = evalFormula(optionInput.value);
-          if (Number.isFinite(option) && option > 0) next.loan.optionAmount = option;
-          if (exercisedBox.checked) next.loan.optionExercised = true;
-        }
-      }
+      const schedule = buildLoan();
+      if (schedule !== undefined) next.loan = schedule;
       void this.store.updateVehicle(
         this.vehicle.id,
         { acquisition: Object.keys(next).length > 0 ? next : undefined }
@@ -620,34 +694,65 @@ export class VehicleDetailView {
     });
   }
 
-  /** km column shared by energy and cost rows (empty when unknown). */
-  private kmCell(odometerKm: number | undefined): string {
+  /** km column shared by energy and cost rows (empty when unknown);
+   *  `sub` adds a second muted line (window consumption). */
+  private kmCell(odometerKm: number | undefined, sub = ''): string {
     const units = defaultUnits(I18n.language);
-    return `<span class="event-km">${odometerKm !== undefined ? formatDistance(odometerKm, units) : ''}</span>`;
+    const km = odometerKm !== undefined ? formatDistance(odometerKm, units) : '';
+    return `<span class="event-km">${km}${sub ? subLine(sub) : ''}</span>`;
   }
 
-  /** Energy row (fill-up, charge or fuel cost): icon + date + km +
-   *  volume/kWh column + main + amount. */
+  /** Volume/kWh cell of an energy row — unit price on a second line
+   *  when both quantity and amount are known. */
+  private qtyCell(e: { amount?: number; volumeLitres?: number; kwh?: number }): string {
+    const units = defaultUnits(I18n.language);
+    const unit = volumeUnit(units);
+    if (e.volumeLitres !== undefined) {
+      const vol = litresToDisplay(e.volumeLitres, units);
+      const digits = units === 'imperial' ? 3 : 2;
+      const price = e.amount !== undefined && vol > 0 ? subLine(`${formatAmount(e.amount / vol)}/${unit}`) : '';
+      return `${I18n.formatNumber(vol, { maximumFractionDigits: digits })} ${unit}${price}`;
+    }
+    if (e.kwh !== undefined) {
+      const price = e.amount !== undefined && e.kwh > 0 ? subLine(`${formatAmount(e.amount / e.kwh)}/kWh`) : '';
+      return `${I18n.formatNumber(e.kwh, { maximumFractionDigits: 1 })} kWh${price}`;
+    }
+    return '';
+  }
+
+  /** Compact "full" badge: check + energy-stream icon — the tooltip
+   *  carries the full label. */
+  private fullBadge(isCharge: boolean): string {
+    const key = isCharge ? 'events.fullCharge' : 'events.fullTank';
+    const icon = isCharge ? BATTERY_ICON : FUEL_ICON;
+    return `<span class="event-full" title="${I18n.t(key)}">✓${icon}</span>`;
+  }
+
+  /** Localized consumption text for a window value — '' when the window
+   *  is unknown (missing bound or unrecorded energy inside it). */
+  private consumptionLabel(per100km: number | undefined, kind: 'fuel' | 'elec'): string {
+    if (per100km === undefined) return '';
+    const units = defaultUnits(I18n.language);
+    return (kind === 'fuel' ? formatFuelConsumption(per100km, units) : formatElecConsumption(per100km, units)) ?? '';
+  }
+
+  /** Energy row (fill-up, charge or fuel cost): date + km (with the
+   *  window consumption below it) + volume/kWh (with unit price when
+   *  both quantity and amount are known) + full-tank icon or comment +
+   *  amount. */
   private energyRow(key: string, e: {
     date: string; odometerKm?: number; amount?: number;
     volumeLitres?: number; kwh?: number; full?: boolean; comment?: string;
-  }): string {
-    const units = defaultUnits(I18n.language);
+  }, conso = ''): string {
     const isCharge = e.kwh !== undefined || (e.volumeLitres === undefined && this.vehicle.data.energyType === 'electric');
-    let qty = '';
-    if (e.volumeLitres !== undefined) {
-      qty = `${I18n.formatNumber(litresToDisplay(e.volumeLitres, units), { maximumFractionDigits: units === 'imperial' ? 3 : 2 })} ${volumeUnit(units)}`;
-    } else if (e.kwh !== undefined) {
-      qty = `${I18n.formatNumber(e.kwh, { maximumFractionDigits: 1 })} kWh`;
-    }
-    const fullKey = isCharge ? 'events.fullCharge' : 'events.fullTank';
-    const main = e.full ? `✓ ${I18n.t(fullKey)}` : escapeHtml(e.comment ?? '');
+    const main = e.full ? this.fullBadge(isCharge) : escapeHtml(e.comment ?? '');
+    const amount = e.amount !== undefined ? formatAmount(e.amount) : '';
     return `<div class="event-row" data-id="${key}">
       <span class="event-date">${I18n.formatDate(e.date)}</span>
-      ${this.kmCell(e.odometerKm)}
-      <span class="event-qty">${qty}</span>
+      ${this.kmCell(e.odometerKm, conso)}
+      <span class="event-qty">${this.qtyCell(e)}</span>
       <span class="event-main">${main}</span>
-      <span class="event-amount">${e.amount !== undefined ? formatAmount(e.amount) : ''}</span>
+      <span class="event-amount">${amount}</span>
     </div>`;
   }
 
