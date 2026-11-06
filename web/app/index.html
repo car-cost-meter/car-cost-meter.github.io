@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <!-- The app lives under /app/ and is served at the domain root; deep
+         links (/app/veh/<id>, /app/calc) reach this page through the
+         host's SPA fallback, so only an absolute base keeps relative URLs
+         (css, favicon, manifest, dist/main.js, runtime fetches, sw.js)
+         resolved from the site root. -->
+    <base href="/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0b0f17" media="(prefers-color-scheme: dark)">
+    <meta name="robots" content="noindex">
+    <title>Car Cost Meter</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div id="app-root"></div>
+    <script type="importmap">
+      {"imports": {"ts-cloud-storage-manager": "./vendor/ts-cloud-storage-manager/index.js"}}
+    </script>
+    <script type="module" src="dist/main.js"></script>
+</body>
+</html>

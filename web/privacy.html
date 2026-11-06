@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Politique de Confidentialité - Car Cost Meter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <main class="main-content">
+        <div class="card" style="max-width: 60rem; margin: 0 auto;">
+            <div style="text-align: right;">
+                <a href="#" data-lang-switch="fr">FR</a> · <a href="#" data-lang-switch="en">EN</a>
+            </div>
+            <div data-lang="fr">
+                <h1>Politique de Confidentialité</h1>
+                <p class="text-muted">Dernière mise à jour : Octobre 2026</p>
+
+                <h2>1. Absence de serveur tiers</h2>
+                <p>L'application <strong>Car Cost Meter</strong> s'exécute intégralement dans votre navigateur (architecture <em>Full Client-Side JavaScript</em>). Aucune donnée saisie, aucun identifiant ni aucun jeton d'authentification ne transite par un serveur tiers ou hébergeur intermédiaire.</p>
+
+                <h2>2. Intégration des services de stockage cloud</h2>
+                <p>Lorsque vous activez la synchronisation via un service de stockage cloud (Dropbox ou Microsoft OneDrive) :</p>
+                <ul>
+                    <li>La connexion s'effectue directement entre votre navigateur et les serveurs du service choisi, via OAuth 2.0 (PKCE, client public sans secret).</li>
+                    <li>Votre fichier de données <code>car-cost-meter.json</code> reste dans votre espace de stockage personnel ; l'application n'a accès qu'au dossier applicatif dédié.</li>
+                    <li>Votre adresse email n'est utilisée que pour identifier le compte connecté et n'est conservée que localement dans votre navigateur.</li>
+                </ul>
+
+                <h2>3. Données locales</h2>
+                <p>Les préférences (langue, thème, unités, devise) sont stockées dans le <code>localStorage</code> de votre navigateur ; la synchronisation hors-ligne utilise IndexedDB. Aucune de ces données n'est transmise à des tiers.</p>
+            </div>
+            <div data-lang="en" hidden>
+                <h1>Privacy Policy</h1>
+                <p class="text-muted">Last updated: October 2026</p>
+
+                <h2>1. No third-party server</h2>
+                <p><strong>Car Cost Meter</strong> runs entirely in your browser (full client-side JavaScript architecture). No entered data, no credentials and no authentication tokens ever transit through a third-party server or intermediary host.</p>
+
+                <h2>2. Cloud storage integration</h2>
+                <p>When you enable synchronization through a cloud storage service (Dropbox or Microsoft OneDrive):</p>
+                <ul>
+                    <li>The connection happens directly between your browser and the chosen service's servers, via OAuth 2.0 (PKCE, public client without secret).</li>
+                    <li>Your <code>car-cost-meter.json</code> data file stays in your own personal storage space; the app can only access its dedicated app folder.</li>
+                    <li>Your email address is only used to identify the connected account and is kept locally in your browser only.</li>
+                </ul>
+
+                <h2>3. Local data</h2>
+                <p>Preferences (language, theme, units, currency) are stored in your browser's <code>localStorage</code>; offline sync uses IndexedDB. None of this data is sent to third parties.</p>
+            </div>
+        </div>
+    </main>
+    <script type="module" src="dist/legal.js"></script>
+</body>
+</html>

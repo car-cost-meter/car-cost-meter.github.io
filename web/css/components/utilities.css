@@ -1,0 +1,13 @@
+/* Small utility classes reused across components. */
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  box-sizing: border-box;
+}

@@ -1,0 +1,822 @@
+import { I18n } from '../core/I18n.js';
+import { evalFormula } from '../core/Formula.js';
+import { defaultUnits, formatDistance, formatElecConsumption, formatFuelConsumption, litresToDisplay, volumeUnit } from '../core/units.js';
+import { LOAN_PERIODICITIES } from '../domain/events.js';
+import { isRented } from '../domain/costs.js';
+import { chargeConsumption, fuelUpConsumption } from '../domain/consumption.js';
+import { escapeHtml, formatAmount } from './format.js';
+import { componentStyles } from './componentStyles.js';
+import { openChargeEditor, openCostEditor, openFuelUpEditor, openResaleEditor } from './EventEditors.js';
+import { CostsView } from './CostsView.js';
+import { FUEL_ICON, BATTERY_ICON, MAINTENANCE_ICON, REPAIR_ICON, INSPECTION_ICON, INSURANCE_ICON, ACQUISITION_ICON, OTHER_ICON, RESALE_ICON } from './icons.js';
+import { VehicleEditor } from './VehicleEditor.js';
+import type { AppStore } from '../core/AppStore.js';
+import type { Vehicle } from '../domain/Vehicle.js';
+import type { AcquisitionData, CostCategory, LoanPeriodicity, LoanSchedule } from '../domain/events.js';
+
+const CSS = `
+.detail-tabs, .cost-subtabs {
+  display: flex;
+  gap: var(--space-xs);
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: var(--space-md);
+  overflow-x: auto;
+  /* Never squeeze the strip when the content below is too tall. */
+  flex-shrink: 0;
+}
+/* The fixed zone (acquisition form) scrolls internally when taller than
+   the space left — it must not push the tab strip out of view. */
+#cost-fixed { overflow-y: auto; min-height: 0; }
+.detail-tab, .cost-subtab {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.detail-tab svg, .cost-subtab svg { width: 1rem; height: 1rem; }
+.info-row { display: flex; gap: var(--space-sm); margin-bottom: var(--space-sm); align-items: center; }
+.info-row .info-label { flex: 1; }
+.info-row .info-value { flex: 2; }
+.info-row .info-del { padding: 0 var(--space-sm); min-width: 0; }
+.infos-actions { display: flex; gap: var(--space-sm); margin-top: var(--space-md); }
+.detail-tab.active, .cost-subtab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+.event-row:hover { background: var(--hover-bg); }
+.event-row .event-date { color: var(--text-muted); min-width: 4.8rem; }
+.event-row .event-km {
+  min-width: 5.5rem;
+  text-align: right;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.event-row .event-qty {
+  min-width: 4.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.event-row .event-sub {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+.event-row .event-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--accent);
+}
+.event-row .event-full svg { width: 0.9rem; height: 0.9rem; }
+/* Compact rows on phones: no horizontal scroll, slimmer columns. */
+@media (max-width: 640px) {
+  .event-row { gap: var(--space-sm); padding: var(--space-sm) var(--space-xs); }
+  .event-row .event-date { min-width: 4.2rem; }
+  .event-row .event-km { min-width: 4.6rem; }
+  .event-row .event-qty { min-width: 3.4rem; }
+}
+.event-row .event-main { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.event-row .event-amount { font-weight: var(--font-weight-semibold); white-space: nowrap; }
+.category-chip {
+  display: inline-block;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-pill);
+  background: var(--hover-bg);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+.detail-empty { color: var(--text-muted); padding: var(--space-lg) 0; text-align: center; }
+.detail-add { margin-top: var(--space-sm); }
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+.detail-header h2 { margin: 0; font-size: var(--font-size-xl); }
+.detail-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+.inspection-alert {
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+.inspection-alert.overdue { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+.inspection-alert.soon { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
+.acq-form {
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-sm);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+}
+.acq-grid {
+  display: grid;
+  /* Columns are capped so fields don't stretch across a wide screen —
+   * leftover space stays empty on the right. */
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 12.5rem));
+  gap: var(--space-xs) var(--space-md);
+  align-items: end;
+}
+/* The hidden attribute loses against display:grid — reassert it. */
+.acq-grid[hidden] { display: none; }
+/* On narrow screens the fields stack full-width. */
+@media (max-width: 640px) {
+  .acq-grid { grid-template-columns: 1fr; }
+}
+.acq-form .form-group { margin-bottom: var(--space-xs); }
+.acq-form .form-group label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.acq-loan-check label { display: flex; align-items: center; gap: var(--space-xs); padding-bottom: 0.35rem; }
+.acq-actions { display: flex; justify-content: flex-end; margin-top: var(--space-xs); }
+.acq-other-title { font-size: var(--font-size-sm); color: var(--text-muted); margin: var(--space-sm) 0; }
+
+/* Page layout: header + tabs fixed, only the list scrolls. The page is
+   bounded to the scroll container's visible height — its children can
+   overflow only inside .detail-scroll. */
+.detail-page { height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.detail-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.detail-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--space-md);
+}
+/* Floating "+" — sticky to the bottom of the scroll area: sits right under
+   a short list, pinned to the viewport corner when the list overflows. */
+.fab-row {
+  position: sticky;
+  bottom: var(--space-md);
+  align-self: flex-end;
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+.fab {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.fab svg { width: 22px; height: 22px; }
+.fab:hover { filter: brightness(1.15); }
+`;
+
+export type Tab = 'edit' | 'analysis' | 'consumption' | 'infos';
+export type CostSubTab = 'energy' | CostCategory | 'resale';
+const COST_SUBTABS: CostSubTab[] = ['energy', 'maintenance', 'repair', 'inspection', 'insurance', 'acquisition', 'resale', 'other'];
+
+/** Second muted line inside a row cell. */
+const subLine = (text: string): string => `<span class="event-sub">${text}</span>`;
+
+/** Category icons shown at the start of each row. */
+const CATEGORY_ICONS: Record<CostCategory, string> = {
+  acquisition: ACQUISITION_ICON,
+  maintenance: MAINTENANCE_ICON,
+  repair: REPAIR_ICON,
+  inspection: INSPECTION_ICON,
+  insurance: INSURANCE_ICON,
+  fuel: FUEL_ICON,
+  other: OTHER_ICON
+};
+
+/**
+ * Full-page vehicle detail: top tabs Costs / Resale / Summary /
+ * Consumption (placeholder). The Costs tab itself splits into sub-tabs —
+ * energy entries (fill-ups / charges) plus one sub-tab per cost category;
+ * Acquisition also shows the read-only purchase price.
+ */
+export class VehicleDetailView {
+  private tab: Tab;
+  private costSubTab: CostSubTab = 'energy';
+  /** Which cost sub-tab's list is currently in the DOM — the key under
+   *  which its scroll position is saved. */
+  private renderedSubTab?: CostSubTab;
+  /** Scroll position remembered per cost sub-tab — survives the DOM
+   *  rebuild on tab switches and saves. */
+  private readonly scrollTops = new Map<CostSubTab, number>();
+
+  constructor(
+    private readonly host: HTMLElement,
+    private readonly store: AppStore,
+    private readonly vehicle: Vehicle,
+    initialTab?: Tab,
+    initialCostSubTab?: CostSubTab
+  ) {
+    componentStyles('vehicle-detail', CSS);
+    this.tab = initialTab ?? 'edit';
+    if (initialCostSubTab) this.costSubTab = initialCostSubTab;
+  }
+
+  /** Currently selected tab — lets the dashboard restore it after a
+   *  state-driven re-render (e.g. save). */
+  get currentTab(): Tab {
+    return this.tab;
+  }
+
+  /** Currently selected Costs sub-tab — restored like `currentTab`. */
+  get currentCostSubTab(): CostSubTab {
+    return this.costSubTab;
+  }
+
+  render(): void {
+    // Keep the open list's scroll position before the DOM rebuild wipes it.
+    this.captureScroll();
+    this.host.innerHTML = `
+      <div class="detail-page">
+        <div class="detail-header">
+          <div class="detail-title">
+            <h2>${escapeHtml(this.vehicle.name)}</h2>
+            ${this.inspectionAlertHtml()}
+          </div>
+          <button class="btn-secondary" id="detail-edit-vehicle">${I18n.t('detail.editVehicle')}</button>
+        </div>
+        <div class="detail-tabs" id="detail-tabs"></div>
+        <div class="detail-body" id="detail-body"></div>
+      </div>`;
+    this.host.querySelector('#detail-edit-vehicle')!.addEventListener('click', () => {
+      VehicleEditor.open(this.store, this.vehicle);
+    });
+    this.renderTabs();
+    this.renderList();
+  }
+
+  /** Small badge next to the vehicle name: red when the inspection is
+   *  overdue, orange when due within a month — nothing otherwise. */
+  private inspectionAlertHtml(): string {
+    const status = this.vehicle.inspectionStatus();
+    const next = this.vehicle.nextInspectionDate();
+    if (next === undefined || (status !== 'overdue' && status !== 'soon')) return '';
+    const key = status === 'overdue' ? 'vehicles.inspection.overdue' : 'vehicles.inspection.due';
+    return `<span class="inspection-alert ${status}">${I18n.t(key, { date: I18n.formatDate(next) })}</span>`;
+  }
+
+  private readonly save = async (): Promise<void> => {
+    // Refresh now — the in-memory change is already applied; the cloud
+    // write continues in the background (failures surface via save:error).
+    this.render(); // re-render header too (inspection alert, updated name)
+    await this.store.save();
+  };
+
+  private visibleTabs(): Tab[] {
+    return ['edit', 'analysis', 'consumption', 'infos'];
+  }
+
+  private renderTabs(): void {
+    const host = this.host.querySelector('#detail-tabs')!;
+    host.innerHTML = this.visibleTabs().map(t => {
+      const label = I18n.t(`detail.tabs.${t}`);
+      return `<button class="detail-tab ${t === this.tab ? 'active' : ''}" data-tab="${t}">${label}</button>`;
+    }).join('');
+    host.querySelectorAll<HTMLButtonElement>('.detail-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Toggle the class in place — rebuilding the strip would reset
+        // its own horizontal scroll on narrow screens.
+        this.tab = btn.dataset.tab as Tab;
+        host.querySelectorAll('.detail-tab').forEach(b => b.classList.toggle('active', b === btn));
+        this.renderList();
+      });
+    });
+  }
+
+  private renderList(): void {
+    const host = this.host.querySelector('#detail-body') as HTMLElement;
+    this.captureScroll();
+    switch (this.tab) {
+      case 'analysis':
+        host.innerHTML = '<div class="detail-scroll"></div>';
+        new CostsView(this.vehicle, host.querySelector('.detail-scroll') as HTMLElement);
+        return;
+      case 'consumption':
+        host.innerHTML = `<div class="detail-scroll"><p class="detail-empty">${I18n.t('detail.notImplemented')}</p></div>`;
+        return;
+      case 'infos':
+        this.renderInfos(host);
+        return;
+      case 'edit':
+        this.renderCosts(host);
+        return;
+    }
+  }
+
+  /** Free-form vehicle info: editable label/value rows, saved as a whole. */
+  private renderInfos(host: HTMLElement): void {
+    const row = (n: { label: string; value: string }): string => `
+      <div class="info-row">
+        <input class="form-control info-label" placeholder="${I18n.t('infos.label')}" value="${escapeHtml(n.label)}">
+        <input class="form-control info-value" placeholder="${I18n.t('infos.value')}" value="${escapeHtml(n.value)}">
+        <button class="btn-secondary info-del" title="${I18n.t('common.delete')}">×</button>
+      </div>`;
+    host.innerHTML = `<div class="detail-scroll">
+      <div id="infos-list">${(this.vehicle.data.notes ?? []).map(row).join('')}</div>
+      <div class="infos-actions">
+        <button class="btn-secondary" id="infos-add">${I18n.t('common.add')}</button>
+        <button class="btn-primary" id="infos-save" style="visibility:hidden">${I18n.t('common.save')}</button>
+      </div>
+    </div>`;
+    const list = host.querySelector('#infos-list')!;
+    const saveBtn = host.querySelector<HTMLButtonElement>('#infos-save')!;
+    const markDirty = (): void => { saveBtn.style.visibility = 'visible'; };
+    const bind = (el: HTMLElement): void => {
+      el.querySelectorAll('input').forEach(i => i.addEventListener('input', markDirty));
+      el.querySelector<HTMLButtonElement>('.info-del')!.addEventListener('click', () => { el.remove(); markDirty(); });
+    };
+    list.querySelectorAll<HTMLElement>('.info-row').forEach(bind);
+    host.querySelector('#infos-add')!.addEventListener('click', () => {
+      const div = document.createElement('div');
+      div.innerHTML = row({ label: '', value: '' });
+      const el = div.firstElementChild as HTMLElement;
+      bind(el);
+      list.appendChild(el);
+      markDirty();
+      (el.querySelector('.info-label') as HTMLInputElement).focus();
+    });
+    saveBtn.addEventListener('click', () => {
+      const notes = [...list.querySelectorAll<HTMLElement>('.info-row')]
+        .map(el => ({
+          label: (el.querySelector('.info-label') as HTMLInputElement).value.trim(),
+          value: (el.querySelector('.info-value') as HTMLInputElement).value.trim()
+        }))
+        .filter(n => n.label !== '');
+      void this.store.updateVehicle(this.vehicle.id, { notes: notes.length ? notes : undefined });
+      saveBtn.style.visibility = 'hidden';
+    });
+  }
+
+  /* ---------------------------------------------------------------- costs */
+
+  private costSubTabIcon(t: CostSubTab): string {
+    if (t === 'energy') return this.energyIcons();
+    if (t === 'resale') return RESALE_ICON;
+    return CATEGORY_ICONS[t];
+  }
+
+  private costSubTabLabel(t: CostSubTab): string {
+    if (t === 'resale') return I18n.t('detail.tabs.resale');
+    if (t !== 'energy') return I18n.t(`categories.${t}`);
+    switch (this.vehicle.data.energyType) {
+      case 'electric': return I18n.t('categories.charges');
+      case 'hybrid': return `${I18n.t('categories.fuelUps')} + ${I18n.t('categories.charges')}`;
+      default: return I18n.t('categories.fuelUps');
+    }
+  }
+
+  /** List ordering: newest date first; same-date entries sort by odometer
+   *  descending (the higher reading is the later event of the day). */
+  private static byDateKmDesc(
+    a: { date: string; odometerKm?: number },
+    b: { date: string; odometerKm?: number }
+  ): number {
+    return b.date.localeCompare(a.date) || (b.odometerKm ?? -1) - (a.odometerKm ?? -1);
+  }
+
+  private renderCosts(host: HTMLElement): void {
+    this.captureScroll();
+    host.innerHTML = `
+      <div class="cost-subtabs">
+        ${COST_SUBTABS.filter(t => t !== 'resale' || !isRented(this.vehicle)).map(t => `
+          <button class="cost-subtab ${t === this.costSubTab ? 'active' : ''}" data-subtab="${t}">
+            ${this.costSubTabIcon(t)}${this.costSubTabLabel(t)}
+          </button>`).join('')}
+      </div>
+      <div id="cost-fixed"></div>
+      <div class="detail-scroll" id="cost-scroll"></div>`;
+    const fixed = host.querySelector('#cost-fixed') as HTMLElement;
+    const scroll = host.querySelector('#cost-scroll') as HTMLElement;
+    host.querySelectorAll<HTMLButtonElement>('.cost-subtab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Only the content under the tab strip is rebuilt — the strip
+        // itself (and its own scroll) stays untouched.
+        this.captureScroll();
+        this.costSubTab = btn.dataset.subtab as CostSubTab;
+        host.querySelectorAll('.cost-subtab').forEach(b => b.classList.toggle('active', b === btn));
+        this.showCostSubTab(fixed, scroll);
+      });
+    });
+    this.showCostSubTab(fixed, scroll);
+  }
+
+  /** Renders the current cost sub-tab's content and restores the scroll
+   *  position remembered for it. */
+  private showCostSubTab(fixed: HTMLElement, scroll: HTMLElement): void {
+    this.renderCostSubTab(fixed, scroll);
+    this.renderedSubTab = this.costSubTab;
+    scroll.scrollTop = this.scrollTops.get(this.costSubTab) ?? 0;
+  }
+
+  /** Saves the scroll position of the visible cost list under its
+   *  sub-tab — called just before the DOM is rebuilt; a no-op outside
+   *  the Costs tab. */
+  private captureScroll(): void {
+    const scroll = this.host.querySelector<HTMLElement>('#cost-scroll');
+    if (scroll && this.renderedSubTab !== undefined) {
+      this.scrollTops.set(this.renderedSubTab, scroll.scrollTop);
+    }
+  }
+
+  private energyIcons(): string {
+    if (this.vehicle.data.energyType === 'electric') return BATTERY_ICON;
+    if (this.vehicle.data.energyType === 'hybrid') return `${FUEL_ICON}${BATTERY_ICON}`;
+    return FUEL_ICON;
+  }
+
+  private renderCostSubTab(fixed: HTMLElement, scroll: HTMLElement): void {
+    fixed.innerHTML = '';
+    if (this.costSubTab === 'energy') { this.renderEnergy(scroll); return; }
+    if (this.costSubTab === 'resale') { this.renderResale(scroll); return; }
+    if (this.costSubTab === 'acquisition') {
+      this.renderAcquisitionForm(fixed);
+      this.renderAcquisition(scroll);
+      return;
+    }
+    const cat = this.costSubTab;
+    const rows = this.vehicle.data.costs
+      .map((c, i) => ({ c, i }))
+      .filter(x => x.c.category === cat)
+      .sort((a, b) => VehicleDetailView.byDateKmDesc(a.c, b.c)) // newest first, km tie-break
+      .map(x => this.costRow(String(x.i), cat, x.c.date, x.c.odometerKm, x.c.comment ?? '', x.c.amount));
+    scroll.innerHTML = this.rowsWithFab(rows, 'cost-sub-add');
+    scroll.querySelector('#cost-sub-add')!.addEventListener('click', () =>
+      openCostEditor(this.vehicle, this.save, undefined, { category: cat }));
+    this.bindRows(scroll, idx => {
+      openCostEditor(this.vehicle, this.save, this.vehicle.data.costs[Number(idx)]);
+    });
+  }
+
+  /** Fill-ups + charges (hybrid shows both), merged and date-sorted,
+   *  each opening its own editor. */
+  private renderEnergy(host: HTMLElement): void {
+    const rows = [
+      ...this.vehicle.data.fuelUps.map((f, i) => ({ date: f.date, odometerKm: f.odometerKm, html: this.energyRow(`fuelUp:${i}`, f, this.consumptionLabel(fuelUpConsumption(this.vehicle.data, i)?.per100km, 'fuel')) })),
+      ...this.vehicle.data.charges.map((c, i) => ({ date: c.date, odometerKm: c.odometerKm, html: this.energyRow(`charge:${i}`, c, this.consumptionLabel(chargeConsumption(this.vehicle.data, i)?.per100km, 'elec')) })),
+      // Fuel costs recorded without a fill-up entry stay visible here too.
+      ...this.vehicle.data.costs
+        .map((c, i) => ({ c, i }))
+        .filter(x => x.c.category === 'fuel')
+        .map(x => ({ date: x.c.date, odometerKm: x.c.odometerKm, html: this.energyRow(`cost:${x.i}`, x.c) }))
+    ].sort(VehicleDetailView.byDateKmDesc).map(r => r.html); // newest first, km tie-break
+    const addLabel = this.vehicle.data.energyType === 'electric'
+      ? I18n.t('detail.addCharge')
+      : I18n.t('detail.addFuelUp');
+    const fabs = this.vehicle.data.energyType === 'hybrid'
+      ? `<button class="fab" id="add-fuel" title="${I18n.t('detail.addFuelUp')}">${FUEL_ICON}</button>
+         <button class="fab" id="add-charge" title="${I18n.t('detail.addCharge')}">${BATTERY_ICON}</button>`
+      : `<button class="fab" id="add-energy" title="${addLabel}">${this.energyIcons()}</button>`;
+    host.innerHTML = `
+      ${rows.length === 0 ? `<p class="detail-empty">${I18n.t('detail.empty')}</p>` : `<div>${rows.join('')}</div>`}
+      <div class="fab-row">${fabs}</div>`;
+    host.querySelector('#add-energy')?.addEventListener('click', () => {
+      if (this.vehicle.data.energyType === 'electric') {
+        openChargeEditor(this.vehicle, this.save);
+      } else {
+        openFuelUpEditor(this.vehicle, this.save);
+      }
+    });
+    host.querySelector('#add-fuel')?.addEventListener('click', () => openFuelUpEditor(this.vehicle, this.save));
+    host.querySelector('#add-charge')?.addEventListener('click', () => openChargeEditor(this.vehicle, this.save));
+    this.bindRows(host, rawId => {
+      const [kind, idx] = rawId.split(':', 2);
+      const i = Number(idx);
+      if (kind === 'fuelUp') openFuelUpEditor(this.vehicle, this.save, this.vehicle.data.fuelUps[i]);
+      else if (kind === 'charge') openChargeEditor(this.vehicle, this.save, this.vehicle.data.charges[i]);
+      else openCostEditor(this.vehicle, this.save, this.vehicle.data.costs[i]);
+    });
+  }
+
+  /** Acquisition form (fixed zone): initial amount + optional loan/lease
+   *  schedule. Saved as `vehicle.data.acquisition` through updateVehicle. */
+  private renderAcquisitionForm(fixed: HTMLElement): void {
+    const acq = this.vehicle.data.acquisition;
+    const loan = acq?.loan;
+    // Financing selector value derived from the saved loan.
+    let fin = '';
+    if (loan?.kind === 'lease') {
+      fin = loan.optionAmount !== undefined || loan.optionExercised ? 'loa' : 'lld';
+    } else if (loan !== undefined) {
+      fin = 'credit';
+    }
+    const finOptions = [
+      { value: '', key: 'acqFinCash' },
+      { value: 'credit', key: 'acqFinCredit' },
+      { value: 'lld', key: 'acqFinLld' },
+      { value: 'loa', key: 'acqFinLoa' }
+    ].map(o => {
+      const label = I18n.t(`detail.${o.key}`);
+      return `<option value="${o.value}" ${fin === o.value ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+    const periodOptions = LOAN_PERIODICITIES.map(p => {
+      const label = I18n.t(`detail.acq${p[0].toUpperCase()}${p.slice(1)}`);
+      return `<option value="${p}" ${loan?.periodicity === p ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+    fixed.innerHTML = `
+      <div class="acq-form">
+        <div class="acq-grid">
+          <div class="form-group">
+            <label for="acq-initial">${I18n.t('detail.acqInitialAmount')}</label>
+            <input id="acq-initial" class="form-control" type="text" inputmode="decimal" data-formula
+                   value="${acq?.initialAmount ?? ''}" />
+          </div>
+          <div class="form-group">
+            <label for="acq-reg">${I18n.t('detail.acqRegistrationFee')}</label>
+            <input id="acq-reg" class="form-control" type="text" inputmode="decimal" data-formula
+                   value="${acq?.registrationFee ?? ''}" />
+          </div>
+          <div class="form-group">
+            <label for="acq-fin">${I18n.t('detail.acqFinancing')}</label>
+            <select id="acq-fin" class="form-control">${finOptions}</select>
+          </div>
+        </div>
+        <div class="acq-grid" id="acq-loan-fields" ${fin ? '' : 'hidden'}>
+          <div class="form-group">
+            <label for="acq-period">${I18n.t('detail.acqPeriodicity')}</label>
+            <select id="acq-period" class="form-control">${periodOptions}</select>
+          </div>
+          <div class="form-group">
+            <label for="acq-amount">${I18n.t('detail.acqAmount')}</label>
+            <input id="acq-amount" class="form-control" type="text" inputmode="decimal" data-formula
+                   value="${loan?.amount ?? ''}" />
+          </div>
+          <div class="form-group">
+            <label for="acq-count">${I18n.t('detail.acqCount')}</label>
+            <input id="acq-count" class="form-control" type="number" min="1" step="1"
+                   value="${loan?.count ?? ''}" />
+          </div>
+          <div class="form-group">
+            <label for="acq-first">${I18n.t('detail.acqFirstDate')}</label>
+            <input id="acq-first" class="form-control" type="date" value="${loan?.firstPaymentDate ?? ''}" />
+          </div>
+        </div>
+        <div class="acq-grid" id="acq-loa-fields" ${fin === 'loa' ? '' : 'hidden'}>
+          <div class="form-group">
+            <label for="acq-option">${I18n.t('detail.acqOptionAmount')}</label>
+            <input id="acq-option" class="form-control" type="text" inputmode="decimal" data-formula
+                   value="${loan?.optionAmount ?? ''}" />
+          </div>
+          <div class="form-group acq-loan-check">
+            <label><input id="acq-exercised" type="checkbox" ${loan?.optionExercised ? 'checked' : ''} /> ${I18n.t('detail.acqOptionExercised')}</label>
+          </div>
+        </div>
+        <div class="acq-actions">
+          <button id="acq-save" class="btn-primary">${I18n.t('common.save')}</button>
+        </div>
+      </div>`;
+
+    const $ = <T extends HTMLElement>(sel: string): T => fixed.querySelector(sel) as T;
+    const initialInput = $<HTMLInputElement>('#acq-initial');
+    const regInput = $<HTMLInputElement>('#acq-reg');
+    const finSelect = $<HTMLSelectElement>('#acq-fin');
+    const loanFields = $<HTMLDivElement>('#acq-loan-fields');
+    const loaFields = $<HTMLDivElement>('#acq-loa-fields');
+    const periodSelect = $<HTMLSelectElement>('#acq-period');
+    const amountInput = $<HTMLInputElement>('#acq-amount');
+    const countInput = $<HTMLInputElement>('#acq-count');
+    const firstInput = $<HTMLInputElement>('#acq-first');
+    const optionInput = $<HTMLInputElement>('#acq-option');
+    const exercisedBox = $<HTMLInputElement>('#acq-exercised');
+    const saveBtn = $<HTMLButtonElement>('#acq-save');
+
+    const amountOk = (el: HTMLInputElement): boolean => {
+      const v = el.value.trim();
+      if (v === '') return true;
+      const n = evalFormula(v);
+      return Number.isFinite(n) && n >= 0;
+    };
+    /** Dirty detection — the save button stays invisible (but space is
+     *  reserved, so nothing shifts) until the form differs from its
+     *  initial state; it is then enabled only when every field is valid. */
+    const snapshot = (): string => JSON.stringify([
+      initialInput.value.trim(), regInput.value.trim(), finSelect.value,
+      periodSelect.value, amountInput.value.trim(), countInput.value.trim(),
+      firstInput.value, optionInput.value.trim(), exercisedBox.checked
+    ]);
+    const baseline = snapshot();
+    const validate = (): void => {
+      const loanOn = finSelect.value !== '';
+      const loaOn = finSelect.value === 'loa';
+      const checks: [HTMLInputElement, boolean][] = [
+        [initialInput, amountOk(initialInput)],
+        [regInput, amountOk(regInput)],
+        [amountInput, !loanOn || amountOk(amountInput)],
+        [countInput, !loanOn || Number.parseInt(countInput.value, 10) > 0],
+        [firstInput, !loanOn || firstInput.value.length > 0],
+        [optionInput, !loaOn || amountOk(optionInput)]
+      ];
+      let ok = true;
+      for (const [input, valid] of checks) {
+        input.classList.toggle('invalid-amount', !valid);
+        if (!valid) ok = false;
+      }
+      saveBtn.style.visibility = snapshot() === baseline ? 'hidden' : 'visible';
+      saveBtn.disabled = !ok;
+    };
+    for (const el of [initialInput, regInput, amountInput, countInput, firstInput, optionInput]) {
+      el.addEventListener('input', validate);
+    }
+    periodSelect.addEventListener('change', validate);
+    exercisedBox.addEventListener('change', validate);
+    finSelect.addEventListener('change', () => {
+      loanFields.hidden = finSelect.value === '';
+      loaFields.hidden = finSelect.value !== 'loa';
+      validate();
+    });
+    validate();
+
+    /** Reads the loan/lease schedule fields — undefined when financing
+     *  is cash. */
+    const buildLoan = (): LoanSchedule | undefined => {
+      if (finSelect.value === '') return undefined;
+      const schedule: LoanSchedule = {
+        kind: finSelect.value === 'credit' ? 'credit' : 'lease',
+        periodicity: periodSelect.value as LoanPeriodicity,
+        amount: evalFormula(amountInput.value),
+        count: Number.parseInt(countInput.value, 10),
+        firstPaymentDate: firstInput.value
+      };
+      if (finSelect.value === 'loa') {
+        const option = evalFormula(optionInput.value);
+        if (Number.isFinite(option) && option > 0) schedule.optionAmount = option;
+        if (exercisedBox.checked) schedule.optionExercised = true;
+      }
+      return schedule;
+    };
+
+    saveBtn.addEventListener('click', () => {
+      const next: AcquisitionData = {};
+      const initial = evalFormula(initialInput.value);
+      const reg = evalFormula(regInput.value);
+      if (Number.isFinite(initial) && initial > 0) next.initialAmount = initial;
+      if (Number.isFinite(reg) && reg > 0) next.registrationFee = reg;
+      const schedule = buildLoan();
+      if (schedule !== undefined) next.loan = schedule;
+      void this.store.updateVehicle(
+        this.vehicle.id,
+        { acquisition: Object.keys(next).length > 0 ? next : undefined }
+      );
+    });
+  }
+
+  /** Acquisition list: one-off acquisition costs (carte grise, options…)
+   *  — the initial amount and loan schedule live in the fixed form above. */
+  private renderAcquisition(host: HTMLElement): void {
+    const rows = this.vehicle.data.costs
+      .map((c, i) => ({ c, i }))
+      .filter(x => x.c.category === 'acquisition')
+      .sort((a, b) => VehicleDetailView.byDateKmDesc(a.c, b.c)) // newest first, km tie-break
+      .map(x => this.costRow(String(x.i), 'acquisition', x.c.date, x.c.odometerKm, x.c.comment ?? '', x.c.amount));
+    host.innerHTML = `<p class="acq-other-title">${I18n.t('detail.acqOtherCosts')}</p>` +
+      this.rowsWithFab(rows, 'cost-sub-add');
+    host.querySelector('#cost-sub-add')!.addEventListener('click', () =>
+      openCostEditor(this.vehicle, this.save, undefined, { category: 'acquisition' }));
+    this.bindRows(host, idx => {
+      openCostEditor(this.vehicle, this.save, this.vehicle.data.costs[Number(idx)]);
+    });
+  }
+
+  private renderResale(host: HTMLElement): void {
+    const rows = [...this.vehicle.data.resaleValues]
+      .sort((a, b) => b.date.localeCompare(a.date)) // newest first
+      .map(v =>
+      `<div class="event-row" data-id="${v.date}">
+        <span class="event-date">${I18n.formatDate(v.date)}</span>
+        <span class="event-main"></span>
+        <span class="event-amount">${formatAmount(v.value)}</span>
+      </div>`);
+    host.innerHTML = this.rowsWithFab(rows, 'resale-add');
+    host.querySelector('#resale-add')!.addEventListener('click', () =>
+      openResaleEditor(this.vehicle, this.save));
+    this.bindRows(host, date =>
+      openResaleEditor(this.vehicle, this.save, this.vehicle.data.resaleValues.find(r => r.date === date)));
+  }
+
+  /* ------------------------------------------------------------- helpers */
+
+  /** Rows + a sticky circular "+" button at the bottom of the scroll area. */
+  private rowsWithFab(rows: string[], addId: string): string {
+    return `
+      ${rows.length === 0 ? `<p class="detail-empty">${I18n.t('detail.empty')}</p>` : `<div>${rows.join('')}</div>`}
+      <div class="fab-row"><button class="fab" id="${addId}" title="${I18n.t('common.add')}">+</button></div>`;
+  }
+
+  private bindRows(host: HTMLElement, open: (id: string) => void): void {
+    host.querySelectorAll<HTMLElement>('.event-row').forEach(row => {
+      row.addEventListener('click', () => open(row.dataset.id!));
+    });
+  }
+
+  /** km column shared by energy and cost rows (empty when unknown);
+   *  `sub` adds a second muted line (window consumption). */
+  private kmCell(odometerKm: number | undefined, sub = ''): string {
+    const units = defaultUnits(I18n.language);
+    const km = odometerKm !== undefined ? formatDistance(odometerKm, units) : '';
+    return `<span class="event-km">${km}${sub ? subLine(sub) : ''}</span>`;
+  }
+
+  /** Volume/kWh cell of an energy row — unit price on a second line
+   *  when both quantity and amount are known. */
+  private qtyCell(e: { amount?: number; volumeLitres?: number; kwh?: number }): string {
+    const units = defaultUnits(I18n.language);
+    const unit = volumeUnit(units);
+    if (e.volumeLitres !== undefined) {
+      const vol = litresToDisplay(e.volumeLitres, units);
+      const digits = units === 'imperial' ? 3 : 2;
+      const price = e.amount !== undefined && vol > 0 ? subLine(`${formatAmount(e.amount / vol)}/${unit}`) : '';
+      return `${I18n.formatNumber(vol, { maximumFractionDigits: digits })} ${unit}${price}`;
+    }
+    if (e.kwh !== undefined) {
+      const price = e.amount !== undefined && e.kwh > 0 ? subLine(`${formatAmount(e.amount / e.kwh)}/kWh`) : '';
+      return `${I18n.formatNumber(e.kwh, { maximumFractionDigits: 1 })} kWh${price}`;
+    }
+    return '';
+  }
+
+  /** Compact "full" badge: check + energy-stream icon — the tooltip
+   *  carries the full label. */
+  private fullBadge(isCharge: boolean): string {
+    const key = isCharge ? 'events.fullCharge' : 'events.fullTank';
+    const icon = isCharge ? BATTERY_ICON : FUEL_ICON;
+    return `<span class="event-full" title="${I18n.t(key)}">✓${icon}</span>`;
+  }
+
+  /** Localized consumption text for a window value — '' when the window
+   *  is unknown (missing bound or unrecorded energy inside it). */
+  private consumptionLabel(per100km: number | undefined, kind: 'fuel' | 'elec'): string {
+    if (per100km === undefined) return '';
+    const units = defaultUnits(I18n.language);
+    return (kind === 'fuel' ? formatFuelConsumption(per100km, units) : formatElecConsumption(per100km, units)) ?? '';
+  }
+
+  /** Energy row (fill-up, charge or fuel cost): date + km (with the
+   *  window consumption below it) + volume/kWh (with unit price when
+   *  both quantity and amount are known) + full-tank icon or comment +
+   *  amount. */
+  private energyRow(key: string, e: {
+    date: string; odometerKm?: number; amount?: number;
+    volumeLitres?: number; kwh?: number; full?: boolean; comment?: string;
+  }, conso = ''): string {
+    const isCharge = e.kwh !== undefined || (e.volumeLitres === undefined && this.vehicle.data.energyType === 'electric');
+    const main = e.full ? this.fullBadge(isCharge) : escapeHtml(e.comment ?? '');
+    const amount = e.amount !== undefined ? formatAmount(e.amount) : '';
+    return `<div class="event-row" data-id="${key}">
+      <span class="event-date">${I18n.formatDate(e.date)}</span>
+      ${this.kmCell(e.odometerKm, conso)}
+      <span class="event-qty">${this.qtyCell(e)}</span>
+      <span class="event-main">${main}</span>
+      <span class="event-amount">${amount}</span>
+    </div>`;
+  }
+
+  /** Cost row: date + km (when the category can hold one) + comment + amount. */
+  private costRow(key: string, category: CostCategory, date: string, odometerKm: number | undefined, comment: string, amount: number): string {
+    // Acquisition and insurance have no odometer field — no km column.
+    const km = category === 'acquisition' || category === 'insurance' ? '' : this.kmCell(odometerKm);
+    return `<div class="event-row" data-id="${key}">
+      <span class="event-date">${I18n.formatDate(date)}</span>
+      ${km}
+      <span class="event-main">${escapeHtml(comment)}</span>
+      <span class="event-amount">${formatAmount(amount)}</span>
+    </div>`;
+  }
+}

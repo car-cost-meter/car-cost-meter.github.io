@@ -1,0 +1,50 @@
+import type { Vehicle } from './Vehicle.js';
+import type { Charge, Cost, CostCategory, FuelUp } from './events.js';
+
+/** A known odometer reading: the initial odometer or any dated event
+ *  carrying one (fill-up, charge, cost). */
+export interface OdometerReading {
+  kind: 'initial' | 'fuelUp' | 'charge' | 'cost';
+  /** Cost category when kind === 'cost'. */
+  category?: CostCategory;
+  date: string;
+  km: number;
+}
+
+/** All known odometer readings of the vehicle, sorted by date.
+ *  `exclude` skips an event (same object reference — useful when editing
+ *  it). */
+export function odometerReadings(vehicle: Vehicle, exclude?: FuelUp | Charge | Cost): OdometerReading[] {
+  const out: OdometerReading[] = [
+    { kind: 'initial', date: vehicle.data.acquisitionDate, km: vehicle.data.initialOdometerKm }
+  ];
+  for (const f of vehicle.data.fuelUps) {
+    if (f.odometerKm !== undefined && f !== exclude) out.push({ kind: 'fuelUp', date: f.date, km: f.odometerKm });
+  }
+  for (const c of vehicle.data.charges) {
+    if (c.odometerKm !== undefined && c !== exclude) out.push({ kind: 'charge', date: c.date, km: c.odometerKm });
+  }
+  for (const c of vehicle.data.costs) {
+    if (c.odometerKm !== undefined && c !== exclude) out.push({ kind: 'cost', category: c.category, date: c.date, km: c.odometerKm });
+  }
+  return out.sort((a, b) => a.date.localeCompare(b.date) || a.km - b.km);
+}
+
+/**
+ * Readings that contradict the (date, km) pair monotonicity: the latest
+ * strictly-earlier reading with a higher km, and/or the earliest
+ * strictly-later reading with a lower km. Only these *immediate*
+ * contradictions are returned — the farther readings they shadow add
+ * noise without helping the user fix the entry. Same-date readings are
+ * ignored — several events in one day legitimately carry different
+ * odometers (two fill-ups morning/evening), and dates alone cannot
+ * order them. An empty result means the entry is consistent.
+ */
+export function odometerViolations(
+  vehicle: Vehicle, date: string, km: number, exclude?: FuelUp | Charge | Cost
+): OdometerReading[] {
+  const readings = odometerReadings(vehicle, exclude);
+  const earlier = readings.filter(r => r.date < date && r.km > km).at(-1);
+  const later = readings.find(r => r.date > date && r.km < km);
+  return [earlier, later].filter((r): r is OdometerReading => r !== undefined);
+}
