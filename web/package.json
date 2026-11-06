@@ -8,7 +8,7 @@
   "description": "Web application to track the real cost of owning a vehicle (acquisition, maintenance, insurance, fuel/electricity) and its consumption.",
   "scripts": {
     "predev": "bun run vendor",
-    "dev": "tsc --watch & python3 -m http.server 5500",
+    "dev": "tsc --watch & bun scripts/dev-server.ts",
     "build": "tsc",
     "test": "bun test",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",

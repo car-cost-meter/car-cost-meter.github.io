@@ -3,11 +3,16 @@ import { evalFormula } from '../core/Formula.js';
 import { defaultUnits, displayToKm, distanceUnit } from '../core/units.js';
 import { formatAmount } from './format.js';
 import { Settings } from '../core/settings.js';
-import { bindOverlayClose } from './overlayClose.js';
 import { componentStyles } from './componentStyles.js';
 import { todayString, addMonths } from '../core/dates.js';
 
 const CSS = `
+.sim-card {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+.sim-card h3 { margin-top: 0; }
 .sim-results {
   margin-top: var(--space-md);
   border-top: 1px solid var(--card-border);
@@ -21,26 +26,22 @@ const CSS = `
   font-size: var(--font-size-sm);
 }
 .sim-results .sim-row strong { color: var(--accent); }
+.sim-actions { display: flex; justify-content: flex-end; margin-top: var(--space-md); }
 `;
 
 /**
  * Pre-purchase cost simulator: hypotheses (purchase price, resale value at a
  * horizon date, km/year, loan, monthly payment, running costs, energy price)
  * → projected annual cost of ownership and cost per unit of distance.
- * Standalone — not tied to any recorded vehicle.
+ * Standalone — not tied to any recorded vehicle. Rendered as a regular
+ * screen (`/app/calc`), reachable even without an account.
  */
 export class SimulatorView {
-  static open(container: HTMLElement = document.body): void {
-    new SimulatorView(container).show();
-  }
-
-  private overlay!: HTMLElement;
-
-  private constructor(private readonly container: HTMLElement) {
+  constructor(private readonly host: HTMLElement) {
     componentStyles('simulator', CSS);
   }
 
-  private show(): void {
+  render(): void {
     const units = defaultUnits(I18n.language);
     const du = distanceUnit(units);
     const currency = Settings.load().get('currency');
@@ -54,11 +55,9 @@ export class SimulatorView {
       <div class="form-group"><label for="${id}">${label}</label>
         <input id="${id}" class="form-control" type="date" value="${value}" /></div>`;
 
-    this.overlay = document.createElement('div');
-    this.overlay.className = 'modal-overlay';
-    this.overlay.innerHTML = `
-      <div class="modal-content" style="max-width: 520px;">
-        <h3 style="margin-top:0;">${I18n.t('sim.title')}</h3>
+    this.host.innerHTML = `
+      <div class="card sim-card" data-tool="simulator">
+        <h3>${I18n.t('sim.title')}</h3>
         ${field('sim-price', `${I18n.t('sim.purchasePrice')} (${currency})`, '20000', '1', true)}
         ${dateField('sim-resale-date', I18n.t('sim.resaleDate'), addMonths(todayString(), 60))}
         ${field('sim-resale', `${I18n.t('sim.resaleValue')} (${currency})`, '12000', '1', true)}
@@ -72,31 +71,24 @@ export class SimulatorView {
           ${field('sim-conso', `${I18n.t('sim.consumption')} (L/100km, mpg ou kWh/100km)`, '6.5', '0.1')}
           ${field('sim-energy-price', `${I18n.t('sim.energyPrice')} (${currency}/L ou kWh)`, '1.80', '0.01', true)}
         </div>
-        <div class="sim-results" id="sim-results"></div>
-        <div class="modal-actions">
-          <div class="modal-actions-left"></div>
-          <div class="modal-actions-right">
-            <button class="btn-secondary" id="sim-close">${I18n.t('common.close')}</button>
-            <button class="btn-primary" id="sim-run">${I18n.t('sim.run')}</button>
-          </div>
+        <div class="sim-actions">
+          <button class="btn-primary" id="sim-run">${I18n.t('sim.run')}</button>
         </div>
+        <div class="sim-results" id="sim-results"></div>
       </div>`;
-    this.container.appendChild(this.overlay);
-    this.overlay.querySelector('#sim-close')!.addEventListener('click', () => this.overlay.remove());
-    bindOverlayClose(this.overlay, () => this.overlay.remove());
-    this.overlay.querySelector('#sim-run')!.addEventListener('click', () => this.compute(units, currency));
+    this.host.querySelector('#sim-run')!.addEventListener('click', () => this.compute(units, currency));
   }
 
   private num(id: string): number {
     // Amount fields accept formulas; NaN evaluates to 0.
-    const v = evalFormula((this.overlay.querySelector(`#${id}`) as HTMLInputElement).value);
+    const v = evalFormula((this.host.querySelector(`#${id}`) as HTMLInputElement).value);
     return Number.isFinite(v) ? v : 0;
   }
 
   private compute(units: ReturnType<typeof defaultUnits>, currency: string): void {
     const price = this.num('sim-price');
     const resale = this.num('sim-resale');
-    const resaleDate = (this.overlay.querySelector('#sim-resale-date') as HTMLInputElement).value;
+    const resaleDate = (this.host.querySelector('#sim-resale-date') as HTMLInputElement).value;
     const kmYear = displayToKm(this.num('sim-km-year'), units);
     const insurance = this.num('sim-insurance');
     const maintenance = this.num('sim-maintenance');
@@ -119,7 +111,7 @@ export class SimulatorView {
       return `<div class="sim-row"><span>${label}</span>${cell}</div>`;
     };
 
-    this.overlay.querySelector('#sim-results')!.innerHTML = `
+    this.host.querySelector('#sim-results')!.innerHTML = `
       ${row(I18n.t('sim.depreciationYear'), formatAmount(depreciationPerYear))}
       ${row(I18n.t('sim.energyYear'), formatAmount(energyPerYear))}
       ${row(I18n.t('sim.fixedYear'), formatAmount(insurance + maintenance + loanMonthly * 12))}

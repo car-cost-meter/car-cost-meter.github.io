@@ -19,6 +19,12 @@ export interface AppSettings {
   currency: string;
   /** INSEE CPI series idbank for constant-euros display (France only). */
   cpiSeries?: string;
+  /** Last app path visited (/app/**) — /app redirects back to it. */
+  lastRoute?: string;
+  /** Search radius (km) on the fuel-stations screen. */
+  fuelRadiusKm?: number;
+  /** Selected fuel on the fuel-stations screen (e.g. 'Gazole'). */
+  fuelKind?: string;
 }
 
 const STORAGE_KEY = 'ccm.settings';

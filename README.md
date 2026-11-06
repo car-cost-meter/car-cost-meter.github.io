@@ -23,7 +23,7 @@ bun run dev
 
 Puis ouvrir http://localhost:5500 dans votre navigateur (`/app/` pour l'application).
 
-`bun run dev` lance `tsc --watch` (recompilation automatique) et un serveur HTTP statique sur le port 5500.
+`bun run dev` lance `tsc --watch` (recompilation automatique) et un serveur HTTP statique sur le port 5500 (`scripts/dev-server.ts` — fallback SPA : les liens profonds `/app/**`, ex. `/app/veh/<id>` ou `/app/calc`, servent `app/index.html`, comme le `404.html` déployé).
 
 ### Tests
 

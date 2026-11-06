@@ -90,6 +90,12 @@ L'application permet de corriger toutes les données saisies par l'utilisateur, 
 
 L'application permet de simuler les coûts de propriété d'un véhicule en fonction de différentes hypothèses (prix d'achat, valeur de revente à une date donnée, nombre de km parcourus par an, loyer de voiture, montant et durée du crédit, etc.).
 
+### Stations service à proximité
+
+Un écran dédié (accessible sans compte) liste les stations service les plus proches de la position de l'utilisateur (géolocalisation navigateur, rayon de recherche réglable), avec les prix officiels par carburant (France uniquement), les horaires d'ouverture du jour, les ruptures de stock et la présence d'un automate 24/7. Le choix d'un carburant trie les stations par prix croissant ; un lien `geo:` ouvre chaque station dans l'application de navigation.
+
+Les données proviennent d'un fichier `stations.json` condensé (~1 Mo) généré toutes les heures par le pipeline [fuel2gist](https://github.com/fathzer/fuel2gist) à partir du flux instantané de [data.economie.gouv.fr](https://data.economie.gouv.fr/explore/dataset/prix-des-carburants-en-france-flux-instantane-v2/), et publié sur un Gist. Le fichier est conservé dans le cache navigateur (Cache Storage) : **une version générée le jour même n'est jamais retéléchargée sans action explicite** (bouton « Actualiser » de l'écran), en revanche **une version plus ancienne est re-téléchargée en arrière-plan au démarrage de l'application**, même si l'écran n'est pas ouvert — les prix restent ainsi disponibles hors-ligne.
+
 ### Prise en compte de l'inflation
 
 L'application permet de prendre en compte l'inflation dans tous les calculs de coûts. en utilisant les barêmes publiés par l'INSEE disponible dans le gist https://gist.github.com/fathzer/5646b5558f759655717914400cc50a03.

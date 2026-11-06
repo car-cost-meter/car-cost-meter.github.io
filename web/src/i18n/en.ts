@@ -144,7 +144,8 @@ export const en = {
     currency: 'Currency'
   },
   nav: {
-    vehicles: 'Vehicles'
+    vehicles: 'Vehicles',
+    stations: 'Stations'
   },
   detail: {
     editVehicle: 'Edit',
@@ -223,6 +224,25 @@ export const en = {
     annualTotal: 'Total cost / year',
     monthlyTotal: 'Total cost / month',
     perDistance: 'Cost / {unit}'
+  },
+  fuel: {
+    fuelLabel: 'Fuel',
+    radius: 'Radius',
+    locating: 'Locating…',
+    loading: 'Searching for stations…',
+    refresh: 'Refresh',
+    geoDenied: 'Position unavailable — allow geolocation and retry.',
+    loadError: 'Could not fetch station prices.',
+    retry: 'Retry',
+    none: 'No station within {km} km.',
+    found: '{count} stations within {km} km',
+    source: 'Official prices — data.economie.gouv.fr (France only)',
+    h24: '24/7',
+    soldOut: 'out of stock',
+    updatedAt: 'upd. {date}',
+    openMap: 'Open in maps',
+    hoursToday: 'Today: {hours}',
+    closedToday: 'Closed today'
   },
   events: {
     date: 'Date',

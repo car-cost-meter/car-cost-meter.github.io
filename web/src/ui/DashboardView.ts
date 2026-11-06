@@ -7,7 +7,9 @@ import { componentStyles } from './componentStyles.js';
 import { escapeHtml } from './format.js';
 import { VehicleDetailView } from './VehicleDetailView.js';
 import type { CostSubTab, Tab } from './VehicleDetailView.js';
-import { ADD_ICON, CAR_ICON, VAN_ICON, MOTORCYCLE_ICON, SETTINGS_ICON, LOGOUT_ICON, SIMULATOR_ICON, IMPORT_ICON, EXPORT_ICON, FUEL_ICON, BATTERY_ICON, MENU_ICON, HELP_ICON } from './icons.js';
+import { SimulatorView } from './SimulatorView.js';
+import { FuelStationsView } from './FuelStationsView.js';
+import { ADD_ICON, CAR_ICON, VAN_ICON, MOTORCYCLE_ICON, SETTINGS_ICON, LOGOUT_ICON, SIMULATOR_ICON, IMPORT_ICON, EXPORT_ICON, FUEL_ICON, BATTERY_ICON, MENU_ICON, HELP_ICON, VEHICLES_ICON } from './icons.js';
 
 const CSS = `
 .vehicle-grid {
@@ -148,15 +150,23 @@ const ENERGY_STREAM_ICONS: Record<string, string> = {
   hybrid: `${FUEL_ICON}${BATTERY_ICON}`
 };
 
+/** The screen currently occupying the content area — driven by the URL. */
+type Screen = { kind: 'list' } | { kind: 'vehicle'; id: string } | { kind: 'simulator' } | { kind: 'stations' };
+
 export class DashboardView {
   /** The provider picker hands the picked name here (wired by main.ts). */
   onProviderPick?: (name: ProviderName) => Promise<void>;
-  /** Clicked vehicle cards surface here (wired by main.ts → detail view). */
+  /** Clicked vehicle cards surface here (wired by main.ts → navigate). */
   onVehicleOpen?: (id: string) => void;
+  /** Back to the vehicle list (breadcrumb, toolbar icon). */
+  onHome?: () => void;
+  /** The open vehicle id is unknown — main.ts normalizes the URL. */
+  onVehicleGone?: () => void;
   onVehicleAdd?: () => void;
   onLogout?: () => void;
   onDemo?: () => void;
   onSimulator?: () => void;
+  onStations?: () => void;
   onSettings?: () => void;
   onHelp?: () => void;
   onImport?: () => void;
@@ -200,41 +210,63 @@ export class DashboardView {
     const host = this.root.querySelector('#top-bar-actions');
     if (!host) return;
     const authed = this.store.state.isAuthenticated;
+    // A screen's own toolbar icon is hidden while that screen is shown —
+    // the "vehicles" icon covers every non-vehicle screen.
+    const inVehicle = this.screen.kind === 'list' || this.screen.kind === 'vehicle';
+    const homeBtn = inVehicle ? ''
+      : `<button id="nav-home" class="btn-secondary" title="${I18n.t('nav.vehicles')}">${VEHICLES_ICON}</button>`;
+    const simBtn = this.screen.kind === 'simulator' ? ''
+      : `<button id="simulator" class="btn-secondary" title="${I18n.t('sim.button')}">${SIMULATOR_ICON}</button>`;
+    const stationsBtn = this.screen.kind === 'stations' ? ''
+      : `<button id="stations" class="btn-secondary" title="${I18n.t('nav.stations')}">${FUEL_ICON}</button>`;
     const logoutBtn = authed ? `<button id="logout" class="btn-secondary" title="${I18n.t('vehicles.logout')}">${LOGOUT_ICON}</button>` : '';
     const ioBtns = authed
       ? `<button id="export" class="btn-secondary" title="${I18n.t('tools.export')}">${EXPORT_ICON}</button>
          <button id="import" class="btn-secondary" title="${I18n.t('tools.import')}">${IMPORT_ICON}</button>`
       : '';
     host.innerHTML = `
-      <button id="simulator" class="btn-secondary" title="${I18n.t('sim.button')}">${SIMULATOR_ICON}</button>
+      ${homeBtn}
+      ${simBtn}
+      ${stationsBtn}
       ${ioBtns}
       <button id="settings" class="btn-secondary" title="${I18n.t('tools.settings')}">${SETTINGS_ICON}</button>
       <button id="help" class="btn-secondary" title="${I18n.t('tools.help')}">${HELP_ICON}</button>
       ${logoutBtn}`;
+    host.querySelector('#nav-home')?.addEventListener('click', () => this.onHome?.());
     host.querySelector('#simulator')?.addEventListener('click', () => this.onSimulator?.());
+    host.querySelector('#stations')?.addEventListener('click', () => this.onStations?.());
     host.querySelector('#export')?.addEventListener('click', () => this.onExport?.());
     host.querySelector('#import')?.addEventListener('click', () => this.onImport?.());
     host.querySelector('#settings')?.addEventListener('click', () => this.onSettings?.());
     host.querySelector('#help')?.addEventListener('click', () => this.onHelp?.());
     host.querySelector('#logout')?.addEventListener('click', () => this.onLogout?.());
 
-    // Mobile menu — same actions, labelled with the button tooltips.
+    // Mobile menu — same actions, labelled with the button tooltips; all
+    // items stay listed, grouped by kind with separators between groups.
     const menuHost = this.root.querySelector('#top-bar-menu');
     if (menuHost) {
-      const items = [
-        { id: 'simulator', icon: SIMULATOR_ICON, label: I18n.t('sim.button') },
-        ...(authed ? [
+      const groups = [
+        [
+          { id: 'home', icon: VEHICLES_ICON, label: I18n.t('nav.vehicles') },
+          { id: 'simulator', icon: SIMULATOR_ICON, label: I18n.t('sim.button') },
+          { id: 'stations', icon: FUEL_ICON, label: I18n.t('nav.stations') }
+        ],
+        ...(authed ? [[
           { id: 'export', icon: EXPORT_ICON, label: I18n.t('tools.export') },
           { id: 'import', icon: IMPORT_ICON, label: I18n.t('tools.import') }
-        ] : []),
-        { id: 'settings', icon: SETTINGS_ICON, label: I18n.t('tools.settings') },
-        { id: 'help', icon: HELP_ICON, label: I18n.t('tools.help') },
-        ...(authed ? [{ id: 'logout', icon: LOGOUT_ICON, label: I18n.t('vehicles.logout') }] : [])
+        ]] : []),
+        [
+          { id: 'settings', icon: SETTINGS_ICON, label: I18n.t('tools.settings') },
+          { id: 'help', icon: HELP_ICON, label: I18n.t('tools.help') }
+        ],
+        ...(authed ? [[{ id: 'logout', icon: LOGOUT_ICON, label: I18n.t('vehicles.logout') }]] : [])
       ];
+      const itemHtml = (i: { id: string; icon: string; label: string }): string =>
+        `<button class="menu-item" data-action="${i.id}">${i.icon}<span>${i.label}</span></button>`;
       menuHost.innerHTML = `
         <button id="menu-btn" class="btn-secondary" title="Menu">${MENU_ICON}</button>
         <div class="menu-dropdown" hidden>
-          ${items.map(i => `<button class="menu-item" data-action="${i.id}">${i.icon}<span>${i.label}</span></button>`).join('')}
+          ${groups.map(g => g.map(itemHtml).join('')).join('<div class="menu-sep"></div>')}
         </div>`;
       const dropdown = menuHost.querySelector<HTMLElement>('.menu-dropdown')!;
       const btn = menuHost.querySelector('#menu-btn')!;
@@ -263,7 +295,9 @@ export class DashboardView {
   /** Dispatches a mobile-menu action to the same callbacks as the buttons. */
   private onMenuAction(action: string): void {
     const handlers: Record<string, (() => void) | undefined> = {
+      home: this.onHome,
       simulator: this.onSimulator,
+      stations: this.onStations,
       export: this.onExport,
       import: this.onImport,
       settings: this.onSettings,
@@ -331,26 +365,60 @@ export class DashboardView {
     });
   }
 
-  /** Full re-render on state change. */
-  /** Id of the vehicle whose detail page is open, if any — re-rendered
-   *  in place on state:changed instead of falling back to the list. */
-  private openVehicleId?: string;
+  private screen: Screen = { kind: 'list' };
   private detailView?: VehicleDetailView;
 
+  /** Vehicle list screen — `/app/`. */
+  showList(): void {
+    this.screen = { kind: 'list' };
+    this.render(this.store.state);
+  }
+
+  /** Vehicle detail screen — `/app/veh/<id>`; unknown ids fall back to
+   *  the list (and the URL is normalized through onVehicleGone). */
+  showVehicleById(id: string): void {
+    this.screen = { kind: 'vehicle', id };
+    this.render(this.store.state);
+  }
+
+  /** Simulator screen — `/app/calc`; usable without an account. */
+  showSimulator(): void {
+    this.screen = { kind: 'simulator' };
+    this.render(this.store.state);
+  }
+
+  /** Fuel stations screen — `/app/fuel`; usable without an account. */
+  showStations(): void {
+    this.screen = { kind: 'stations' };
+    this.render(this.store.state);
+  }
+
   /** Shows a vehicle detail page with breadcrumb "Véhicules / name". */
-  showVehicle(vehicle: Vehicle, tab?: Tab, costSubTab?: CostSubTab): void {
-    this.openVehicleId = vehicle.id;
+  private showVehicle(vehicle: Vehicle, tab?: Tab, costSubTab?: CostSubTab): void {
     const bc = this.root.querySelector('#breadcrumb-root') as HTMLElement;
     bc.hidden = false;
     bc.innerHTML = `<a id="bc-list">${I18n.t('nav.vehicles')}</a><span class="bc-sep">/</span><span>${escapeHtml(vehicle.name)}</span>`;
-    bc.querySelector('#bc-list')!.addEventListener('click', () => {
-      this.openVehicleId = undefined;
-      this.render(this.store.state);
-    });
+    bc.querySelector('#bc-list')!.addEventListener('click', () => this.onHome?.());
     const content = this.root.querySelector('#dashboard-content') as HTMLElement;
     content.classList.add('detail-mode');
     this.detailView = new VehicleDetailView(content, this.store, vehicle, tab, costSubTab);
     this.detailView.render();
+  }
+
+  /** Tool screen host (simulator, stations): no vehicle breadcrumb —
+   *  the toolbar "vehicles" icon is the way back. The tool is re-mounted
+   *  only when its marker disappeared: state:changed re-renders keep it
+   *  (typed fields, results survive), while a showLoading wipe or a
+   *  screen change rebuilds it. */
+  private renderTool(kind: 'simulator' | 'stations', mount: (content: HTMLElement) => void): void {
+    const bc = this.root.querySelector('#breadcrumb-root') as HTMLElement;
+    bc.hidden = true;
+    bc.innerHTML = '';
+    const content = this.root.querySelector('#dashboard-content') as HTMLElement;
+    content.classList.remove('detail-mode');
+    if ((content.firstElementChild as HTMLElement | null)?.dataset.tool !== kind) {
+      mount(content);
+    }
   }
 
   render(state: AppState): void {
@@ -358,21 +426,40 @@ export class DashboardView {
     this.renderDemoBanner();
     this.renderTopBarActions();
     if (this.loading) return;
+    const screen = this.screen;
+    // Tool screens are usable without an account.
+    if (screen.kind === 'simulator') {
+      this.renderTool('simulator', c => new SimulatorView(c).render());
+      return;
+    }
+    if (screen.kind === 'stations') {
+      this.renderTool('stations', c => new FuelStationsView(c).render());
+      return;
+    }
     if (!state.isAuthenticated) {
-      this.openVehicleId = undefined;
+      // Keep the requested screen — a deep link resumes after login.
+      this.detailView = undefined;
+      const bc = this.root.querySelector('#breadcrumb-root') as HTMLElement;
+      bc.hidden = true;
+      bc.innerHTML = '';
       this.showProviderPicker();
       return;
     }
     // A detail page stays open across state changes (saves) — the list is
     // only shown again when the vehicle disappears (deleted remotely).
-    if (this.openVehicleId) {
-      const vehicle = state.vehicles.find(v => v.id === this.openVehicleId);
+    if (screen.kind === 'vehicle') {
+      const vehicle = state.vehicles.find(v => v.id === screen.id);
       if (vehicle) {
         this.showVehicle(vehicle, this.detailView?.currentTab, this.detailView?.currentCostSubTab);
         return;
       }
-      this.openVehicleId = undefined;
+      this.screen = { kind: 'list' };
+      if (this.onVehicleGone) {
+        this.onVehicleGone();
+        return;
+      }
     }
+    this.detailView = undefined;
     const bc = this.root.querySelector('#breadcrumb-root') as HTMLElement | null;
     if (bc) { bc.hidden = true; bc.innerHTML = ''; }
     this.root.querySelector('#dashboard-content')?.classList.remove('detail-mode');

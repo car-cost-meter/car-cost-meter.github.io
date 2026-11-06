@@ -62,6 +62,10 @@ jobs:
           mkdir -p _site/app
           sed 's|dist/main.js|main.js|g' web/app/index.html > _site/app/index.html
 
+          # SPA fallback: deep links (/app/veh/<id>, /app/calc) get the app
+          # shell via the GitHub Pages 404 mechanism.
+          cp _site/app/index.html _site/404.html
+
           # Copy manifest.json
           cp web/manifest.json _site/manifest.json
 

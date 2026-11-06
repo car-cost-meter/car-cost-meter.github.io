@@ -2,10 +2,11 @@ import { I18n } from './core/I18n.js';
 import { Settings } from './core/settings.js';
 import type { Theme } from './core/settings.js';
 import { AppStore } from './core/AppStore.js';
+import { parseRoute, isAppRoot, listPath, simulatorPath, stationsPath, vehiclePath } from './core/route.js';
+import { refreshFuelDataIfStale } from './domain/fuelStations.js';
 import { vehicleGrains } from './domain/payload.js';
 import { DashboardView } from './ui/DashboardView.js';
 import { VehicleEditor } from './ui/VehicleEditor.js';
-import { SimulatorView } from './ui/SimulatorView.js';
 import { SettingsModal } from './ui/SettingsModal.js';
 import { HelpModal } from './ui/HelpModal.js';
 import { ConfirmDialog } from './ui/ConfirmDialog.js';
@@ -120,6 +121,9 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
   const dashboard = new DashboardView(appRoot, store, storageManager);
   dashboard.comingSoonProviders = COMING_SOON_PROVIDERS;
   mountSyncBanner(storageManager);
+  // Fuel-stations file: ~1 MB cached for the day — a stale copy is
+  // re-downloaded in the background even if the screen is never opened.
+  void refreshFuelDataIfStale();
 
   dashboard.onProviderPick = async (name) => {
     storageManager.useProviderByName(name);
@@ -142,14 +146,38 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
       dashboard.showConnectFailed();
     }
   };
+  // URL routing — the visible screen follows /app/** paths; back/forward
+  // buttons replay them through popstate.
+  const applyRoute = (): void => {
+    // The bare app root resumes the last visited screen — the query is
+    // kept so OAuth verdicts (?code), ?demo and ?connect survive.
+    if (isAppRoot(window.location.pathname)) {
+      const target = settings.get('lastRoute') ?? listPath();
+      window.history.replaceState(null, '', target + window.location.search);
+    }
+    const route = parseRoute(window.location.pathname);
+    if (route.kind === 'vehicle') dashboard.showVehicleById(route.id);
+    else if (route.kind === 'simulator') dashboard.showSimulator();
+    else if (route.kind === 'stations') dashboard.showStations();
+    else dashboard.showList();
+    // Remember the resolved screen — the bare root never overwrites it.
+    settings.set('lastRoute', window.location.pathname);
+  };
+  const navigate = (path: string, replace = false): void => {
+    if (replace) window.history.replaceState(null, '', path);
+    else window.history.pushState(null, '', path);
+    applyRoute();
+  };
+  window.addEventListener('popstate', applyRoute);
+
   dashboard.onDemo = () => { void store.loginDemo(); };
   dashboard.onVehicleAdd = () => VehicleEditor.open(store);
-  dashboard.onVehicleOpen = (id) => {
-    const vehicle = store.findVehicle(id);
-    if (vehicle) dashboard.showVehicle(vehicle);
-  };
+  dashboard.onVehicleOpen = (id) => navigate(vehiclePath(id));
+  dashboard.onHome = () => navigate(listPath());
+  dashboard.onVehicleGone = () => navigate(listPath(), true);
   dashboard.onLogout = () => { void store.logout(); };
-  dashboard.onSimulator = () => SimulatorView.open();
+  dashboard.onSimulator = () => navigate(simulatorPath());
+  dashboard.onStations = () => navigate(stationsPath());
   dashboard.onHelp = () => HelpModal.open(document.body, storageManager.currentProvider);
   dashboard.onSettings = () => SettingsModal.open(settings, (patch) => {
     if ('theme' in patch) applyTheme(settings.get('theme'));
@@ -194,6 +222,10 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
     });
     input.click();
   };
+
+  // Resolve the entry URL (/app/, /app/veh/<id>, /app/calc) — an
+  // unauthenticated deep link shows the picker and resumes after login.
+  applyRoute();
 
   let wasAuthenticated = false;
   store.on('state:changed', (state) => {
