@@ -2,7 +2,7 @@ import { I18n } from './core/I18n.js';
 import { Settings } from './core/settings.js';
 import type { Theme } from './core/settings.js';
 import { AppStore } from './core/AppStore.js';
-import { parseRoute, isAppRoot, listPath, simulatorPath, stationsPath, vehiclePath } from './core/route.js';
+import { parseRoute, isAppRoot, listPath, simulatorPath, stationsPath, vehiclePath, connectPath } from './core/route.js';
 import { refreshFuelDataIfStale } from './domain/fuelStations.js';
 import { vehicleGrains } from './domain/payload.js';
 import { DashboardView } from './ui/DashboardView.js';
@@ -126,6 +126,13 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
   void refreshFuelDataIfStale();
 
   dashboard.onProviderPick = async (name) => {
+    // OAuth providers build their redirect URI from the current path —
+    // pin it to /app/, the registered entry point, so connecting from a
+    // deep link or a tool screen (e.g. /app/calc) keeps working. The
+    // visited screen is remembered in lastRoute and restored after auth.
+    if (window.location.pathname !== '/app/') {
+      window.history.replaceState(null, '', `/app/${window.location.search}`);
+    }
     storageManager.useProviderByName(name);
     // The "connecting" placeholder only suits popup flows (the consent
     // window is up while the page stays). A redirect flow leaves
@@ -149,19 +156,40 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
   // URL routing — the visible screen follows /app/** paths; back/forward
   // buttons replay them through popstate.
   const applyRoute = (): void => {
+    const params = new URLSearchParams(window.location.search);
     // The bare app root resumes the last visited screen — the query is
-    // kept so OAuth verdicts (?code), ?demo and ?connect survive.
-    if (isAppRoot(window.location.pathname)) {
+    // kept so ?demo survives. Auth queries (?connect, ?code, ?state,
+    // ?error) pin /app/ instead: it is the registered OAuth endpoint and
+    // the picker / verdict processing must run under it, not under the
+    // restored screen's path.
+    const authIntent = params.has('connect') || params.has('code')
+      || params.has('state') || params.has('error');
+    if (isAppRoot(window.location.pathname) && !authIntent) {
       const target = settings.get('lastRoute') ?? listPath();
       window.history.replaceState(null, '', target + window.location.search);
     }
     const route = parseRoute(window.location.pathname);
+    if (route.kind === 'connect') {
+      // Already signed in → the connect screen is meaningless: resume the
+      // last visited screen, exactly like the bare root.
+      if (store.state.isAuthenticated) {
+        const target = settings.get('lastRoute') ?? listPath();
+        window.history.replaceState(null, '', target + window.location.search);
+        applyRoute();
+        return;
+      }
+      dashboard.showProviderPicker();
+      return; // never stored in lastRoute — it is an entry point, not a screen
+    }
     if (route.kind === 'vehicle') dashboard.showVehicleById(route.id);
     else if (route.kind === 'simulator') dashboard.showSimulator();
     else if (route.kind === 'stations') dashboard.showStations();
     else dashboard.showList();
-    // Remember the resolved screen — the bare root never overwrites it.
-    settings.set('lastRoute', window.location.pathname);
+    // Remember the resolved screen — the bare root (kept for auth queries)
+    // never overwrites it either.
+    if (!isAppRoot(window.location.pathname)) {
+      settings.set('lastRoute', window.location.pathname);
+    }
   };
   const navigate = (path: string, replace = false): void => {
     if (replace) window.history.replaceState(null, '', path);
@@ -234,6 +262,9 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
       return;
     }
     wasAuthenticated = state.isAuthenticated;
+    // The connect screen only makes sense while unauthenticated: once the
+    // session resolves, re-route so it resumes the last visited screen.
+    if (window.location.pathname === connectPath()) { applyRoute(); return; }
     dashboard.render(state);
   });
   store.on('state:loading', (isLoading) => dashboard.showLoading(isLoading));
@@ -264,7 +295,11 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
     }
     window.history.replaceState(null, '', url.pathname + url.search + url.hash);
     await store.init();
-    if (!verdict) dashboard.showConnectFailed();
+    if (!verdict) {
+      dashboard.showConnectFailed();
+      return;
+    }
+    applyRoute(); // successful sign-in: resume the last visited screen
     return;
   }
 

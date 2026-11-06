@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { parseRoute, listPath, simulatorPath, stationsPath, vehiclePath } from './route.js';
+import { parseRoute, listPath, simulatorPath, stationsPath, vehiclePath, connectPath } from './route.js';
 
 describe('parseRoute', () => {
   test('app root and /app/veh → list', () => {
@@ -33,6 +33,7 @@ describe('paths', () => {
     expect(parseRoute(listPath())).toEqual({ kind: 'list' });
     expect(parseRoute(simulatorPath())).toEqual({ kind: 'simulator' });
     expect(parseRoute(stationsPath())).toEqual({ kind: 'stations' });
+    expect(parseRoute(connectPath())).toEqual({ kind: 'connect' });
     expect(parseRoute(vehiclePath('a b'))).toEqual({ kind: 'vehicle', id: 'a b' });
   });
 });
