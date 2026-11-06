@@ -27,6 +27,9 @@ export interface VehicleData {
   /** Exempt from technical inspection (collector vehicles, etc.) —
    *  disables the reminder entirely. */
   inspectionExempt?: boolean;
+  /** Free-form info list (registration, tyre pressure…): label/value
+   *  pairs kept in user order. */
+  notes?: { label: string; value: string }[];
   /** Dated resale-value estimates, sorted by date. */
   resaleValues: DatedValue[];
   fuelUps: FuelUp[];

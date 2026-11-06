@@ -54,12 +54,16 @@ export const BATTERY_ICON = svgEmoji(
 export const GEO_ICON = svg(
   '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>');
 
-/** "Back to vehicles" icon (toolbar, mobile menu) — front-view car. */
-export const VEHICLES_ICON = svg(
+/** "Back to vehicles" icon (toolbar, mobile menu) — a fleet: two
+ *  front-view cars, one offset behind the other. */
+const VEHICLE_SHAPE =
   '<path d="M5.5 10.5 7 6.8A2 2 0 0 1 8.9 5.5h6.2a2 2 0 0 1 1.9 1.3l1.5 3.7"/>' +
   '<rect x="3" y="10.5" width="18" height="6.5" rx="2"/>' +
   '<line x1="7.2" y1="13.7" x2="7.2" y2="13.71"/><line x1="16.8" y1="13.7" x2="16.8" y2="13.71"/>' +
-  '<path d="M5 17v2.2M19 17v2.2"/>');
+  '<path d="M5 17v2.2M19 17v2.2"/>';
+export const VEHICLES_ICON = svg(
+  `<g transform="translate(-2.5,-3)">${VEHICLE_SHAPE}</g>` +
+  `<g transform="translate(2,2.5)">${VEHICLE_SHAPE}</g>`);
 
 export const MENU_ICON = svgEmoji(
   '<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>');

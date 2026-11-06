@@ -13,6 +13,8 @@ export const en = {
     card2Text: 'Consumption is only computed over periods where all data is known — never fanciful figures when fuel fill-ups are missing (loans, rentals, incomplete entries).',
     card3Title: 'Cost per mile and total cost',
     card3Text: 'Per-distance cost and yearly total cost of ownership for each vehicle, resale value deducted, displayable in constant euros using INSEE indices.',
+    card4Title: 'The cheapest stations around you (in France)',
+    card4Text: 'Official fuel prices at nearby gas stations—no account or installation required, and no ads. Try it now by clicking here.',
     footerHelp: 'Help',
     footerPrivacy: 'Privacy',
     footerTerms: 'Terms'
@@ -91,6 +93,10 @@ export const en = {
     add: 'Add',
     edit: 'Edit'
   },
+  infos: {
+    label: 'Label (e.g. Registration)',
+    value: 'Value (e.g. AB-123-CD)'
+  },
   alerts: {
     loadError: 'Could not load your data. Check your connection then reload the page.',
     importError: 'Invalid file — import failed.'
@@ -154,7 +160,8 @@ export const en = {
       edit: 'Edit',
       resale: 'Resale',
       analysis: 'Summary',
-      consumption: 'Consumption'
+      consumption: 'Consumption',
+      infos: 'Infos'
     },
     notImplemented: 'Not implemented yet',
     acqInitialAmount: 'Initial amount',

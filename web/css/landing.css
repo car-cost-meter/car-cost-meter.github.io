@@ -55,6 +55,14 @@
   padding: var(--space-md);
 }
 
+.welcome-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--transition-fast);
+}
+.welcome-card-link:hover { border-color: var(--accent); }
+
 .welcome-card-header {
   display: flex;
   align-items: center;

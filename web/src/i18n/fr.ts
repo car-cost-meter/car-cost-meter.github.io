@@ -13,6 +13,8 @@ export const fr = {
     card2Text: 'La consommation n\'est calculée que sur des périodes où toutes les données sont connues — jamais de chiffres fantaisistes quand des appoints de carburant manquent (prêt, location, saisie incomplète).',
     card3Title: 'Coût au kilomètre et coût total',
     card3Text: 'Coût kilométrique et coût total de possession annuel par véhicule, valeur de revente déduite, affichables en euros constants grâce aux indices INSEE.',
+    card4Title: 'Stations les moins chères autour de vous (en France)',
+    card4Text: 'Les prix officiels des stations service à proximité, sans compte ni installation — sans publicité. Essayez maintenant en cliquant ici.',
     footerHelp: 'Aide',
     footerPrivacy: 'Confidentialité',
     footerTerms: 'Conditions'
@@ -91,6 +93,10 @@ export const fr = {
     add: 'Ajouter',
     edit: 'Modifier'
   },
+  infos: {
+    label: 'Intitulé (ex. Immatriculation)',
+    value: 'Valeur (ex. AB-123-CD)'
+  },
   alerts: {
     loadError: 'Impossible de charger vos données. Vérifiez votre connexion puis rechargez la page.',
     importError: 'Fichier invalide — import impossible.'
@@ -154,7 +160,8 @@ export const fr = {
       edit: 'Édition',
       resale: 'Revente',
       analysis: 'Synthèse',
-      consumption: 'Consommation'
+      consumption: 'Consommation',
+      infos: 'Infos'
     },
     notImplemented: 'Non encore implémenté',
     acqInitialAmount: 'Montant initial',

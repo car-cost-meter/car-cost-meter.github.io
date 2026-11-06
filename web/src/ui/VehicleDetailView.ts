@@ -43,6 +43,11 @@ const CSS = `
   gap: var(--space-xs);
 }
 .detail-tab svg, .cost-subtab svg { width: 1rem; height: 1rem; }
+.info-row { display: flex; gap: var(--space-sm); margin-bottom: var(--space-sm); align-items: center; }
+.info-row .info-label { flex: 1; }
+.info-row .info-value { flex: 2; }
+.info-row .info-del { padding: 0 var(--space-sm); min-width: 0; }
+.infos-actions { display: flex; gap: var(--space-sm); margin-top: var(--space-md); }
 .detail-tab.active, .cost-subtab.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
@@ -200,7 +205,7 @@ const CSS = `
 .fab:hover { filter: brightness(1.15); }
 `;
 
-export type Tab = 'edit' | 'analysis' | 'consumption';
+export type Tab = 'edit' | 'analysis' | 'consumption' | 'infos';
 export type CostSubTab = 'energy' | CostCategory | 'resale';
 const COST_SUBTABS: CostSubTab[] = ['energy', 'maintenance', 'repair', 'inspection', 'insurance', 'acquisition', 'resale', 'other'];
 
@@ -297,7 +302,7 @@ export class VehicleDetailView {
   };
 
   private visibleTabs(): Tab[] {
-    return ['edit', 'analysis', 'consumption'];
+    return ['edit', 'analysis', 'consumption', 'infos'];
   }
 
   private renderTabs(): void {
@@ -328,10 +333,57 @@ export class VehicleDetailView {
       case 'consumption':
         host.innerHTML = `<div class="detail-scroll"><p class="detail-empty">${I18n.t('detail.notImplemented')}</p></div>`;
         return;
+      case 'infos':
+        this.renderInfos(host);
+        return;
       case 'edit':
         this.renderCosts(host);
         return;
     }
+  }
+
+  /** Free-form vehicle info: editable label/value rows, saved as a whole. */
+  private renderInfos(host: HTMLElement): void {
+    const row = (n: { label: string; value: string }): string => `
+      <div class="info-row">
+        <input class="form-control info-label" placeholder="${I18n.t('infos.label')}" value="${escapeHtml(n.label)}">
+        <input class="form-control info-value" placeholder="${I18n.t('infos.value')}" value="${escapeHtml(n.value)}">
+        <button class="btn-secondary info-del" title="${I18n.t('common.delete')}">×</button>
+      </div>`;
+    host.innerHTML = `<div class="detail-scroll">
+      <div id="infos-list">${(this.vehicle.data.notes ?? []).map(row).join('')}</div>
+      <div class="infos-actions">
+        <button class="btn-secondary" id="infos-add">${I18n.t('common.add')}</button>
+        <button class="btn-primary" id="infos-save" style="visibility:hidden">${I18n.t('common.save')}</button>
+      </div>
+    </div>`;
+    const list = host.querySelector('#infos-list')!;
+    const saveBtn = host.querySelector<HTMLButtonElement>('#infos-save')!;
+    const markDirty = (): void => { saveBtn.style.visibility = 'visible'; };
+    const bind = (el: HTMLElement): void => {
+      el.querySelectorAll('input').forEach(i => i.addEventListener('input', markDirty));
+      el.querySelector<HTMLButtonElement>('.info-del')!.addEventListener('click', () => { el.remove(); markDirty(); });
+    };
+    list.querySelectorAll<HTMLElement>('.info-row').forEach(bind);
+    host.querySelector('#infos-add')!.addEventListener('click', () => {
+      const div = document.createElement('div');
+      div.innerHTML = row({ label: '', value: '' });
+      const el = div.firstElementChild as HTMLElement;
+      bind(el);
+      list.appendChild(el);
+      markDirty();
+      (el.querySelector('.info-label') as HTMLInputElement).focus();
+    });
+    saveBtn.addEventListener('click', () => {
+      const notes = [...list.querySelectorAll<HTMLElement>('.info-row')]
+        .map(el => ({
+          label: (el.querySelector('.info-label') as HTMLInputElement).value.trim(),
+          value: (el.querySelector('.info-value') as HTMLInputElement).value.trim()
+        }))
+        .filter(n => n.label !== '');
+      void this.store.updateVehicle(this.vehicle.id, { notes: notes.length ? notes : undefined });
+      saveBtn.style.visibility = 'hidden';
+    });
   }
 
   /* ---------------------------------------------------------------- costs */
