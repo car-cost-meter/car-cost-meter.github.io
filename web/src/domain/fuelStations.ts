@@ -35,6 +35,13 @@ export interface Station {
   soldOut: Set<string>;
   /** Weekly schedule (Mon..Sun) when published — hidden for 24/7 stations. */
   week?: DayHours[];
+  /** OSM-derived brand (TotalEnergies, Carrefour…) when mapped. */
+  brand?: string;
+  /** Coordinates come from the unverified government geocoding (no OSM
+   *  match) — shown as an approximate-location hint. */
+  geoUncertain: boolean;
+  /** Motorway service area (location type "A"), vs regular road. */
+  motorway: boolean;
 }
 export interface NearbyStation extends Station {
   /** Distance from the searched point, in km. */
@@ -49,10 +56,12 @@ export interface FuelData {
 }
 
 /** Raw gist payload — stations are positional arrays (see fuel2gist):
- *  [id, lat, lon, address, city, cp, h24, oh, pricedFuels, shortages]. */
+ *  [id, lat, lon, address, city, cp, h24, oh, pricedFuels, shortages,
+ *  brandIdx, geoUncertain, locationType]. */
 interface GistData {
   ts: number;
   fuels: string[];
+  brands?: string[];
   stations: unknown[][];
 }
 
@@ -60,14 +69,15 @@ interface GistData {
 export function parseFuelData(raw: unknown): FuelData {
   const data = raw as GistData;
   const fuels = Array.isArray(data.fuels) ? data.fuels : [];
+  const brands = Array.isArray(data.brands) ? data.brands : [];
   const stations = (Array.isArray(data.stations) ? data.stations : [])
-    .map(s => parseGistStation(s, fuels))
+    .map(s => parseGistStation(s, fuels, brands))
     .filter(s => s !== undefined);
   return { ts: Number(data.ts) || 0, fuels, stations };
 }
 
-function parseGistStation(s: unknown[], fuels: string[]): Station | undefined {
-  const [, lat, lon, addr, city, cp, h24, oh, priced, out] = s;
+function parseGistStation(s: unknown[], fuels: string[], brands: string[]): Station | undefined {
+  const [, lat, lon, addr, city, cp, h24, oh, priced, out, brandIdx, geoGouv, place] = s;
   if (typeof lat !== 'number' || typeof lon !== 'number') return undefined;
   const prices: FuelPrice[] = [];
   if (Array.isArray(priced)) {
@@ -91,7 +101,10 @@ function parseGistStation(s: unknown[], fuels: string[]): Station | undefined {
     lat, lon,
     h24: h24 === 1,
     prices, soldOut,
-    week: Array.isArray(oh) ? oh as DayHours[] : undefined
+    week: Array.isArray(oh) ? oh as DayHours[] : undefined,
+    brand: typeof brandIdx === 'number' ? brands[brandIdx] : undefined,
+    geoUncertain: geoGouv === 1,
+    motorway: place === 'A'
   };
 }
 
@@ -112,6 +125,16 @@ export function haversineKm(a: { lat: number; lon: number }, b: { lat: number; l
   return 6371 * 2 * Math.asin(Math.sqrt(h));
 }
 
+/** Initial bearing from a to b, in degrees 0-360 (0 = north). */
+export function bearingDeg(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+  const rad = Math.PI / 180;
+  const dLon = (b.lon - a.lon) * rad;
+  const y = Math.sin(dLon) * Math.cos(b.lat * rad);
+  const x = Math.cos(a.lat * rad) * Math.sin(b.lat * rad)
+    - Math.sin(a.lat * rad) * Math.cos(b.lat * rad) * Math.cos(dLon);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
 /** All stations within radiusKm of a point, nearest first — the view
  *  slices what it shows and reports the total count. */
 export function nearestStations(
@@ -121,6 +144,21 @@ export function nearestStations(
     .map(s => ({ ...s, km: haversineKm(from, s) }))
     .filter(s => s.km <= radiusKm)
     .sort((a, b) => a.km - b.km);
+}
+
+/** Whether a station is open at a given instant: 24/7 stations and
+ *  unpublished schedules count as open; [0,0] slots mean all-day. */
+export function isOpenAt(week: DayHours[] | undefined, h24: boolean, when: Date): boolean {
+  if (h24 || week === undefined) return true;
+  const day = week[(when.getDay() + 6) % 7]; // JS: 0=Sun..6=Sat → 0=Mon..6=Sun
+  if (day === null) return false;
+  if (day.length === 0) return true;
+  const m = when.getHours() * 60 + when.getMinutes();
+  for (let i = 0; i + 1 < day.length; i += 2) {
+    if (day[i] === 0 && day[i + 1] === 0) return true; // 00:00–00:00 = all day
+    if (m >= day[i] && m < day[i + 1]) return true;
+  }
+  return false;
 }
 
 /** Fuel names present in a station list, canonical order first. */

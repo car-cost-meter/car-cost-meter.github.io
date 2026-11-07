@@ -54,6 +54,30 @@ export const BATTERY_ICON = svgEmoji(
 export const GEO_ICON = svg(
   '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>');
 
+/** "Approximate location" (station cards) — map pin with a question
+ *  mark, for unverified government geocoding. */
+export const GEO_UNCERTAIN_ICON = svg(
+  '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/>' +
+  '<path d="M9.9 8.9a2.1 2.1 0 0 1 4.2 0c0 1.1-2.1 1.5-2.1 2.8"/>' +
+  '<line x1="12" y1="13.4" x2="12" y2="13.41"/>');
+
+/** "Motorway" (station cards) — French motorway sign: two carriageways
+ *  diverging toward the horizon crossed by an overpass, dashed median. */
+export const MOTORWAY_ICON = svg(
+  '<path d="M6 20 10 4"/><path d="M18 20 14 4"/>' +
+  '<line x1="4" y1="10" x2="20" y2="10"/>' +
+  '<line x1="12" y1="4" x2="12" y2="20" stroke-dasharray="2.5 3"/>');
+
+/** Direction indicator (station cards) — a fixed "N" marking north at
+ *  the top and a single solid arrow rotated to the given bearing in
+ *  degrees, 0 = north. Taller than square so the N stays readable. */
+export const dirIcon = (deg: number): string =>
+  '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="19" viewBox="0 0 24 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<text x="12" y="9.5" font-size="10" font-weight="bold" font-family="inherit" text-anchor="middle" fill="currentColor" stroke="none">N</text>' +
+  `<g transform="rotate(${deg.toFixed(0)} 12 21.5)">` +
+  '<polygon points="12 13 16 28.5 12 26 8 28.5" fill="currentColor" stroke="none"/>' +
+  '</g></svg>';
+
 /** "Back to vehicles" icon (toolbar, mobile menu) — a fleet: two
  *  front-view cars, one offset behind the other. */
 const VEHICLE_SHAPE =

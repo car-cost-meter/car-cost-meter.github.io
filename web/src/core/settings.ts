@@ -25,6 +25,16 @@ export interface AppSettings {
   fuelRadiusKm?: number;
   /** Selected fuel on the fuel-stations screen (e.g. 'Gazole'). */
   fuelKind?: string;
+  /** Brand names hidden on the fuel-stations screen ([] = all shown). */
+  fuelHiddenBrands?: string[];
+  /** Whether unbranded stations are hidden on the fuel-stations screen. */
+  fuelHideUnbranded?: boolean;
+  /** Location-type filter on the fuel-stations screen. */
+  fuelMotorway?: 'all' | 'motorway' | 'road';
+  /** Restrict the fuel-stations screen to currently open stations. */
+  fuelOpenOnly?: boolean;
+  /** Whether the fuel-stations filter panel is collapsed. */
+  fuelFiltersCollapsed?: boolean;
 }
 
 const STORAGE_KEY = 'ccm.settings';

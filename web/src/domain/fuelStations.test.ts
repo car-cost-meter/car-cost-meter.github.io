@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { haversineKm, nearestStations, orderedFuelNames, parseFuelData } from './fuelStations.js';
+import { bearingDeg, haversineKm, isOpenAt, nearestStations, orderedFuelNames, parseFuelData } from './fuelStations.js';
 
 /** Positional record like the gist: [id, lat, lon, addr, city, cp, h24, oh, priced, out]. */
 const station = (over: Partial<Record<number, unknown>> = {}): unknown[] => {
@@ -8,8 +8,8 @@ const station = (over: Partial<Record<number, unknown>> = {}): unknown[] => {
   return s;
 };
 
-const data = (stations: unknown[][]): unknown =>
-  ({ v: 1, ts: 30_000_000, fuels: ['E10', 'E85', 'Gazole', 'SP98'], stations });
+const data = (stations: unknown[][], brands?: string[]): unknown =>
+  ({ v: 1, ts: 30_000_000, fuels: ['E10', 'E85', 'Gazole', 'SP98'], brands, stations });
 
 describe('parseFuelData', () => {
   test('parses stations, prices, shortages and hours', () => {
@@ -31,6 +31,17 @@ describe('parseFuelData', () => {
     expect(s.prices[0].euros).toBeCloseTo(1.99);
     expect(s.prices[0].updated).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(s.soldOut.has('SP98')).toBe(true);
+  });
+
+  test('brand, uncertain geocoding and motorway fields', () => {
+    const s = parseFuelData(data([station({ 10: 1, 11: 1, 12: 'A' })], ['Avia', 'Total'])).stations[0];
+    expect(s.brand).toBe('Total');
+    expect(s.geoUncertain).toBe(true);
+    expect(s.motorway).toBe(true);
+    const plain = parseFuelData(data([station()])).stations[0];
+    expect(plain.brand).toBeUndefined();
+    expect(plain.geoUncertain).toBe(false);
+    expect(plain.motorway).toBe(false);
   });
 
   test('skips stations without coordinates', () => {
@@ -58,6 +69,40 @@ describe('nearestStations', () => {
 describe('haversineKm', () => {
   test('~111 km per degree of latitude', () => {
     expect(haversineKm({ lat: 48, lon: 0 }, { lat: 49, lon: 0 })).toBeCloseTo(111, 0);
+  });
+});
+
+describe('bearingDeg', () => {
+  test('cardinal directions', () => {
+    const o = { lat: 48.85, lon: 2.35 };
+    expect(bearingDeg(o, { lat: 49.85, lon: 2.35 })).toBeCloseTo(0, 0);
+    expect(bearingDeg(o, { lat: 48.85, lon: 3.35 })).toBeCloseTo(90, 0);
+    expect(bearingDeg(o, { lat: 47.85, lon: 2.35 })).toBeCloseTo(180, 0);
+    expect(bearingDeg(o, { lat: 48.85, lon: 1.35 })).toBeCloseTo(270, 0);
+  });
+});
+
+describe('isOpenAt', () => {
+  // Monday 2026-11-02, 10:00 → week index 0.
+  const at = (h: number, m = 0): Date => new Date(2026, 10, 2, h, m);
+  test('open cases', () => {
+    expect(isOpenAt(undefined, false, at(10))).toBe(true);   // no schedule → presumed open
+    expect(isOpenAt(undefined, true, at(10))).toBe(true);    // 24/7 automate
+    expect(isOpenAt([[]], false, at(3))).toBe(true);         // open all day
+    expect(isOpenAt([[0, 0]], false, at(10))).toBe(true);    // 00:00–00:00 = all day
+    expect(isOpenAt([[360, 1140]], false, at(10))).toBe(true);
+    expect(isOpenAt([[360, 720, 840, 1140]], false, at(15))).toBe(true); // second slot
+  });
+  test('closed cases', () => {
+    expect(isOpenAt([null], false, at(10))).toBe(false);     // closed that day
+    expect(isOpenAt([[360, 1140]], false, at(5))).toBe(false);
+    expect(isOpenAt([[360, 720, 840, 1140]], false, at(13))).toBe(false); // between slots
+  });
+  test('uses the right weekday', () => {
+    const sunday = new Date(2026, 10, 8, 10);                // Sun → week index 6
+    const week = [null, null, null, null, null, null, [360, 1140]];
+    expect(isOpenAt(week, false, sunday)).toBe(true);
+    expect(isOpenAt(week, false, at(10))).toBe(false);       // Monday slot is null
   });
 });
 
