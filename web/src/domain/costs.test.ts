@@ -1,7 +1,8 @@
 import { describe, test, expect } from 'bun:test';
 import { createVehicle } from './payload.js';
-import { resaleValueAt, odometerAt, kmInPeriod, costsInPeriod, costsByCategory, depreciation, yearlyReport, loanPayments, expensesInPeriod, isRented, totalInvested } from './costs.js';
+import { resaleValueAt, odometerAt, kmInPeriod, costsInPeriod, costsByCategory, depreciation, yearlyReport, loanPayments, expensesInPeriod, isRented, totalInvested, costBreakdown } from './costs.js';
 import { todayString, yearOf } from '../core/dates.js';
+import type { CostCategory } from './events.js';
 
 function golf(): ReturnType<typeof createVehicle> {
   const v = createVehicle({
@@ -86,6 +87,62 @@ describe('costs engine', () => {
     expect(y2022.costs).toBe(780); // 720 insurance + 60€ fuel-up
     // 2022: from 2022-01-01 (interp ~17453) to 2022-12-31 (interp ~16038)
     expect(y2022.depreciation).toBeGreaterThan(0);
+  });
+
+  test('yearlyReport splits ownership costs (depreciation, insurance, inspection) from usage costs', () => {
+    const v = golf();
+    v.recordCost({ date: '2021-10-01', category: 'inspection', amount: 80 });
+    v.recordCost({ date: '2021-11-01', category: 'repair', amount: 200 });
+    const [y2021, y2022] = yearlyReport(v, undefined, 2022);
+    expect(y2021.usage).toBe(550); // 300 maintenance + 200 repair + 50 fuel
+    expect(y2021.ownership).toBeCloseTo(y2021.depreciation + 780, 6); // insurance 700 + inspection 80
+    expect(y2021.tco).toBeCloseTo(y2021.ownership + y2021.usage, 6);
+    expect(y2022.usage).toBe(60);
+    expect(y2022.ownership).toBeCloseTo(y2022.depreciation + 720, 6);
+    expect(y2021.usageCostPerKm).toBeCloseTo(550 / y2021.km!, 6);
+  });
+
+  test('a rented vehicle counts rents as ownership costs', () => {
+    const v = golf();
+    v.data.acquisition = {
+      initialAmount: 1200,
+      loan: { kind: 'lease', periodicity: 'monthly', amount: 300, count: 3, firstPaymentDate: '2021-04-05' }
+    };
+    const [y2021] = yearlyReport(v, undefined, 2021);
+    expect(y2021.depreciation).toBe(0);
+    // rents 3 × 300 + initial 1200 spread over the instalments + insurance 700
+    expect(y2021.ownership).toBe(900 + 1200 + 700);
+    expect(y2021.usage).toBe(350);
+  });
+
+  test('costBreakdown: depreciation first for owned, rents instead for rented, never acquisition', () => {
+    const owned = costBreakdown(golf(), '2021-03-15', '2022-12-31');
+    expect(owned.map(r => r.key)).toEqual(['depreciation', 'fuel', 'maintenance', 'repair', 'inspection', 'insurance', 'other']);
+    expect(owned.find(r => r.key === 'insurance')!.amount).toBe(1420);
+
+    const v = golf();
+    v.data.acquisition = {
+      initialAmount: 1200,
+      loan: { kind: 'lease', periodicity: 'monthly', amount: 300, count: 3, firstPaymentDate: '2021-04-05' }
+    };
+    const rented = costBreakdown(v, '2021-03-15', '2022-12-31');
+    expect(rented.map(r => r.key)).toEqual(['rent', 'fuel', 'maintenance', 'repair', 'inspection', 'insurance', 'other']);
+    expect(rented[0].amount).toBe(900 + 1200);
+  });
+
+  test('costBreakdown total equals the sum of the yearly total costs', () => {
+    const owned = golf();
+    const rented = golf();
+    rented.data.acquisition = {
+      initialAmount: 1200, registrationFee: 100,
+      loan: { kind: 'lease', periodicity: 'monthly', amount: 300, count: 3, firstPaymentDate: '2021-04-05' }
+    };
+    const filtered = new Set<CostCategory>(['fuel', 'insurance']);
+    for (const [v, categories] of [[owned, undefined], [rented, undefined], [owned, filtered], [rented, filtered]] as const) {
+      const yearly = yearlyReport(v, categories, 2022).reduce((acc, r) => acc + r.tco, 0);
+      const breakdown = costBreakdown(v, v.data.acquisitionDate, '2022-12-31', categories).reduce((acc, r) => acc + r.amount, 0);
+      expect(breakdown).toBeCloseTo(yearly, 6);
+    }
   });
 
   test('loanPayments expands the schedule at each periodicity', () => {

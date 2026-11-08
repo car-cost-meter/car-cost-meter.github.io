@@ -272,6 +272,34 @@ export function depreciation(vehicle: Vehicle, from: string, to: string, factor:
   return resaleValueAt(vehicle, from) * factor(from) - resaleValueAt(vehicle, to) * factor(to);
 }
 
+/** A line of the cost breakdown: depreciation (owned), rents (rented) or a cost category. */
+export type BreakdownKey = 'depreciation' | 'rent' | CostCategory;
+
+/** Display order of the usage-like categories, as in the Edit sub-tabs. */
+const BREAKDOWN_CATEGORIES: CostCategory[] = ['fuel', 'maintenance', 'repair', 'inspection', 'insurance', 'other'];
+
+/**
+ * Costs inside [from, to] split into lines: depreciation for an owned
+ * vehicle, rents for a rented one (acquisition is never a cost line), then
+ * one line per category. Honors the same category filter as the yearly
+ * report, so the lines add up to its total cost.
+ */
+export function costBreakdown(
+  vehicle: Vehicle, from: string, to: string,
+  categories?: ReadonlySet<CostCategory>, factor: PriceFactor = NOMINAL
+): { key: BreakdownKey; amount: number }[] {
+  const filter = categories ?? new Set(COST_CATEGORIES);
+  const costs = costsByCategory(vehicle, from, to, factor);
+  const first: { key: BreakdownKey; amount: number } = isRented(vehicle)
+    ? { key: 'rent', amount: filter.has('acquisition') ? costs.get('acquisition') ?? 0 : 0 }
+    : { key: 'depreciation', amount: filter.has('acquisition') ? depreciation(vehicle, from, to, factor) : 0 };
+  return [first, ...BREAKDOWN_CATEGORIES.map(key => ({ key, amount: filter.has(key) ? costs.get(key) ?? 0 : 0 }))];
+}
+
+/** Categories whose cost depends on owning the vehicle, not on driving it
+ *  (rents of a rented vehicle land in 'acquisition'). The others are usage. */
+export const OWNERSHIP_CATEGORIES: ReadonlySet<CostCategory> = new Set<CostCategory>(['acquisition', 'inspection', 'insurance']);
+
 /** One row of the yearly report. */
 export interface YearReport {
   year: number;
@@ -281,10 +309,16 @@ export interface YearReport {
   costs: number;
   /** Resale-value drop over the year (acquisition cost of the period). */
   depreciation: number;
-  /** costs + depreciation — total cost of ownership for the year. */
+  /** Ownership costs: depreciation + inspection + insurance (+ rents when rented). */
+  ownership: number;
+  /** Usage costs: energy, maintenance, repairs and other. */
+  usage: number;
+  /** ownership + usage — total cost of ownership for the year. */
   tco: number;
   /** Kilometres driven in the year, when covered by known readings. */
   km?: number;
+  /** usage / km when both are known. */
+  usageCostPerKm?: number;
   /** tco / km when both are known. */
   costPerKm?: number;
 }
@@ -317,12 +351,18 @@ export function yearlyReport(
     const to = compareDates(end, yearEnd(y)) < 0 ? end : yearEnd(y);
     const costs = costsInPeriod(vehicle, from, to, filter, factor);
     const expenses = expensesInPeriod(vehicle, from, to, filter, factor);
-    const dep = filter.has('acquisition') ? depreciation(vehicle, from, to, factor) : 0;
+    // Depreciation starts at the previous year's end so that consecutive
+    // rows leave no gap (Dec 31 → Jan 1) and add up to the whole period.
+    const depFrom = y === firstYear ? from : yearEnd(y - 1);
+    const dep = filter.has('acquisition') ? depreciation(vehicle, depFrom, to, factor) : 0;
     const km = kmInPeriod(vehicle, from, to);
+    const usage = costsInPeriod(vehicle, from, to, new Set([...filter].filter(c => !OWNERSHIP_CATEGORIES.has(c))), factor);
+    const ownership = costs - usage + dep;
     const tco = costs + dep;
+    const perKm = (amount: number): number | undefined => km !== undefined && km > 0 ? amount / km : undefined;
     reports.push({
-      year: y, expenses, costs, depreciation: dep, tco, km,
-      costPerKm: km !== undefined && km > 0 ? tco / km : undefined
+      year: y, expenses, costs, depreciation: dep, ownership, usage, tco, km,
+      usageCostPerKm: perKm(usage), costPerKm: perKm(tco)
     });
   }
   return reports;

@@ -35,6 +35,8 @@ export interface AppSettings {
   fuelOpenOnly?: boolean;
   /** Whether the fuel-stations filter panel is collapsed. */
   fuelFiltersCollapsed?: boolean;
+  /** Columns hidden in the vehicle summary table ([] = all shown). */
+  analysisHiddenColumns?: string[];
 }
 
 const STORAGE_KEY = 'ccm.settings';
