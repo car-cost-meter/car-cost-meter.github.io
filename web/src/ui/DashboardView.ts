@@ -1,5 +1,5 @@
 import { I18n } from '../core/I18n.js';
-import { formatDistance, defaultUnits } from '../core/units.js';
+import { formatDistance, activeUnits } from '../core/units.js';
 import type { AppStore, AppState } from '../core/AppStore.js';
 import type { StorageManager, ProviderName } from 'ts-cloud-storage-manager';
 import type { Vehicle } from '../domain/Vehicle.js';
@@ -168,7 +168,9 @@ export class DashboardView {
   onSimulator?: () => void;
   onStations?: () => void;
   onSettings?: () => void;
-  onHelp?: () => void;
+  /** Help button — receives the active screen kind so main.ts can point
+   *  to the matching help chapter. */
+  onHelp?: (kind: Screen['kind']) => void;
   onImport?: () => void;
   onExport?: () => void;
 
@@ -238,7 +240,7 @@ export class DashboardView {
     host.querySelector('#export')?.addEventListener('click', () => this.onExport?.());
     host.querySelector('#import')?.addEventListener('click', () => this.onImport?.());
     host.querySelector('#settings')?.addEventListener('click', () => this.onSettings?.());
-    host.querySelector('#help')?.addEventListener('click', () => this.onHelp?.());
+    host.querySelector('#help')?.addEventListener('click', () => this.onHelp?.(this.screen.kind));
     host.querySelector('#logout')?.addEventListener('click', () => this.onLogout?.());
 
     // Mobile menu — same actions, labelled with the button tooltips; all
@@ -301,7 +303,7 @@ export class DashboardView {
       export: this.onExport,
       import: this.onImport,
       settings: this.onSettings,
-      help: this.onHelp,
+      help: () => this.onHelp?.(this.screen.kind),
       logout: this.onLogout
     };
     handlers[action]?.();
@@ -328,6 +330,10 @@ export class DashboardView {
   showLoading(isLoading: boolean): void {
     this.loading = isLoading;
     if (isLoading) {
+      // Tool screens (simulator, stations) don't depend on the session —
+      // they stay mounted while auth resolves in the background; only
+      // auth-dependent content is replaced by the connecting placeholder.
+      if (this.screen.kind === 'simulator' || this.screen.kind === 'stations') return;
       const content = this.root.querySelector('#dashboard-content');
       if (content) content.innerHTML = `<p class="empty-state">${I18n.t('auth.connecting')}</p>`;
     }
@@ -366,6 +372,9 @@ export class DashboardView {
   }
 
   private screen: Screen = { kind: 'list' };
+  /** Language+units the mounted tool screen was rendered with — a
+   *  settings change remounts it so its labels refresh. */
+  private toolRenderKey?: string;
   private detailView?: VehicleDetailView;
 
   /** Vehicle list screen — `/app/`. */
@@ -416,8 +425,13 @@ export class DashboardView {
     bc.innerHTML = '';
     const content = this.root.querySelector('#dashboard-content') as HTMLElement;
     content.classList.remove('detail-mode');
-    if ((content.firstElementChild as HTMLElement | null)?.dataset.tool !== kind) {
+    // A language/units change also remounts — the tool's labels were
+    // rendered with the previous settings and state:changed keeps the DOM.
+    const renderKey = `${I18n.language}|${activeUnits()}`;
+    if ((content.firstElementChild as HTMLElement | null)?.dataset.tool !== kind
+      || this.toolRenderKey !== renderKey) {
       mount(content);
+      this.toolRenderKey = renderKey;
     }
   }
 
@@ -496,7 +510,7 @@ export class DashboardView {
 
   private cardHtml(vehicle: Vehicle): string {
     const icon = VEHICLE_TYPE_ICONS[vehicle.data.vehicleType] ?? CAR_ICON;
-    const units = defaultUnits(I18n.language);
+    const units = activeUnits();
     const odometer = vehicle.lastKnownOdometerKm();
     const energy = ENERGY_STREAM_ICONS[vehicle.data.energyType] ?? '';
     return `

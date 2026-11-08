@@ -2,5 +2,7 @@
 /web/node_modules
 /web/dist
 /web/vendor
+/web/help
+/web/en
 # Local dev link to the sibling storage library (optional)
 /ts-cloud-storage-manager

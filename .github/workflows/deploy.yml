@@ -57,6 +57,12 @@ jobs:
           sed 's|dist/legal.js|legal.js|g' web/privacy.html > _site/privacy.html
           sed 's|dist/legal.js|legal.js|g' web/terms.html > _site/terms.html
 
+          # Generated help pages (built by scripts/build-help.ts from i18n)
+          cp -r web/help _site/help
+          cp -r web/en _site/en
+          # Rewrite the compiled entry point like the index pages
+          find _site/help _site/en/help -name 'index.html' -exec sed -i 's|dist/help.js|help.js|g' {} +
+
           # Generate landing and app pages with compiled entry point
           sed 's|dist/main.js|main.js|g' web/index.html > _site/index.html
           mkdir -p _site/app

@@ -1,6 +1,6 @@
 import { I18n } from '../core/I18n.js';
 import { evalFormula } from '../core/Formula.js';
-import { defaultUnits, formatDistance, formatElecConsumption, formatFuelConsumption, litresToDisplay, volumeUnit } from '../core/units.js';
+import { activeUnits, formatDistance, formatElecConsumption, formatFuelConsumption, litresToDisplay, volumeUnit } from '../core/units.js';
 import { LOAN_PERIODICITIES } from '../domain/events.js';
 import { isRented } from '../domain/costs.js';
 import { chargeConsumption, fuelUpConsumption } from '../domain/consumption.js';
@@ -749,7 +749,7 @@ export class VehicleDetailView {
   /** km column shared by energy and cost rows (empty when unknown);
    *  `sub` adds a second muted line (window consumption). */
   private kmCell(odometerKm: number | undefined, sub = ''): string {
-    const units = defaultUnits(I18n.language);
+    const units = activeUnits();
     const km = odometerKm !== undefined ? formatDistance(odometerKm, units) : '';
     return `<span class="event-km">${km}${sub ? subLine(sub) : ''}</span>`;
   }
@@ -757,7 +757,7 @@ export class VehicleDetailView {
   /** Volume/kWh cell of an energy row — unit price on a second line
    *  when both quantity and amount are known. */
   private qtyCell(e: { amount?: number; volumeLitres?: number; kwh?: number }): string {
-    const units = defaultUnits(I18n.language);
+    const units = activeUnits();
     const unit = volumeUnit(units);
     if (e.volumeLitres !== undefined) {
       const vol = litresToDisplay(e.volumeLitres, units);
@@ -784,7 +784,7 @@ export class VehicleDetailView {
    *  is unknown (missing bound or unrecorded energy inside it). */
   private consumptionLabel(per100km: number | undefined, kind: 'fuel' | 'elec'): string {
     if (per100km === undefined) return '';
-    const units = defaultUnits(I18n.language);
+    const units = activeUnits();
     return (kind === 'fuel' ? formatFuelConsumption(per100km, units) : formatElecConsumption(per100km, units)) ?? '';
   }
 

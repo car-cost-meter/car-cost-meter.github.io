@@ -3,34 +3,14 @@ import { Settings } from './core/settings.js';
 import type { Theme } from './core/settings.js';
 import { AppStore } from './core/AppStore.js';
 import { parseRoute, isAppRoot, listPath, simulatorPath, stationsPath, vehiclePath, connectPath } from './core/route.js';
+import { STORAGE_CONFIG, ONEDRIVE_CLIENT_ID } from './core/storageConfig.js';
 import { refreshFuelDataIfStale } from './domain/fuelStations.js';
-import { vehicleGrains } from './domain/payload.js';
 import { DashboardView } from './ui/DashboardView.js';
 import { VehicleEditor } from './ui/VehicleEditor.js';
 import { SettingsModal } from './ui/SettingsModal.js';
-import { HelpModal } from './ui/HelpModal.js';
 import { ConfirmDialog } from './ui/ConfirmDialog.js';
 import { SyncBanner } from './ui/SyncBanner.js';
 import { StorageManager } from 'ts-cloud-storage-manager';
-import type { StorageConfig } from 'ts-cloud-storage-manager';
-
-// OAuth app credentials — register the app in the Dropbox and Microsoft
-// Entra consoles (PKCE public clients), see README. Placeholders until then.
-const DROPBOX_APP_KEY = 'oz68n4s2g6onj3e';
-const ONEDRIVE_CLIENT_ID = 'TODO-onedrive-client-id';
-
-const STORAGE_CONFIG: StorageConfig = {
-  // Storage namespace: isolates this app's sessions/sync state from other
-  // apps sharing the origin (dev port, *.github.io project pages).
-  namespace: 'car-cost-meter',
-  fileName: 'car-cost-meter.json',
-  dropbox: { appKey: DROPBOX_APP_KEY },
-  oneDrive: { clientId: ONEDRIVE_CLIENT_ID },
-  // Offline-first sync with per-vehicle merge (one grain per vehicle);
-  // remote updates wait for the banner's update button instead of
-  // reloading data under the user's eyes.
-  sync: { grains: vehicleGrains, eagerPull: false }
-};
 
 // Providers whose OAuth app is not registered yet (placeholder client
 // id) are shown greyed out in the picker instead of failing at connect.
@@ -91,6 +71,10 @@ function bootLanding(): void {
       btn.setAttribute('aria-label', btn.title);
     });
     document.documentElement.lang = I18n.language;
+    // The static help page is per-language — keep the footer link on the
+    // active locale's variant.
+    document.getElementById('landing-help')
+      ?.setAttribute('href', I18n.language === 'en' ? 'en/help/' : 'help/');
   };
   if (I18n.language !== 'fr') swap();
   // The preliminary banner can be dismissed for the session — a reload
@@ -107,11 +91,6 @@ function bootLanding(): void {
       I18n.setLanguage(lang);
       swap();
     });
-  });
-  // Footer help link — opens the same help modal as the app toolbar.
-  document.getElementById('landing-help')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    HelpModal.open();
   });
 }
 
@@ -206,7 +185,11 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
   dashboard.onLogout = () => { void store.logout(); };
   dashboard.onSimulator = () => navigate(simulatorPath());
   dashboard.onStations = () => navigate(stationsPath());
-  dashboard.onHelp = () => HelpModal.open(document.body, storageManager.currentProvider);
+  // Contextual help: each screen links to its own help chapter.
+  dashboard.onHelp = (kind) => {
+    const slug = kind === 'stations' ? 'stations' : kind === 'simulator' ? 'simulateur' : 'vehicules';
+    window.location.href = `${I18n.language === 'en' ? '/en/help/' : '/help/'}${slug}/`;
+  };
   dashboard.onSettings = () => SettingsModal.open(settings, (patch) => {
     if ('theme' in patch) applyTheme(settings.get('theme'));
     if ('language' in patch) {
@@ -280,6 +263,11 @@ async function bootApp(appRoot: HTMLElement): Promise<void> {
   // A redirect-flow provider (Dropbox, OneDrive) comes back with its verdict
   // carried in the URL (?code / ?error + ?state). Consume it before anything
   // could conclude the user is unauthenticated.
+  // The applyRoute above just showed the picker — the code exchange can take
+  // a while, so the connecting placeholder replaces it while resumeAuth runs.
+  if (params.has('code') || params.has('state') || params.has('error')) {
+    dashboard.showLoading(true);
+  }
   const verdict = await storageManager.resumeAuth(new URL(window.location.href));
   if (verdict !== 'none') {
     const url = new URL(window.location.href);

@@ -1,5 +1,5 @@
 import { I18n } from '../core/I18n.js';
-import { defaultUnits, formatDistance, distanceUnit } from '../core/units.js';
+import { activeUnits, formatDistance, distanceUnit } from '../core/units.js';
 import { formatAmount } from './format.js';
 import { todayString } from '../core/dates.js';
 import { loadInflationIndex, type InflationIndex, type CpiSeries } from '../core/inflation.js';
@@ -94,7 +94,7 @@ export class CostsView {
     this.constantEuros && this.index ? this.index.factorFor(date) : 1;
 
   private render(): void {
-    const units = defaultUnits(I18n.language);
+    const units = activeUnits();
     const report = yearlyReport(this.vehicle, this.filter, undefined, this.factor);
     const breakdown = costsByCategory(this.vehicle, this.from, this.to, this.factor);
 

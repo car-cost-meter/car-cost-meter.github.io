@@ -1,5 +1,5 @@
 import { I18n } from '../core/I18n.js';
-import { defaultUnits, displayToKm, kmToDisplay, distanceUnit } from '../core/units.js';
+import { activeUnits, displayToKm, kmToDisplay, distanceUnit } from '../core/units.js';
 import { addMonths } from '../core/dates.js';
 import { bindOverlayClose } from './overlayClose.js';
 import { ConfirmDialog } from './ConfirmDialog.js';
@@ -23,7 +23,7 @@ const FIRST_INSPECTION_MONTHS_USED = 24;
  */
 export class VehicleEditor {
   static open(store: AppStore, vehicle?: Vehicle, container: HTMLElement = document.body): void {
-    const units = defaultUnits(I18n.language);
+    const units = activeUnits();
     const editing = vehicle !== undefined;
     const typeOptions = VEHICLE_TYPES.map(t => {
       const label = I18n.t(`vehicleType.${t}`);

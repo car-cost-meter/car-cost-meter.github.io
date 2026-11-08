@@ -1,6 +1,6 @@
 import { I18n } from '../core/I18n.js';
 import { evalFormula } from '../core/Formula.js';
-import { defaultUnits, displayToKm, kmToDisplay, distanceUnit, litresToDisplay, volumeUnit, formatDistance } from '../core/units.js';
+import { activeUnits, displayToKm, kmToDisplay, distanceUnit, litresToDisplay, volumeUnit, formatDistance } from '../core/units.js';
 import { odometerViolations } from '../domain/odometer.js';
 import { todayString } from '../core/dates.js';
 import type { Charge, Cost, CostCategory, FuelUp, LoanPeriod } from '../domain/events.js';
@@ -106,14 +106,14 @@ const field = (id: string, label: string, inner: string): string => `
   <div class="form-group"><label for="${id}">${label}</label>${inner}</div>`;
 const dateField = (value?: string): string =>
   `<input id="ev-date" class="form-control" type="date" required value="${value ?? todayString()}" />`;
-const odoField = (label: string, km: number | undefined, units: ReturnType<typeof defaultUnits>): string =>
+const odoField = (label: string, km: number | undefined, units: ReturnType<typeof activeUnits>): string =>
   field('ev-odo', `${label} (${distanceUnit(units)})`,
     `<input id="ev-odo" class="form-control" type="number" min="0" step="1"
        value="${km !== undefined ? Math.round(kmToDisplay(km, units)) : ''}" />`);
 const amountField = (value: number | undefined): string =>
   field('ev-amount', I18n.t('events.amount'),
     `<input id="ev-amount" class="form-control" type="text" inputmode="decimal" data-formula value="${value ?? ''}" />`);
-const odo = (root: HTMLElement, units: ReturnType<typeof defaultUnits>): number | undefined => {
+const odo = (root: HTMLElement, units: ReturnType<typeof activeUnits>): number | undefined => {
   const input = root.querySelector('#ev-odo') as HTMLInputElement | null;
   if (!input) return undefined; // field hidden for this category (acquisition)
   const v = Number.parseFloat(input.value);
@@ -139,7 +139,7 @@ function readingLabel(r: { kind: string; category?: string }): string {
 function checkOdometer(root: HTMLElement, vehicle: Vehicle, date: string, km: number | undefined, exclude?: FuelUp | Charge | Cost): boolean {
   const alert = root.querySelector('#ev-alert') as HTMLElement;
   if (km === undefined) { alert.hidden = true; return true; }
-  const units = defaultUnits(I18n.language);
+  const units = activeUnits();
   const violations = odometerViolations(vehicle, date, km, exclude);
   if (violations.length === 0) { alert.hidden = true; return true; }
   alert.innerHTML = `
@@ -153,7 +153,7 @@ function checkOdometer(root: HTMLElement, vehicle: Vehicle, date: string, km: nu
 
 /** Fuel fill-up editor (new or existing entry). */
 export function openFuelUpEditor(vehicle: Vehicle, save: () => Promise<void>, entry?: FuelUp): void {
-  const units = defaultUnits(I18n.language);
+  const units = activeUnits();
   // Volume precision: centilitres in metric, milli-gallons in imperial
   // (both match fuel-pump resolutions).
   const volDecimals = units === 'imperial' ? 3 : 2;
@@ -191,7 +191,7 @@ export function openFuelUpEditor(vehicle: Vehicle, save: () => Promise<void>, en
 
 /** Battery charge editor (electric / hybrid). */
 export function openChargeEditor(vehicle: Vehicle, save: () => Promise<void>, entry?: Charge): void {
-  const units = defaultUnits(I18n.language);
+  const units = activeUnits();
   openFormModal({
     title: I18n.t(entry ? 'events.charge.editTitle' : 'events.charge.newTitle'),
     fieldsHtml:
@@ -228,7 +228,7 @@ export function openCostEditor(
   vehicle: Vehicle, save: () => Promise<void>, entry?: Cost,
   preset?: { category: CostCategory }
 ): void {
-  const units = defaultUnits(I18n.language);
+  const units = activeUnits();
   const category = entry?.category ?? preset?.category ?? 'other';
   const categoryLabel = I18n.t(`categories.${category}`);
   const titleSuffix = I18n.t(entry ? 'events.cost.editTitle' : 'events.cost.newTitle');

@@ -1,4 +1,5 @@
 import { I18n } from './I18n.js';
+import { Settings } from './settings.js';
 import type { Language, UnitSystem } from './settings.js';
 
 /**
@@ -14,6 +15,11 @@ const L100_TO_MPG = 100 * LITRES_PER_US_GAL / KM_PER_MILE; // ≈ 235.215
 /** Unit system derived from the language when the user did not pick one. */
 export function defaultUnits(language: Language): UnitSystem {
   return language === 'en' ? 'imperial' : 'metric';
+}
+
+/** The units in effect: the user's explicit choice, else the language default. */
+export function activeUnits(): UnitSystem {
+  return Settings.load().get('units') ?? defaultUnits(I18n.language);
 }
 
 export function kmToDisplay(km: number, units: UnitSystem): number {
@@ -38,6 +44,13 @@ export function litresToDisplay(litres: number, units: UnitSystem): number {
 
 export function volumeUnit(units: UnitSystem): string {
   return units === 'imperial' ? 'gal' : 'L';
+}
+
+/** Price per volume unit: official prices are per litre — imperial
+ *  displays them per US gallon (×3.785). Includes the unit label. */
+export function formatFuelPrice(eurosPerLitre: number, units: UnitSystem): string {
+  const per = units === 'imperial' ? eurosPerLitre * LITRES_PER_US_GAL : eurosPerLitre;
+  return `${I18n.formatNumber(per, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}&nbsp;€/${volumeUnit(units)}`;
 }
 
 /**

@@ -7,9 +7,9 @@
   },
   "description": "Web application to track the real cost of owning a vehicle (acquisition, maintenance, insurance, fuel/electricity) and its consumption.",
   "scripts": {
-    "predev": "bun run vendor",
+    "predev": "bun run vendor && bun scripts/build-help.ts",
     "dev": "tsc --watch & bun scripts/dev-server.ts",
-    "build": "tsc",
+    "build": "tsc && bun scripts/build-help.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
     "vendor": "bash scripts/vendor-csm.sh",
@@ -18,6 +18,6 @@
   "type": "module",
   "trustedDependencies": ["ts-cloud-storage-manager"],
   "dependencies": {
-    "ts-cloud-storage-manager": "github:fathzer/ts-cloud-storage-manager#v0.0.3-preview"
+    "ts-cloud-storage-manager": "github:fathzer/ts-cloud-storage-manager#v0.0.4-preview"
   }
 }

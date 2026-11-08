@@ -1,5 +1,5 @@
 import { I18n } from '../core/I18n.js';
-import { defaultUnits, distanceUnit, kmToDisplay } from '../core/units.js';
+import { activeUnits, distanceUnit, kmToDisplay, formatDistance, formatFuelPrice } from '../core/units.js';
 import { Settings } from '../core/settings.js';
 import { escapeHtml } from './format.js';
 import { componentStyles } from './componentStyles.js';
@@ -147,6 +147,10 @@ export class FuelStationsView {
 
   render(): void {
     const radii = [5, 10, 20, 50];
+    const units = activeUnits();
+    // The stored radius stays metric; the option label converts to the
+    // active unit system (5/10/20/50 km → 3/6/12/31 mi).
+    const radiusLabel = (r: number): string => `${I18n.formatNumber(kmToDisplay(r, units), { maximumFractionDigits: 0 })} ${distanceUnit(units)}`;
     this.host.innerHTML = `
       <div class="fuel-screen" data-tool="stations">
         <div class="fuel-toolbar">
@@ -159,7 +163,7 @@ export class FuelStationsView {
           <div class="fuel-filter-row">
             <label for="fuel-radius">${I18n.t('fuel.radius')}
               <select id="fuel-radius" class="form-control">
-                ${radii.map(r => `<option value="${r}" ${r === this.radiusKm ? 'selected' : ''}>${r} km</option>`).join('')}
+                ${radii.map(r => `<option value="${r}" ${r === this.radiusKm ? 'selected' : ''}>${radiusLabel(r)}</option>`).join('')}
               </select></label>
             <label for="fuel-kind" class="fuel-kind" hidden>${I18n.t('fuel.fuelLabel')}
               <select id="fuel-kind" class="form-control"></select></label>
@@ -192,7 +196,7 @@ export class FuelStationsView {
       Settings.load().set('fuelFiltersCollapsed', this.collapsed);
       (this.host.querySelector('#fuel-filters') as HTMLElement).hidden = this.collapsed;
       this.host.querySelector('#filters-toggle')!.setAttribute('aria-expanded', String(!this.collapsed));
-      this.host.querySelector('.chevron')!.classList.toggle('open', !this.collapsed);
+      this.host.querySelector('#filters-toggle .chevron')!.classList.toggle('open', !this.collapsed);
     });
     this.host.querySelector('#fuel-radius')!.addEventListener('change', (e) => {
       this.radiusKm = Number((e.target as HTMLSelectElement).value);
@@ -396,11 +400,13 @@ export class FuelStationsView {
     return s.prices.find(p => p.name === fuel && !s.soldOut.has(fuel))?.euros;
   }
 
-  /** Today's schedule text — '' when nothing is published for today. */
-  private todayHours(week: DayHours[] | undefined): string {
+  /** Today's schedule text — '' when nothing is published for today.
+   *  `now` is the timestamp shared by the whole render (filters + cards),
+   *  so all decisions use the same day even across midnight. */
+  private todayHours(week: DayHours[] | undefined, now: Date): string {
     if (!week) return '';
     // JS getDay(): 0=Sun..6=Sat → index 0=Mon..6=Sun.
-    const day = week[(new Date().getDay() + 6) % 7];
+    const day = week[(now.getDay() + 6) % 7];
     if (day === null) return I18n.t('fuel.closedToday');
     const fmt = (m: number): string =>
       `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
@@ -416,7 +422,8 @@ export class FuelStationsView {
    *  the others stay behind in distance order. */
   private renderStations(): void {
     if (!this.mounted) return;
-    const units = defaultUnits(I18n.language);
+    const units = activeUnits();
+    const radiusDist = formatDistance(this.radiusKm, units);
     const now = new Date();
     // Two-step: eligibility = sells the selected fuel; filters = the
     // explicit user filters (brands, location, open-only).
@@ -429,17 +436,17 @@ export class FuelStationsView {
     });
     const body = this.host.querySelector('#fuel-body') as HTMLElement;
     if (this.stations.length === 0) {
-      body.innerHTML = `<p class="fuel-status">${I18n.t('fuel.none', { km: this.radiusKm })}</p>`;
+      body.innerHTML = `<p class="fuel-status">${I18n.t('fuel.none', { dist: radiusDist })}</p>`;
       return;
     }
     if (filtered.length === 0) {
       const msg = eligible.length === 0
-        ? I18n.t('fuel.noFuel', { km: this.radiusKm })
+        ? I18n.t('fuel.noFuel', { dist: radiusDist })
         : I18n.t('fuel.noneFiltered');
       body.innerHTML = `<p class="fuel-status">${msg}</p>`;
       return;
     }
-    const count = I18n.t('fuel.found', { shown: Math.min(filtered.length, MAX_RESULTS), count: filtered.length, km: this.radiusKm });
+    const count = I18n.t('fuel.found', { shown: Math.min(filtered.length, MAX_RESULTS), count: filtered.length, dist: radiusDist });
     // Position accuracy is shown only from 500 m up — below that it adds
     // no information; an amber tone flags accuracy worse than the radius.
     const acc = this.coords?.acc;
@@ -450,14 +457,14 @@ export class FuelStationsView {
     body.innerHTML = `
       ${accNote}
       <p class="fuel-count">${count}</p>
-      ${sorted.slice(0, MAX_RESULTS).map(s => this.stationCard(s, units)).join('')}`;
+      ${sorted.slice(0, MAX_RESULTS).map(s => this.stationCard(s, units, now)).join('')}`;
   }
 
-  private stationCard(s: NearbyStation, units: ReturnType<typeof defaultUnits>): string {
+  private stationCard(s: NearbyStation, units: ReturnType<typeof activeUnits>, now: Date): string {
     const chips = [
       ...s.prices.map(p => {
         const cls = `${p.name === this.selectedFuel && !s.soldOut.has(p.name) ? ' sel' : ''}${s.soldOut.has(p.name) ? ' out' : ''}`;
-        return `<span class="fuel-chip${cls}">${escapeHtml(p.name)} ${I18n.formatNumber(p.euros, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}&nbsp;€/L</span>`;
+        return `<span class="fuel-chip${cls}">${escapeHtml(p.name)} ${formatFuelPrice(p.euros, units)}</span>`;
       }),
       ...[...s.soldOut].filter(n => !s.prices.some(p => p.name === n))
         .map(n => `<span class="fuel-chip out">${escapeHtml(n)} ${I18n.t('fuel.soldOut')}</span>`)
@@ -469,9 +476,9 @@ export class FuelStationsView {
     const deg = this.coords === undefined ? undefined : bearingDeg(this.coords, s);
     const dir = deg === undefined ? ''
       : ` <span class="station-dir" title="${I18n.t('fuel.dirs').split(' ')[Math.round(deg / 22.5) % 16]}">${dirIcon(deg)}</span>`;
-    const hours = s.h24 ? '' : this.todayHours(s.week);
+    const hours = s.h24 ? '' : this.todayHours(s.week, now);
     // Closed now, or the selected fuel out of stock → dimmed card.
-    const dimmed = !isOpenAt(s.week, s.h24, new Date())
+    const dimmed = !isOpenAt(s.week, s.h24, now)
       || s.soldOut.has(this.selectedFuel);
     return `<article class="station-card${dimmed ? ' dimmed' : ''}">
       ${s.brand !== undefined ? `<div class="station-brand">${escapeHtml(s.brand)}</div>` : ''}

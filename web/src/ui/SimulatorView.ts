@@ -1,6 +1,6 @@
 import { I18n } from '../core/I18n.js';
 import { evalFormula } from '../core/Formula.js';
-import { defaultUnits, displayToKm, distanceUnit } from '../core/units.js';
+import { activeUnits, displayToKm, distanceUnit } from '../core/units.js';
 import { formatAmount } from './format.js';
 import { Settings } from '../core/settings.js';
 import { componentStyles } from './componentStyles.js';
@@ -42,7 +42,7 @@ export class SimulatorView {
   }
 
   render(): void {
-    const units = defaultUnits(I18n.language);
+    const units = activeUnits();
     const du = distanceUnit(units);
     const currency = Settings.load().get('currency');
     // `money` fields accept infix formulas (data-formula + text input).
@@ -85,7 +85,7 @@ export class SimulatorView {
     return Number.isFinite(v) ? v : 0;
   }
 
-  private compute(units: ReturnType<typeof defaultUnits>, currency: string): void {
+  private compute(units: ReturnType<typeof activeUnits>, currency: string): void {
     const price = this.num('sim-price');
     const resale = this.num('sim-resale');
     const resaleDate = (this.host.querySelector('#sim-resale-date') as HTMLInputElement).value;
