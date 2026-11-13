@@ -3,7 +3,8 @@ import { activeUnits, distanceUnit, kmToDisplay, formatDistance, formatFuelPrice
 import { Settings } from '../core/settings.js';
 import { escapeHtml } from './format.js';
 import { componentStyles } from './componentStyles.js';
-import { GEO_ICON, GEO_UNCERTAIN_ICON, MOTORWAY_ICON, dirIcon } from './icons.js';
+import { GEO_ICON, GEO_UNCERTAIN_ICON, MOTORWAY_ICON, REPORT_ICON, dirIcon } from './icons.js';
+import { StationReportDialog } from './StationReportDialog.js';
 import { bearingDeg, downloadFuelData, isOpenAt, loadFuelData, nearestStations, orderedFuelNames } from '../domain/fuelStations.js';
 import type { DayHours, NearbyStation } from '../domain/fuelStations.js';
 
@@ -16,6 +17,7 @@ const CSS = `
 }
 .fuel-toolbar .form-control { width: auto; }
 .fuel-toolbar #fuel-refresh { margin-left: auto; }
+.fuel-data-ts { font-size: var(--font-size-xs); color: var(--text-muted); white-space: nowrap; }
 .fuel-status {
   text-align: center;
   color: var(--text-muted);
@@ -44,6 +46,12 @@ const CSS = `
 .station-brand { font-weight: var(--font-weight-semibold); color: var(--accent); margin-bottom: var(--space-xs); }
 .station-icon { display: inline-flex; color: var(--text-muted); }
 .station-icon svg { width: 1rem; height: 1rem; }
+.station-report {
+  display: inline-flex; background: none; border: none; padding: 0;
+  color: var(--text-muted); cursor: pointer;
+}
+.station-report svg { width: 1rem; height: 1rem; }
+.station-report:hover { color: var(--accent); }
 .station-geo.uncertain { color: var(--text-main); }
 .station-hours { margin-top: var(--space-xs); font-size: var(--font-size-xs); color: var(--text-muted); }
 .station-h24 {
@@ -140,6 +148,8 @@ export class FuelStationsView {
   private motorway: 'all' | 'motorway' | 'road' = Settings.load().get('fuelMotorway') ?? 'all';
   private openOnly = Settings.load().get('fuelOpenOnly') ?? false;
   private collapsed = Settings.load().get('fuelFiltersCollapsed') ?? false;
+  /** Generation time (minutes, UTC) of the loaded stations file. */
+  private dataTs?: number;
 
   constructor(private readonly host: HTMLElement) {
     componentStyles('fuel-stations', CSS);
@@ -158,6 +168,7 @@ export class FuelStationsView {
             ${I18n.t('fuel.filters')} <span class="chevron${this.collapsed ? '' : ' open'}">▾</span>
           </button>
           <button class="btn-secondary" id="fuel-refresh" hidden>${I18n.t('fuel.refresh')}</button>
+          <span id="fuel-data-ts" class="fuel-data-ts"></span>
         </div>
         <div class="fuel-filters" id="fuel-filters" ${this.collapsed ? 'hidden' : ''}>
           <div class="fuel-filter-row">
@@ -236,6 +247,14 @@ export class FuelStationsView {
       this.renderBrandFilter();
       this.renderStations();
     });
+    // Delegated on the stable container — station cards are re-rendered
+    // into #fuel-body without re-binding their buttons.
+    this.host.querySelector('#fuel-body')!.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>('.station-report');
+      if (btn === null) return;
+      const s = this.stations.find(st => st.id === Number(btn.dataset.id));
+      if (s !== undefined) StationReportDialog.show(s, this.dataTs);
+    });
     this.locate();
   }
 
@@ -275,6 +294,7 @@ export class FuelStationsView {
       // Whatever is cached is used as-is — the file only refreshes at
       // startup (stale) or through the explicit Refresh button.
       const data = await loadFuelData();
+      this.dataTs = data.ts;
       this.stations = nearestStations(data.stations, this.coords, this.radiusKm);
       this.showResults();
     } catch {
@@ -289,6 +309,7 @@ export class FuelStationsView {
     this.status(escapeHtml(I18n.t('fuel.loading')));
     try {
       const data = await downloadFuelData();
+      this.dataTs = data.ts;
       this.stations = nearestStations(data.stations, this.coords, this.radiusKm);
       this.showResults();
     } catch {
@@ -306,7 +327,23 @@ export class FuelStationsView {
     const select = this.host.querySelector<HTMLSelectElement>('#fuel-kind')!;
     select.innerHTML = fuels.map(f => `<option value="${f}" ${f === this.selectedFuel ? 'selected' : ''}>${f}</option>`).join('');
     select.parentElement!.hidden = fuels.length === 0;
-    (this.host.querySelector('#fuel-refresh') as HTMLElement).hidden = false;
+    const refreshBtn = this.host.querySelector('#fuel-refresh') as HTMLButtonElement;
+    refreshBtn.hidden = false;
+    // Global data timestamp next to the button; the hourly pipeline makes
+    // a refresh pointless while the file is less than an hour old.
+    const tsEl = this.host.querySelector('#fuel-data-ts') as HTMLElement;
+    if (this.dataTs) {
+      tsEl.textContent = I18n.t('fuel.dataFrom', {
+        date: new Date(this.dataTs * 60000).toLocaleString(I18n.locale, { dateStyle: 'short', timeStyle: 'short' })
+      });
+      const ageH = (Date.now() - this.dataTs * 60000) / 3600000;
+      const fresh = ageH <= 1;
+      refreshBtn.disabled = fresh;
+      refreshBtn.title = fresh ? I18n.t('fuel.refreshFresh') : '';
+    } else {
+      tsEl.textContent = '';
+      refreshBtn.disabled = false;
+    }
     this.renderBrandFilter();
     this.renderStations();
   }
@@ -493,7 +530,7 @@ export class FuelStationsView {
       </div>
       ${hours ? `<div class="station-hours">${hours}</div>` : ''}
       <div class="station-prices">${chips}</div>
-      ${latest ? `<div class="station-updated">${I18n.t('fuel.updatedAt', { date: I18n.formatDate(latest) })}</div>` : ''}
+      <div class="station-updated">${latest ? `${I18n.t('fuel.updatedAt', { date: new Date(latest).toLocaleString(I18n.locale, { dateStyle: 'short', timeStyle: 'short' }) })} ` : ''}<button type="button" class="station-report" data-id="${s.id}" title="${escapeHtml(I18n.t('fuel.reportTitle'))}" aria-label="${escapeHtml(I18n.t('fuel.reportTitle'))}">${REPORT_ICON}</button></div>
     </article>`;
   }
 }

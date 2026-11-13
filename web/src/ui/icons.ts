@@ -71,6 +71,14 @@ export const MOTORWAY_ICON = svg(
   '<line x1="4" y1="10" x2="20" y2="10"/>' +
   '<line x1="12" y1="4" x2="12" y2="20" stroke-dasharray="2.5 3"/>');
 
+/** "Copy" (station report dialog) — two overlapping rectangles. */
+export const COPY_ICON = svg(
+  '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>');
+
+/** "Report an error" (station cards) — flag. */
+export const REPORT_ICON = svg(
+  '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>');
+
 /** Direction indicator (station cards) — a fixed "N" marking north at
  *  the top and a single solid arrow rotated to the given bearing in
  *  degrees, 0 = north. Taller than square so the N stays readable. */

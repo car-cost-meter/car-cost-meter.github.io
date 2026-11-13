@@ -8,13 +8,14 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { fr } from '../src/i18n/fr.js';
 import { en } from '../src/i18n/en.js';
-import { MOTORWAY_ICON, GEO_UNCERTAIN_ICON, dirIcon } from '../src/ui/icons.js';
+import { MOTORWAY_ICON, GEO_UNCERTAIN_ICON, REPORT_ICON, dirIcon } from '../src/ui/icons.js';
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
 const SITE = 'https://car-cost-meter.github.io';
 const GITHUB_REPO = 'https://github.com/fathzer/car-cost-meter.github.io';
 const GITHUB_ISSUES = `${GITHUB_REPO}/issues`;
 const INSEE_GIST = 'https://gist.github.com/fathzer/5646b5558f759655717914400cc50a03';
+const FUEL_PRICES_CONTACT = 'https://www.prix-carburants.gouv.fr/contact/';
 
 type Dict = typeof fr;
 
@@ -33,6 +34,22 @@ const escapeAttr = (s: string): string =>
   escapeHtml(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 /** t() for HTML text context. */
 const te = (d: Dict, key: string): string => escapeHtml(t(d, key));
+
+/** Like t() but for leaf keys holding an array of strings (e.g. bullet lists). */
+const tList = (d: Dict, key: string): string[] => {
+  let node: unknown = d;
+  for (const part of key.split('.')) node = (node as Record<string, unknown>)[part];
+  if (!Array.isArray(node) || !node.every(item => typeof item === 'string')) {
+    throw new Error(`Missing or non-string-list i18n key: ${key}`);
+  }
+  return node as string[];
+};
+
+/** t() for sentences embedding a link: the {formLink} placeholder in the
+ *  translation is replaced by the anchor (label from its own key). */
+const teLink = (d: Dict, key: string, placeholder: string, href: string, labelKey: string): string =>
+  escapeHtml(t(d, key)).replace(placeholder,
+    `<a href="${href}">${escapeHtml(t(d, labelKey))}</a>`);
 
 /** Full HTML document — depth = path depth below web/ (css, favicon, links).
  *  canonical/altHref are absolute (hreflang convention); altRel is the
@@ -126,6 +143,12 @@ const stationsBody = (d: Dict, root: string): string => `
 <p>${te(d, 'help.stationsIntro')}</p>
 <h2>${te(d, 'help.stationsDataTitle')}</h2>
 <p>${te(d, 'help.stationsData')}</p>
+<h2>${te(d, 'help.stationsCorrectionsTitle')}</h2>
+<p>${te(d, 'help.stationsCorrections')}</p>
+<ul>
+${tList(d, 'help.stationsCorrectionsItems').map(item => `  <li>${escapeHtml(item)}</li>`).join('\n')}
+</ul>
+<p>${te(d, 'help.stationsCorrectionsDetail')}</p>
 <h2>${te(d, 'help.stationsFiltersTitle')}</h2>
 <p>${te(d, 'help.stationsFilters')}</p>
 <h2>${te(d, 'help.stationsCardsTitle')}</h2>
@@ -135,9 +158,12 @@ const stationsBody = (d: Dict, root: string): string => `
   <li><span class="icon dir">${dirIcon(45)}</span><p>${te(d, 'help.stationsIconDir')}</p></li>
   <li><span class="icon">${MOTORWAY_ICON}</span><p>${te(d, 'help.stationsIconMotorway')}</p></li>
   <li><span class="icon uncertain">${GEO_UNCERTAIN_ICON}</span><p>${te(d, 'help.stationsIconUncertain')}</p></li>
+  <li><span class="icon">${REPORT_ICON}</span><p>${te(d, 'help.stationsIconReport')}</p></li>
 </ul>
 <h2>${te(d, 'help.stationsAccuracyTitle')}</h2>
 <p>${te(d, 'help.stationsAccuracy')}</p>
+<h2>${te(d, 'help.stationsWrongTitle')}</h2>
+<p>${teLink(d, 'help.stationsWrong', '{formLink}', FUEL_PRICES_CONTACT, 'help.stationsWrongForm')}</p>
 <p class="help-links"><a href="${root}app/fuel">${te(d, 'help.stationsTry')} →</a></p>`;
 
 const simBody = (d: Dict, root: string): string => `

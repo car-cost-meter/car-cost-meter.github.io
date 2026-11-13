@@ -25,6 +25,9 @@
   box-sizing: border-box;
 }
 
+/* Links inside dialogs — same accent as the help pages (readable on dark). */
+.modal-content a { color: var(--accent); }
+
 /* Inline alert inside editors (e.g. inconsistent odometer) — danger tint. */
 .form-alert {
   margin: var(--space-sm) 0;

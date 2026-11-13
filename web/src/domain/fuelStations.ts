@@ -24,8 +24,10 @@ export const FUEL_ORDER = ['Gazole', 'SP95', 'E85', 'GPLc', 'E10', 'SP98', 'SP95
  *  [open, close, ...] = minute pairs since midnight. */
 export type DayHours = number[] | null;
 
-export interface FuelPrice { name: string; euros: number; updated: string }
+export interface FuelPrice { name: string; euros: number; /** Last price update, ISO 8601 UTC ('' when unknown). */ updated: string }
 export interface Station {
+  /** Government station id — quoted when reporting data errors upstream. */
+  id: number;
   address: string;
   lat: number;
   lon: number;
@@ -76,31 +78,41 @@ export function parseFuelData(raw: unknown): FuelData {
   return { ts: Number(data.ts) || 0, fuels, stations };
 }
 
-function parseGistStation(s: unknown[], fuels: string[], brands: string[]): Station | undefined {
-  const [, lat, lon, addr, city, cp, h24, oh, priced, out, brandIdx, geoGouv, place] = s;
-  if (typeof lat !== 'number' || typeof lon !== 'number') return undefined;
+/** Priced fuels — each entry is [fuelIdx, price (thousandths of €/L),
+ *  updated (minutes, UTC)]; malformed entries are skipped. */
+function parseFuelPrices(priced: unknown, fuels: string[]): FuelPrice[] {
   const prices: FuelPrice[] = [];
-  if (Array.isArray(priced)) {
-    for (const e of priced) {
-      // [fuelIdx, price (thousandths of €/L), updated (minutes, UTC)]
-      const [fi, price, upd] = e as unknown[];
-      const name = typeof fi === 'number' ? fuels[fi] : undefined;
-      if (name !== undefined && typeof price === 'number') {
-        prices.push({ name, euros: price / 1000, updated: minutesToDate(upd) });
-      }
+  if (!Array.isArray(priced)) return prices;
+  for (const e of priced) {
+    const [fi, price, upd] = e as unknown[];
+    const name = typeof fi === 'number' ? fuels[fi] : undefined;
+    if (name !== undefined && typeof price === 'number') {
+      prices.push({ name, euros: price / 1000, updated: minutesToIso(upd) });
     }
   }
+  return prices;
+}
+
+/** Fuel indexes under (temporary) shortage. */
+function parseShortages(out: unknown, fuels: string[]): Set<string> {
   const soldOut = new Set<string>();
-  if (Array.isArray(out)) {
-    for (const fi of out) {
-      if (typeof fi === 'number' && fuels[fi] !== undefined) soldOut.add(fuels[fi]);
-    }
+  if (!Array.isArray(out)) return soldOut;
+  for (const fi of out) {
+    if (typeof fi === 'number' && fuels[fi] !== undefined) soldOut.add(fuels[fi]);
   }
+  return soldOut;
+}
+
+function parseGistStation(s: unknown[], fuels: string[], brands: string[]): Station | undefined {
+  const [gid, lat, lon, addr, city, cp, h24, oh, priced, out, brandIdx, geoGouv, place] = s;
+  if (typeof lat !== 'number' || typeof lon !== 'number') return undefined;
   return {
+    id: typeof gid === 'number' ? gid : 0,
     address: [addr, cp, city].filter(v => typeof v === 'string' && v !== '').join(' '),
     lat, lon,
     h24: h24 === 1,
-    prices, soldOut,
+    prices: parseFuelPrices(priced, fuels),
+    soldOut: parseShortages(out, fuels),
     week: Array.isArray(oh) ? oh as DayHours[] : undefined,
     brand: typeof brandIdx === 'number' ? brands[brandIdx] : undefined,
     geoUncertain: geoGouv === 1,
@@ -108,8 +120,8 @@ function parseGistStation(s: unknown[], fuels: string[], brands: string[]): Stat
   };
 }
 
-const minutesToDate = (m: unknown): string =>
-  typeof m === 'number' ? new Date(m * 60000).toISOString().slice(0, 10) : '';
+const minutesToIso = (m: unknown): string =>
+  typeof m === 'number' ? new Date(m * 60000).toISOString() : '';
 
 /** True when the file's generation day equals today (local time). */
 export const fuelDataIsToday = (ts: number): boolean =>

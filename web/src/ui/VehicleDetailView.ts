@@ -205,7 +205,7 @@ const CSS = `
 .fab:hover { filter: brightness(1.15); }
 `;
 
-export type Tab = 'edit' | 'analysis' | 'consumption' | 'infos';
+export type Tab = 'edit' | 'analysis' | 'infos';
 export type CostSubTab = 'energy' | CostCategory | 'resale';
 const COST_SUBTABS: CostSubTab[] = ['energy', 'maintenance', 'repair', 'inspection', 'insurance', 'acquisition', 'resale', 'other'];
 
@@ -224,8 +224,8 @@ const CATEGORY_ICONS: Record<CostCategory, string> = {
 };
 
 /**
- * Full-page vehicle detail: top tabs Costs / Resale / Summary /
- * Consumption (placeholder). The Costs tab itself splits into sub-tabs —
+ * Full-page vehicle detail: top tabs Edit (cost journal) / Summary /
+ * Info. The Edit tab itself splits into sub-tabs —
  * energy entries (fill-ups / charges) plus one sub-tab per cost category;
  * Acquisition also shows the read-only purchase price.
  */
@@ -302,7 +302,7 @@ export class VehicleDetailView {
   };
 
   private visibleTabs(): Tab[] {
-    return ['edit', 'analysis', 'consumption', 'infos'];
+    return ['edit', 'analysis', 'infos'];
   }
 
   private renderTabs(): void {
@@ -329,9 +329,6 @@ export class VehicleDetailView {
       case 'analysis':
         host.innerHTML = '<div class="detail-scroll"></div>';
         new CostsView(this.vehicle, host.querySelector('.detail-scroll') as HTMLElement);
-        return;
-      case 'consumption':
-        host.innerHTML = `<div class="detail-scroll"><p class="detail-empty">${I18n.t('detail.notImplemented')}</p></div>`;
         return;
       case 'infos':
         this.renderInfos(host);

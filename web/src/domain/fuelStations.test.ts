@@ -24,12 +24,13 @@ describe('parseFuelData', () => {
     ]));
     expect(parsed.ts).toBe(30_000_000);
     const s = parsed.stations[0];
+    expect(s.id).toBe(1);
     expect(s.address).toBe('10 Rue Bailleul 75001 Paris');
     expect(s.h24).toBe(true);
     expect(s.week).toEqual(week);
     expect(s.prices.map(p => p.name)).toEqual(['E10', 'Gazole']);
     expect(s.prices[0].euros).toBeCloseTo(1.99);
-    expect(s.prices[0].updated).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(s.prices[0].updated).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
     expect(s.soldOut.has('SP98')).toBe(true);
   });
 
